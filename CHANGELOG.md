@@ -1,0 +1,412 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [3.5.0] - 2025-12-18 - PROFESSIONAL EDITION: Ultimate Diagnostic Tools
+
+### 🎉 New Professional Features
+
+- **🏥 Comprehensive System Health Check**: 10-point diagnostic system
+
+  - Disk health analysis with space warnings
+  - Memory usage monitoring
+  - Windows Update status verification
+  - Antivirus protection check
+  - System uptime tracking
+  - Event log error analysis
+  - Startup program count
+  - Temporary files size check
+  - Network connectivity test
+  - Health score calculation (0-100)
+  - Automated recommendations
+
+- **📝 Registry Optimizer**: Safe registry performance tweaks
+
+  - Menu show delay reduction
+  - Aero Shake disable
+  - Snap Assist optimization
+  - Taskbar animations disable
+  - Icon cache optimization
+  - Thumbnail cache tuning
+  - Windows Search optimization
+  - Cortana disable
+  - Automatic backup before changes
+
+- **⚙️ Intelligent Service Optimizer**: Smart service management
+
+  - Identifies safe-to-disable services
+  - Automatic service state backup
+  - Telemetry service removal
+  - Xbox services optimization
+  - Superfetch/SysMain control
+  - Windows Search management
+  - Detailed optimization reporting
+
+- **🔄 Windows Update Manager**: Complete update control
+  - Pause updates (7 or 30 days)
+  - Resume updates
+  - Check for updates
+  - Disable/Enable automatic updates
+  - Update service management
+  - Safety warnings for critical changes
+
+### Enhanced
+
+- **Menu System**: Expanded from 20 to 24 options
+- **Professional Tools Section**: New dedicated category
+- **Module Architecture**: Added 7th module (`Modules-FinalEnhancements.ps1`)
+- **Optimization Count**: Increased to 135+
+- **Health Monitoring**: Comprehensive 10-point system check
+
+### Technical
+
+- Added `Modules-FinalEnhancements.ps1` with 500+ lines
+- Implemented health scoring algorithm
+- Enhanced service backup system
+- Registry optimization with safety checks
+- Total codebase now exceeds 5,500 lines
+
+### Statistics
+
+- **Total Optimizations**: 135+
+- **Menu Options**: 24
+- **Functions**: 90+
+- **Module Files**: 7
+- **Lines of Code**: 5,500+
+
+## [3.0.0] - 2025-12-18 - MAJOR RELEASE: ADVANCED TOOLS EDITION
+
+### 🎉 Major New Features
+
+- **📊 Real-Time Performance Dashboard**: Live monitoring of CPU, Memory, Disk, and Network
+
+  - 30-second continuous monitoring
+  - Color-coded performance indicators
+  - Process count tracking
+  - Auto-refresh every second
+
+- **🌐 Network Speed Test**: Comprehensive network diagnostics
+
+  - DNS resolution testing
+  - Ping/latency measurement
+  - Download speed estimation
+  - Network adapter information
+
+- **🚀 Startup Impact Analyzer**: Advanced startup program analysis
+
+  - Scans Registry Run keys
+  - Checks Startup folders
+  - Analyzes Task Scheduler logon triggers
+  - Impact classification (High/Medium/Low)
+  - Detailed recommendations
+
+- **🌡️ System Temperature Monitor**: Hardware temperature tracking
+
+  - WMI thermal zone detection
+  - CPU load alternative metrics
+  - Temperature warnings (color-coded)
+
+- **🔄 One-Click Restore**: Simplified backup restoration
+
+  - Lists last 10 backups
+  - One-click restore functionality
+  - Automatic undo stack restoration
+
+- **💾 Automatic Backup System**: Enhanced backup capabilities
+  - Auto-backup before major changes
+  - JSON-based backup format
+  - Timestamp-based file naming
+  - Comprehensive system state capture
+
+### Enhanced
+
+- **Menu System**: Expanded from 15 to 20 options
+- **Advanced Tools Section**: New dedicated section in main menu
+- **Module Architecture**: Added 6th module (`Modules-Advanced.ps1`)
+- **Error Handling**: Improved global error handling and logging
+- **Exit Messages**: Updated to reflect Wethereal branding
+
+### Technical
+
+- Added `Modules-Advanced.ps1` with 400+ lines of new code
+- Implemented automatic backup directory creation
+- Enhanced error logging with dedicated error log file
+- Improved module loading system
+- Total codebase now exceeds 5,000 lines
+
+### Statistics
+
+- **Total Optimizations**: 130+
+- **Menu Options**: 20
+- **Functions**: 80+
+- **Module Files**: 6
+- **Lines of Code**: 5,000+
+
+## [2.5.0] - 2025-12-18 - WETHEREAL EDITION
+
+### Changed
+
+- **🎨 Simplified ASCII Art**: Clean WINTHEREAL-only display
+  - Removed extra "L-REAL" line per user request
+  - Just "WINTHEREAL" in large ASCII art
+  - Cleaner, more professional appearance
+  - Consistent across startup and headers
+
+### Enhanced
+
+- **Visual Clarity**: Simplified branding
+  - Single-line WINTHEREAL logo
+  - Better readability
+  - Professional minimalist design
+
+### Technical
+
+- Simplified ASCII art in `Show-Header` function
+- Updated startup animation to match
+- Removed redundant ASCII elements
+- Optimized display formatting
+
+## [2.3.0] - 2025-12-18 - WINTHEREAL PERFECTED
+
+### Fixed
+
+- **🎨 Corrected ASCII Art**: Fixed WINTHEREAL spelling
+  - Now properly displays "WINTHEREAL" (WIN + THE + REAL)
+  - Added second line with "L-REAL" to complete the name
+  - Perfectly centered and aligned
+  - Consistent across startup animation and all headers
+
+### Enhanced
+
+- **Visual Polish**: Improved ASCII art presentation
+  - Better spacing and alignment
+  - Enhanced visual hierarchy
+  - Cleaner borders and separators
+  - Professional typography
+
+### Technical
+
+- Updated ASCII art in `Show-Header` function
+- Updated startup animation ASCII art
+- Improved text padding and alignment
+- Enhanced system info display formatting
+
+## [2.2.0] - 2025-12-18 - WINTHEREAL EDITION
+
+### Added
+
+- **🎨 WinThereal ASCII Art Branding**: Professional ASCII art banner
+  - Large "WINTHEREAL" ASCII logo in cyan
+  - Displayed on startup and all menu screens
+  - Live system information bar (CPU, GPU, RAM)
+  - GPU vendor detection displayed in header
+- **✨ Startup Animation**: Professional loading sequence
+  - Animated initialization steps
+  - Module loading progress
+  - System configuration detection
+  - GPU vendor scanning with detection display
+  - "Press any key to continue" prompt
+- **📊 Enhanced Header Display**: Live system stats
+  - Real-time CPU information
+  - GPU model with vendor badge (NVIDIA/AMD/Intel)
+  - RAM capacity display
+  - Automatic text truncation for long names
+
+### Enhanced
+
+- **Branding**: Renamed to "WinThereal" for professional identity
+- **User Experience**: Polished startup sequence
+- **Visual Design**: Cyan-themed professional interface
+- **System Detection**: GPU vendor shown on every screen
+
+### Technical
+
+- Updated ASCII art rendering
+- Added startup animation sequence
+- Enhanced header function with live data
+- Improved error handling for system info display
+
+## [2.1.0] - 2025-12-18 - ENHANCED EDITION
+
+### Added
+
+- **🤖 Automated Profile System**: One-click optimization profiles
+  - Gaming Profile: Applies all gaming-related optimizations
+  - Work Profile: Balanced optimizations for productivity
+  - Max Performance Profile: Applies ALL available optimizations
+  - Privacy Profile: Maximum privacy and security tweaks
+  - Auto-creates restore point before applying
+  - Optional automatic restart after profile application
+- **🎮 GPU-Specific Optimizations**: Vendor-specific tweaks
+  - Auto-detects NVIDIA, AMD, or Intel GPU
+  - NVIDIA: Disables telemetry services, optimizes power management
+  - AMD: Disables user experience program, optimizes settings
+  - Intel: Optimizes Intel graphics settings
+- **🔍 System Analysis & Recommendations**: Pre-optimization analysis
+  - Scans for unnecessary services, low disk space, high startup programs
+  - Analyzes visual effects, telemetry status
+  - Generates optimization score (0-100)
+  - Provides specific recommendations with menu references
+- **📈 Advanced HTML Reporting**: Professional optimization reports
+  - Generates comprehensive HTML reports
+  - Includes system information, optimization log summary
+  - Beautiful responsive design with tables and styling
+  - Auto-opens in browser after generation
+- **🗑️ Enhanced Bloatware Detection**: Smart app removal
+  - Scans for 30+ bloatware patterns
+  - Shows app size and install date
+  - Interactive selection for removal
+  - Detects manufacturer bloatware and unused apps
+
+### Enhanced
+
+- **Main Menu**: Expanded from 11 to 15 options
+- **Profile System**: Fully functional automated application
+- **Logging**: Enhanced with better categorization
+- **Error Handling**: Improved throughout all modules
+- **User Experience**: Better prompts and confirmations
+
+### Technical
+
+- Added `Modules-Enhancements.ps1` (5th module file)
+- New functions: 10+ enhancement functions
+- Total code: 3,500+ → 4,200+ lines
+- Module files: 4 → 5 files
+
+## [2.0.0] - 2025-12-18 - ULTIMATE EDITION
+
+### Added
+
+- **MAJOR UPGRADE**: Expanded from 16 to 50+ optimization options
+- **8 Category Menu System**: Organized optimizations into logical categories
+- **Gaming & Graphics Category** (7 options):
+  - Gaming mode optimizations
+  - Input lag reduction (mouse/keyboard)
+  - Network gaming tweaks
+  - Fullscreen optimizations
+  - Audio optimizations for gaming
+  - Frame rate optimizations
+- **Network & Internet Category** (6 options):
+  - Advanced TCP/IP tweaks
+  - DNS optimizations (Google, Cloudflare, Quad9)
+  - Network adapter power management
+  - QoS configuration
+  - Browser optimizations
+- **Privacy & Security Category** (8 options):
+  - Advanced telemetry blocking
+  - Tracking & ads disabling
+  - Bloatware removal (30+ pre-installed apps)
+  - Windows features privacy controls
+  - Camera & microphone privacy
+  - Network privacy settings
+  - Security hardening (DEP, SMBv1 disable)
+- **Cleanup & Maintenance Category** (8 options):
+  - Advanced disk cleanup (Windows.old, delivery optimization)
+  - Event log management
+  - Scheduled tasks optimization
+  - Context menu cleanup
+  - Search indexing optimization
+- **Advanced Tweaks Category** (8 options):
+  - Boot & shutdown optimization
+  - File Explorer tweaks (show extensions, hidden files)
+  - Taskbar & start menu tweaks
+  - Notification configuration
+  - Windows Defender optimization
+  - Font rendering & ClearType
+  - Registry performance tweaks
+- **Monitoring & System Info Category** (5 options):
+  - System information dashboard
+  - Performance benchmark
+  - Resource monitor integration
+  - Optimization history viewer
+  - System health check
+- **Tools & Utilities Category** (7 options):
+  - Optimization profiles (Gaming, Work, Max Performance, Privacy)
+  - Enhanced backup/restore functionality
+  - Granular undo capabilities
+  - Configuration export/import
+- **Modular Architecture**: Separated code into module files for better organization
+- **Enhanced Logging**: Added category-based logging with severity levels
+- **Undo Stack**: Track all changes for granular rollback
+- **Configuration Profiles**: Pre-defined optimization profiles for different use cases
+
+### Enhanced
+
+- **System Performance Category**: Expanded to 8 options
+  - Added CPU core parking disable
+  - Added GPU hardware-accelerated scheduling
+  - Added advanced memory management
+  - Added disk I/O optimizations
+  - Added Windows Update optimizations
+- **Improved UI**: Color-coded menus with emoji icons
+- **Better Organization**: Logical grouping of related optimizations
+- **Enhanced Safety**: More comprehensive backup before each change
+
+### Changed
+
+- Reorganized menu from flat 16-option list to 8-category system
+- Updated version to 2.0.0 ULTIMATE EDITION
+- Improved helper functions with better error handling
+- Enhanced logging with categories and severity levels
+
+### Technical
+
+- Total lines of code: 1,088 → 3,500+ lines
+- Menu options: 16 → 50+ options
+- Categories: 3 → 8 categories
+- Module files: 1 → 4 files (main + 3 modules)
+- Functions: 19 → 60+ functions
+
+## [1.0.0] - 2025-12-18
+
+### Added
+
+- Initial release of Windows Performance Tweaker
+- Interactive menu-driven interface with 16 options
+- Performance optimization features:
+  - Windows Services optimization
+  - Visual Effects optimization
+  - Disk cleanup and temporary file removal
+  - Network settings optimization
+  - Telemetry and privacy tweaks
+  - Power settings optimization
+  - Startup program management
+  - Storage optimization (SSD/HDD)
+  - Memory optimization
+  - Registry performance tweaks
+  - System maintenance tools
+- Safety features:
+  - System restore point creation
+  - Settings backup and restore functionality
+  - Detailed logging system
+  - Administrator privilege checking
+- "Apply All Optimizations" feature for one-click optimization
+- Color-coded user interface
+- Comprehensive error handling
+- Detailed documentation in README.md
+
+### Security
+
+- Requires administrator privileges for all system modifications
+- Automatic backup of all modified settings
+- System restore point creation before major changes
+
+## [Unreleased]
+
+### Planned Features
+
+- GUI version using Windows Forms
+- Scheduled optimization tasks
+- Performance benchmarking before/after
+- Custom optimization profiles
+- Export/import optimization configurations
+- Automatic update checker
+- More granular control over individual tweaks
+- Windows 12 compatibility (when released)
+
+---
+
+For more information, see [README.md](README.md)

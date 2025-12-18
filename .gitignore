@@ -1,0 +1,31 @@
+# Ignore log files
+*.log
+
+# Ignore backup files
+*_Backup_*.json
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore Windows thumbnail cache
+Thumbs.db
+
+# Ignore macOS files
+.DS_Store
+
+# Ignore editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore user-specific settings
+settings.json
+config.json
+
+# Ignore test files
+test/
+tests/
+*.test.ps1

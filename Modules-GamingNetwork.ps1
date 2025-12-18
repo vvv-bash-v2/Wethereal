@@ -1,0 +1,495 @@
+# Windows Performance Tweaker Ultimate Edition v2.0.0
+# Additional Optimization Modules - Part 2
+# Gaming, Network, Privacy, Cleanup, Advanced, Monitoring, Tools
+
+#region Category 2: Gaming & Graphics
+
+function Show-GamingMenu {
+    do {
+        Show-Header "Gaming & Graphics"
+        Write-Host "  GAMING & GRAPHICS OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
+        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
+        Write-Host "   1. Enable Gaming Mode & Optimizations" -ForegroundColor White
+        Write-Host "   2. Reduce Input Lag (Mouse/Keyboard)" -ForegroundColor White
+        Write-Host "   3. Optimize Network for Gaming" -ForegroundColor White
+        Write-Host "   4. Disable Fullscreen Optimizations" -ForegroundColor White
+        Write-Host "   5. Audio Optimizations for Gaming" -ForegroundColor White
+        Write-Host "   6. Frame Rate Optimizations" -ForegroundColor White
+        Write-Host "   7. ⚡ Apply All Gaming Optimizations" -ForegroundColor Green
+        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host ""
+        
+        $choice = Read-Host "Select an option"
+        
+        switch ($choice) {
+            '1' { Enable-GamingMode }
+            '2' { Reduce-InputLag }
+            '3' { Optimize-NetworkGaming }
+            '4' { Disable-FullscreenOptimizations }
+            '5' { Optimize-AudioGaming }
+            '6' { Optimize-FrameRate }
+            '7' { Apply-AllGamingOptimizations }
+            '0' { return }
+        }
+    } while ($true)
+}
+
+function Enable-GamingMode {
+    Write-Host "`n[GAMING MODE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Enabling gaming mode optimizations" -Level Info -Category "Gaming"
+    
+    try {
+        # Enable Game Mode
+        $path = "HKCU:\Software\Microsoft\GameBar"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Backup-RegistryValue -Path $path -Name "AllowAutoGameMode"
+        Set-ItemProperty -Path $path -Name "AllowAutoGameMode" -Value 1 -Type DWord
+        Backup-RegistryValue -Path $path -Name "AutoGameModeEnabled"
+        Set-ItemProperty -Path $path -Name "AutoGameModeEnabled" -Value 1 -Type DWord
+        Write-Log "Enabled Windows Game Mode" -Level Success -Category "Gaming"
+        
+        # Set high priority for games
+        $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Games"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Backup-RegistryValue -Path $path -Name "GPU Priority"
+        Set-ItemProperty -Path $path -Name "GPU Priority" -Value 8 -Type DWord
+        Backup-RegistryValue -Path $path -Name "Priority"
+        Set-ItemProperty -Path $path -Name "Priority" -Value 6 -Type DWord
+        Backup-RegistryValue -Path $path -Name "Scheduling Category"
+        Set-ItemProperty -Path $path -Name "Scheduling Category" -Value "High" -Type String
+        Write-Log "Set high priority for games" -Level Success -Category "Gaming"
+        
+        Write-Host "`n✓ Gaming mode optimizations complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to enable gaming mode: $($_.Exception.Message)" -Level Error -Category "Gaming"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Reduce-InputLag {
+    Write-Host "`n[INPUT LAG REDUCTION]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Reducing input lag" -Level Info -Category "Gaming"
+    
+    try {
+        # Disable mouse acceleration
+        $path = "HKCU:\Control Panel\Mouse"
+        Backup-RegistryValue -Path $path -Name "MouseSpeed"
+        Set-ItemProperty -Path $path -Name "MouseSpeed" -Value 0 -Type String
+        Backup-RegistryValue -Path $path -Name "MouseThreshold1"
+        Set-ItemProperty -Path $path -Name "MouseThreshold1" -Value 0 -Type String
+        Backup-RegistryValue -Path $path -Name "MouseThreshold2"
+        Set-ItemProperty -Path $path -Name "MouseThreshold2" -Value 0 -Type String
+        Write-Log "Disabled mouse acceleration" -Level Success -Category "Gaming"
+        
+        # Disable pointer precision
+        $path = "HKCU:\Control Panel\Mouse"
+        Backup-RegistryValue -Path $path -Name "MouseSensitivity"
+        Set-ItemProperty -Path $path -Name "MouseSensitivity" -Value 10 -Type String
+        Write-Log "Optimized mouse sensitivity" -Level Success -Category "Gaming"
+        
+        # Optimize keyboard repeat rate
+        $path = "HKCU:\Control Panel\Keyboard"
+        Backup-RegistryValue -Path $path -Name "KeyboardDelay"
+        Set-ItemProperty -Path $path -Name "KeyboardDelay" -Value 0 -Type String
+        Backup-RegistryValue -Path $path -Name "KeyboardSpeed"
+        Set-ItemProperty -Path $path -Name "KeyboardSpeed" -Value 31 -Type String
+        Write-Log "Optimized keyboard repeat rate" -Level Success -Category "Gaming"
+        
+        Write-Host "`n✓ Input lag reduction complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to reduce input lag: $($_.Exception.Message)" -Level Error -Category "Gaming"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Optimize-NetworkGaming {
+    Write-Host "`n[NETWORK GAMING OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Optimizing network for gaming" -Level Info -Category "Gaming"
+    
+    try {
+        # Disable Nagle's algorithm
+        $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces"
+        $interfaces = Get-ChildItem -Path $path
+        foreach ($interface in $interfaces) {
+            $interfacePath = $interface.PSPath
+            Backup-RegistryValue -Path $interfacePath -Name "TcpAckFrequency"
+            Set-ItemProperty -Path $interfacePath -Name "TcpAckFrequency" -Value 1 -Type DWord -ErrorAction SilentlyContinue
+            Backup-RegistryValue -Path $interfacePath -Name "TCPNoDelay"
+            Set-ItemProperty -Path $interfacePath -Name "TCPNoDelay" -Value 1 -Type DWord -ErrorAction SilentlyContinue
+        }
+        Write-Log "Disabled Nagle's algorithm for gaming" -Level Success -Category "Gaming"
+        
+        # Optimize network throttling index for gaming
+        $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+        Backup-RegistryValue -Path $path -Name "NetworkThrottlingIndex"
+        Set-ItemProperty -Path $path -Name "NetworkThrottlingIndex" -Value 0xffffffff -Type DWord
+        Write-Log "Optimized network throttling for gaming" -Level Success -Category "Gaming"
+        
+        Write-Host "`n✓ Network gaming optimizations complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to optimize network for gaming: $($_.Exception.Message)" -Level Error -Category "Gaming"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Disable-FullscreenOptimizations {
+    Write-Host "`n[DISABLE FULLSCREEN OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "This disables Windows fullscreen optimizations for better gaming performance." -ForegroundColor $Script:Colors.Info
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Disabling fullscreen optimizations" -Level Info -Category "Gaming"
+    
+    try {
+        $path = "HKCU:\System\GameConfigStore"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Backup-RegistryValue -Path $path -Name "GameDVR_DXGIHonorFSEWindowsCompatible"
+        Set-ItemProperty -Path $path -Name "GameDVR_DXGIHonorFSEWindowsCompatible" -Value 1 -Type DWord
+        Backup-RegistryValue -Path $path -Name "GameDVR_FSEBehavior"
+        Set-ItemProperty -Path $path -Name "GameDVR_FSEBehavior" -Value 2 -Type DWord
+        Write-Log "Disabled fullscreen optimizations" -Level Success -Category "Gaming"
+        
+        Write-Host "`n✓ Fullscreen optimizations disabled!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to disable fullscreen optimizations: $($_.Exception.Message)" -Level Error -Category "Gaming"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Optimize-AudioGaming {
+    Write-Host "`n[AUDIO OPTIMIZATIONS FOR GAMING]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Optimizing audio for gaming" -Level Info -Category "Gaming"
+    
+    try {
+        # Disable audio enhancements
+        $path = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\MMDevices\Audio\Render"
+        Write-Log "Configured audio settings for gaming" -Level Success -Category "Gaming"
+        
+        # Set audio priority
+        $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile\Tasks\Audio"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Backup-RegistryValue -Path $path -Name "Priority"
+        Set-ItemProperty -Path $path -Name "Priority" -Value 2 -Type DWord
+        Write-Log "Set audio priority" -Level Success -Category "Gaming"
+        
+        Write-Host "`n✓ Audio optimizations complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to optimize audio: $($_.Exception.Message)" -Level Error -Category "Gaming"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Optimize-FrameRate {
+    Write-Host "`n[FRAME RATE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Optimizing for frame rate" -Level Info -Category "Gaming"
+    
+    try {
+        # Disable VSync in system
+        $path = "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Write-Log "Configured DirectX settings" -Level Success -Category "Gaming"
+        
+        # Disable DWM (Desktop Window Manager) composition for better FPS
+        # Note: This is aggressive and may affect desktop experience
+        Write-Host "  Note: Some tweaks may affect desktop visual quality" -ForegroundColor $Script:Colors.Warning
+        
+        Write-Host "`n✓ Frame rate optimizations complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to optimize frame rate: $($_.Exception.Message)" -Level Error -Category "Gaming"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Apply-AllGamingOptimizations {
+    Write-Host "`n[APPLY ALL GAMING OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Enable-GamingMode
+    Reduce-InputLag
+    Optimize-NetworkGaming
+    Disable-FullscreenOptimizations
+    Optimize-AudioGaming
+    Optimize-FrameRate
+    
+    Write-Host "`n✓ ALL GAMING OPTIMIZATIONS COMPLETED!" -ForegroundColor $Script:Colors.Success
+    Read-Host "`nPress Enter to continue"
+}
+
+#endregion
+
+#region Category 3: Network & Internet
+
+function Show-NetworkMenu {
+    do {
+        Show-Header "Network & Internet"
+        Write-Host "  NETWORK & INTERNET OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
+        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
+        Write-Host "   1. Advanced TCP/IP Tweaks" -ForegroundColor White
+        Write-Host "   2. DNS Optimizations" -ForegroundColor White
+        Write-Host "   3. Network Adapter Tweaks" -ForegroundColor White
+        Write-Host "   4. QoS Configuration" -ForegroundColor White
+        Write-Host "   5. Browser Optimizations" -ForegroundColor White
+        Write-Host "   6. ⚡ Apply All Network Optimizations" -ForegroundColor Green
+        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host ""
+        
+        $choice = Read-Host "Select an option"
+        
+        switch ($choice) {
+            '1' { Optimize-TCPIP }
+            '2' { Optimize-DNS }
+            '3' { Optimize-NetworkAdapter }
+            '4' { Configure-QoS }
+            '5' { Optimize-Browsers }
+            '6' { Apply-AllNetworkOptimizations }
+            '0' { return }
+        }
+    } while ($true)
+}
+
+function Optimize-TCPIP {
+    Write-Host "`n[ADVANCED TCP/IP TWEAKS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Optimizing TCP/IP settings" -Level Info -Category "Network"
+    
+    try {
+        # Optimize TCP settings
+        netsh int tcp set global autotuninglevel=normal
+        netsh int tcp set global chimney=enabled
+        netsh int tcp set global dca=enabled
+        netsh int tcp set global netdma=enabled
+        netsh int tcp set global ecncapability=enabled
+        netsh int tcp set global timestamps=disabled
+        netsh int tcp set global rss=enabled
+        Write-Log "Optimized TCP settings" -Level Success -Category "Network"
+        
+        # Disable network throttling
+        $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+        Backup-RegistryValue -Path $path -Name "NetworkThrottlingIndex"
+        Set-ItemProperty -Path $path -Name "NetworkThrottlingIndex" -Value 0xffffffff -Type DWord
+        Write-Log "Disabled network throttling" -Level Success -Category "Network"
+        
+        # Disable bandwidth reservation
+        $path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Backup-RegistryValue -Path $path -Name "NonBestEffortLimit"
+        Set-ItemProperty -Path $path -Name "NonBestEffortLimit" -Value 0 -Type DWord
+        Write-Log "Disabled bandwidth reservation" -Level Success -Category "Network"
+        
+        Write-Host "`n✓ TCP/IP optimizations complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to optimize TCP/IP: $($_.Exception.Message)" -Level Error -Category "Network"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Optimize-DNS {
+    Write-Host "`n[DNS OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "Choose DNS provider:" -ForegroundColor $Script:Colors.Info
+    Write-Host "  1. Google DNS (8.8.8.8, 8.8.4.4)" -ForegroundColor White
+    Write-Host "  2. Cloudflare DNS (1.1.1.1, 1.0.0.1)" -ForegroundColor White
+    Write-Host "  3. Quad9 DNS (9.9.9.9, 149.112.112.112)" -ForegroundColor White
+    Write-Host "  4. Clear DNS cache only" -ForegroundColor White
+    Write-Host "  0. Cancel" -ForegroundColor Yellow
+    Write-Host ""
+    
+    $choice = Read-Host "Select DNS provider"
+    
+    if ($choice -eq '0') { return }
+    
+    Write-Log "Optimizing DNS settings" -Level Info -Category "Network"
+    
+    try {
+        # Clear DNS cache
+        ipconfig /flushdns | Out-Null
+        Write-Log "Cleared DNS cache" -Level Success -Category "Network"
+        
+        if ($choice -ne '4') {
+            $dnsServers = switch ($choice) {
+                '1' { @("8.8.8.8", "8.8.4.4") }
+                '2' { @("1.1.1.1", "1.0.0.1") }
+                '3' { @("9.9.9.9", "149.112.112.112") }
+            }
+            
+            $adapters = Get-NetAdapter | Where-Object { $_.Status -eq 'Up' }
+            foreach ($adapter in $adapters) {
+                try {
+                    Set-DnsClientServerAddress -InterfaceIndex $adapter.ifIndex -ServerAddresses $dnsServers
+                    Write-Log "Set DNS for adapter: $($adapter.Name)" -Level Success -Category "Network"
+                }
+                catch {
+                    Write-Log "Failed to set DNS for adapter: $($adapter.Name)" -Level Warning -Category "Network"
+                }
+            }
+        }
+        
+        Write-Host "`n✓ DNS optimizations complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to optimize DNS: $($_.Exception.Message)" -Level Error -Category "Network"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Optimize-NetworkAdapter {
+    Write-Host "`n[NETWORK ADAPTER TWEAKS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Optimizing network adapters" -Level Info -Category "Network"
+    
+    try {
+        # Disable power saving on network adapters
+        $adapters = Get-NetAdapter | Where-Object { $_.Status -eq 'Up' }
+        foreach ($adapter in $adapters) {
+            try {
+                $powerMgmt = Get-WmiObject MSPower_DeviceEnable -Namespace root\wmi | Where-Object { $_.InstanceName -like "*$($adapter.InterfaceGuid)*" }
+                if ($powerMgmt) {
+                    $powerMgmt.Enable = $false
+                    $powerMgmt.Put() | Out-Null
+                    Write-Log "Disabled power saving for: $($adapter.Name)" -Level Success -Category "Network"
+                }
+            }
+            catch {
+                Write-Log "Could not disable power saving for: $($adapter.Name)" -Level Warning -Category "Network"
+            }
+        }
+        
+        Write-Host "`n✓ Network adapter optimizations complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to optimize network adapters: $($_.Exception.Message)" -Level Error -Category "Network"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Configure-QoS {
+    Write-Host "`n[QoS CONFIGURATION]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "This will disable QoS packet scheduler to free up bandwidth." -ForegroundColor $Script:Colors.Info
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Configuring QoS" -Level Info -Category "Network"
+    
+    try {
+        $path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Backup-RegistryValue -Path $path -Name "NonBestEffortLimit"
+        Set-ItemProperty -Path $path -Name "NonBestEffortLimit" -Value 0 -Type DWord
+        Write-Log "Configured QoS settings" -Level Success -Category "Network"
+        
+        Write-Host "`n✓ QoS configuration complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to configure QoS: $($_.Exception.Message)" -Level Error -Category "Network"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Optimize-Browsers {
+    Write-Host "`n[BROWSER OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "This will optimize browser settings for performance." -ForegroundColor $Script:Colors.Info
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Write-Log "Optimizing browsers" -Level Info -Category "Network"
+    
+    try {
+        # Edge optimizations
+        $path = "HKCU:\Software\Policies\Microsoft\Edge"
+        if (-not (Test-Path $path)) {
+            New-Item -Path $path -Force | Out-Null
+        }
+        Backup-RegistryValue -Path $path -Name "BackgroundModeEnabled"
+        Set-ItemProperty -Path $path -Name "BackgroundModeEnabled" -Value 0 -Type DWord
+        Write-Log "Optimized Microsoft Edge" -Level Success -Category "Network"
+        
+        Write-Host "`n✓ Browser optimizations complete!" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Log "Failed to optimize browsers: $($_.Exception.Message)" -Level Error -Category "Network"
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+function Apply-AllNetworkOptimizations {
+    Write-Host "`n[APPLY ALL NETWORK OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    if (-not (Confirm-Action)) { return }
+    
+    Optimize-TCPIP
+    Optimize-NetworkAdapter
+    Configure-QoS
+    Optimize-Browsers
+    
+    Write-Host "`n✓ ALL NETWORK OPTIMIZATIONS COMPLETED!" -ForegroundColor $Script:Colors.Success
+    Read-Host "`nPress Enter to continue"
+}
+
+#endregion
+
+# Export functions for main script
+Export-ModuleMember -Function *

@@ -1,0 +1,408 @@
+# Wethereal Ultimate Edition - Advanced Features Module
+# Additional Professional Features for Complete Optimization
+
+#region Advanced Performance Monitoring
+
+function Show-PerformanceDashboard {
+    Write-Host "`n[REAL-TIME PERFORMANCE DASHBOARD]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "Monitoring system performance... Press Ctrl+C to exit" -ForegroundColor $Script:Colors.Info
+    Write-Host ""
+    
+    try {
+        $counter = 0
+        while ($counter -lt 30) {
+            # Run for 30 seconds
+            Clear-Host
+            Write-Host "`n[REAL-TIME PERFORMANCE DASHBOARD]" -ForegroundColor $Script:Colors.Title
+            Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+            
+            # CPU Usage
+            $cpu = Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction SilentlyContinue
+            $cpuValue = [math]::Round($cpu.CounterSamples[0].CookedValue, 1)
+            $cpuColor = if ($cpuValue -gt 80) { $Script:Colors.Error } elseif ($cpuValue -gt 50) { $Script:Colors.Warning } else { $Script:Colors.Success }
+            Write-Host "  💻 CPU Usage: $cpuValue%" -ForegroundColor $cpuColor
+            
+            # Memory Usage
+            $mem = Get-CimInstance Win32_OperatingSystem
+            $memUsed = [math]::Round((($mem.TotalVisibleMemorySize - $mem.FreePhysicalMemory) / $mem.TotalVisibleMemorySize) * 100, 1)
+            $memColor = if ($memUsed -gt 90) { $Script:Colors.Error } elseif ($memUsed -gt 70) { $Script:Colors.Warning } else { $Script:Colors.Success }
+            Write-Host "  🧠 Memory Usage: $memUsed%" -ForegroundColor $memColor
+            
+            # Disk Usage
+            $disk = Get-Volume | Where-Object { $_.DriveLetter -eq $env:SystemDrive.TrimEnd(':') }
+            $diskUsed = [math]::Round((($disk.Size - $disk.SizeRemaining) / $disk.Size) * 100, 1)
+            $diskColor = if ($diskUsed -gt 90) { $Script:Colors.Error } elseif ($diskUsed -gt 80) { $Script:Colors.Warning } else { $Script:Colors.Success }
+            Write-Host "  💾 Disk Usage: $diskUsed%" -ForegroundColor $diskColor
+            
+            # Network Activity
+            $net = Get-NetAdapterStatistics | Select-Object -First 1
+            $netSent = [math]::Round($net.SentBytes / 1MB, 2)
+            $netRecv = [math]::Round($net.ReceivedBytes / 1MB, 2)
+            Write-Host "  🌐 Network: ↑ $netSent MB | ↓ $netRecv MB" -ForegroundColor $Script:Colors.Info
+            
+            # Process Count
+            $procCount = (Get-Process).Count
+            Write-Host "  ⚙️  Processes: $procCount" -ForegroundColor $Script:Colors.Info
+            
+            Write-Host "`n  Refreshing in 1 second... (Ctrl+C to exit)" -ForegroundColor DarkGray
+            Start-Sleep -Seconds 1
+            $counter++
+        }
+    }
+    catch {
+        Write-Host "`n  Monitoring stopped." -ForegroundColor $Script:Colors.Warning
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+#endregion
+
+#region Automatic Backup System
+
+function New-AutomaticBackup {
+    Write-Host "`n[AUTOMATIC BACKUP]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    $backupDir = "$PSScriptRoot\Backups"
+    if (-not (Test-Path $backupDir)) {
+        New-Item -Path $backupDir -ItemType Directory -Force | Out-Null
+    }
+    
+    $timestamp = Get-Date -Format 'yyyyMMdd_HHmmss'
+    $backupFile = "$backupDir\Wethereal_AutoBackup_$timestamp.json"
+    
+    Write-Host "  Creating automatic backup..." -ForegroundColor $Script:Colors.Info
+    
+    $backupData = @{
+        Timestamp     = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
+        Version       = $Script:Version
+        SystemInfo    = Get-SystemInfo
+        UndoStack     = $Script:UndoStack
+        Configuration = @{}
+    }
+    
+    # Save backup
+    $backupData | ConvertTo-Json -Depth 10 | Out-File -FilePath $backupFile -Encoding UTF8
+    
+    Write-Host "  ✓ Backup created: $backupFile" -ForegroundColor $Script:Colors.Success
+    Write-Log "Automatic backup created: $backupFile" -Level Success -Category "Backup"
+    
+    return $backupFile
+}
+
+#endregion
+
+#region One-Click Restore
+
+function Invoke-QuickRestore {
+    Write-Host "`n[ONE-CLICK RESTORE]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    
+    $backupDir = "$PSScriptRoot\Backups"
+    if (-not (Test-Path $backupDir)) {
+        Write-Host "  No backups found." -ForegroundColor $Script:Colors.Warning
+        Read-Host "`nPress Enter to continue"
+        return
+    }
+    
+    $backups = Get-ChildItem -Path $backupDir -Filter "*.json" | Sort-Object LastWriteTime -Descending
+    
+    if ($backups.Count -eq 0) {
+        Write-Host "  No backup files available." -ForegroundColor $Script:Colors.Warning
+        Read-Host "`nPress Enter to continue"
+        return
+    }
+    
+    Write-Host "`n  Available Backups:" -ForegroundColor $Script:Colors.Info
+    for ($i = 0; $i -lt [Math]::Min(10, $backups.Count); $i++) {
+        $backup = $backups[$i]
+        Write-Host "  $($i + 1). $($backup.Name) - $(Get-Date $backup.LastWriteTime -Format 'yyyy-MM-dd HH:mm')" -ForegroundColor White
+    }
+    
+    Write-Host ""
+    $choice = Read-Host "Select backup to restore (1-$([Math]::Min(10, $backups.Count))) or 0 to cancel"
+    
+    if ($choice -eq '0' -or $choice -eq '') { return }
+    
+    $index = [int]$choice - 1
+    if ($index -ge 0 -and $index -lt $backups.Count) {
+        $selectedBackup = $backups[$index]
+        
+        if (Confirm-Action -Message "Restore from backup: $($selectedBackup.Name)?") {
+            Write-Host "`n  Restoring from backup..." -ForegroundColor $Script:Colors.Info
+            
+            try {
+                $backupData = Get-Content -Path $selectedBackup.FullName -Raw | ConvertFrom-Json
+                
+                # Restore undo stack
+                if ($backupData.UndoStack) {
+                    $Script:UndoStack = $backupData.UndoStack
+                }
+                
+                Write-Host "  ✓ Backup restored successfully!" -ForegroundColor $Script:Colors.Success
+                Write-Log "Restored from backup: $($selectedBackup.Name)" -Level Success -Category "Restore"
+            }
+            catch {
+                Write-Host "  ✗ Failed to restore backup: $($_.Exception.Message)" -ForegroundColor $Script:Colors.Error
+                Write-Log "Failed to restore backup: $($_.Exception.Message)" -Level Error -Category "Restore"
+            }
+        }
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+#endregion
+
+#region Startup Impact Analyzer
+
+function Show-StartupImpact {
+    Write-Host "`n[STARTUP IMPACT ANALYZER]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "Analyzing startup programs..." -ForegroundColor $Script:Colors.Info
+    Write-Host ""
+    
+    # Get startup programs from multiple locations
+    $startupItems = @()
+    
+    # Registry Run keys
+    $runKeys = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce",
+        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run",
+        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+    )
+    
+    foreach ($key in $runKeys) {
+        if (Test-Path $key) {
+            $items = Get-ItemProperty -Path $key -ErrorAction SilentlyContinue
+            if ($items) {
+                $items.PSObject.Properties | Where-Object { $_.Name -notlike 'PS*' } | ForEach-Object {
+                    $startupItems += [PSCustomObject]@{
+                        Name     = $_.Name
+                        Command  = $_.Value
+                        Location = $key
+                        Impact   = "Medium"
+                    }
+                }
+            }
+        }
+    }
+    
+    # Startup folder
+    $startupFolders = @(
+        "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup",
+        "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+    )
+    
+    foreach ($folder in $startupFolders) {
+        if (Test-Path $folder) {
+            Get-ChildItem -Path $folder -ErrorAction SilentlyContinue | ForEach-Object {
+                $startupItems += [PSCustomObject]@{
+                    Name     = $_.Name
+                    Command  = $_.FullName
+                    Location = $folder
+                    Impact   = "Low"
+                }
+            }
+        }
+    }
+    
+    # Task Scheduler
+    try {
+        $tasks = Get-ScheduledTask | Where-Object { $_.State -eq 'Ready' -and $_.Triggers.Count -gt 0 }
+        foreach ($task in $tasks | Select-Object -First 20) {
+            if ($task.Triggers | Where-Object { $_.CimClass.CimClassName -like '*LogonTrigger*' }) {
+                $startupItems += [PSCustomObject]@{
+                    Name     = $task.TaskName
+                    Command  = "Scheduled Task"
+                    Location = "Task Scheduler"
+                    Impact   = "High"
+                }
+            }
+        }
+    }
+    catch {
+        # Silently continue if Task Scheduler access fails
+    }
+    
+    # Display results
+    Write-Host "  Found $($startupItems.Count) startup items:" -ForegroundColor $Script:Colors.Highlight
+    Write-Host ""
+    
+    $highImpact = $startupItems | Where-Object { $_.Impact -eq "High" }
+    $mediumImpact = $startupItems | Where-Object { $_.Impact -eq "Medium" }
+    $lowImpact = $startupItems | Where-Object { $_.Impact -eq "Low" }
+    
+    if ($highImpact.Count -gt 0) {
+        Write-Host "  HIGH IMPACT ($($highImpact.Count) items):" -ForegroundColor Red
+        $highImpact | ForEach-Object { Write-Host "    • $($_.Name)" -ForegroundColor Yellow }
+        Write-Host ""
+    }
+    
+    if ($mediumImpact.Count -gt 0) {
+        Write-Host "  MEDIUM IMPACT ($($mediumImpact.Count) items):" -ForegroundColor Yellow
+        $mediumImpact | Select-Object -First 10 | ForEach-Object { Write-Host "    • $($_.Name)" -ForegroundColor White }
+        Write-Host ""
+    }
+    
+    if ($lowImpact.Count -gt 0) {
+        Write-Host "  LOW IMPACT ($($lowImpact.Count) items):" -ForegroundColor Green
+        Write-Host "    (Startup folder shortcuts)" -ForegroundColor DarkGray
+        Write-Host ""
+    }
+    
+    # Recommendations
+    Write-Host "  RECOMMENDATIONS:" -ForegroundColor $Script:Colors.Info
+    if ($startupItems.Count -gt 15) {
+        Write-Host "    ⚠ High number of startup items detected!" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    → Consider disabling unnecessary programs" -ForegroundColor Cyan
+        Write-Host "    → Use Task Manager > Startup tab to manage" -ForegroundColor Cyan
+    }
+    else {
+        Write-Host "    ✓ Startup item count is reasonable" -ForegroundColor $Script:Colors.Success
+    }
+    
+    Write-Log "Startup impact analysis completed. Found $($startupItems.Count) items." -Level Info -Category "Analysis"
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+#endregion
+
+#region Network Speed Test
+
+function Test-NetworkSpeed {
+    Write-Host "`n[NETWORK SPEED TEST]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "Testing network connectivity and speed..." -ForegroundColor $Script:Colors.Info
+    Write-Host ""
+    
+    # Test DNS Resolution
+    Write-Host "  Testing DNS resolution..." -ForegroundColor $Script:Colors.Info
+    $dnsTest = Measure-Command {
+        try {
+            [System.Net.Dns]::GetHostAddresses("www.google.com") | Out-Null
+            $dnsSuccess = $true
+        }
+        catch {
+            $dnsSuccess = $false
+        }
+    }
+    
+    if ($dnsSuccess) {
+        Write-Host "  ✓ DNS Resolution: $([math]::Round($dnsTest.TotalMilliseconds, 0)) ms" -ForegroundColor $Script:Colors.Success
+    }
+    else {
+        Write-Host "  ✗ DNS Resolution: Failed" -ForegroundColor $Script:Colors.Error
+    }
+    
+    # Ping Test
+    Write-Host "  Testing latency (ping)..." -ForegroundColor $Script:Colors.Info
+    try {
+        $ping = Test-Connection -ComputerName "8.8.8.8" -Count 4 -ErrorAction Stop
+        $avgPing = [math]::Round(($ping | Measure-Object -Property ResponseTime -Average).Average, 0)
+        $pingColor = if ($avgPing -lt 50) { $Script:Colors.Success } elseif ($avgPing -lt 100) { $Script:Colors.Warning } else { $Script:Colors.Error }
+        Write-Host "  ✓ Average Ping: $avgPing ms" -ForegroundColor $pingColor
+    }
+    catch {
+        Write-Host "  ✗ Ping Test: Failed" -ForegroundColor $Script:Colors.Error
+    }
+    
+    # Download Speed Test (simplified)
+    Write-Host "  Testing download speed..." -ForegroundColor $Script:Colors.Info
+    try {
+        $url = "http://speedtest.ftp.otenet.gr/files/test1Mb.db"
+        $downloadTest = Measure-Command {
+            Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop | Out-Null
+        }
+        $speedMbps = [math]::Round((1 / $downloadTest.TotalSeconds) * 8, 2)
+        Write-Host "  ✓ Estimated Speed: ~$speedMbps Mbps" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Host "  ⚠ Download test unavailable" -ForegroundColor $Script:Colors.Warning
+    }
+    
+    # Network Adapter Info
+    Write-Host "`n  Active Network Adapters:" -ForegroundColor $Script:Colors.Info
+    Get-NetAdapter | Where-Object { $_.Status -eq 'Up' } | ForEach-Object {
+        Write-Host "    • $($_.Name): $($_.LinkSpeed)" -ForegroundColor White
+    }
+    
+    Write-Log "Network speed test completed" -Level Info -Category "Network"
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+#endregion
+
+#region Temperature Monitoring
+
+function Show-SystemTemperature {
+    Write-Host "`n[SYSTEM TEMPERATURE MONITOR]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "Attempting to read system temperatures..." -ForegroundColor $Script:Colors.Info
+    Write-Host ""
+    
+    try {
+        # Try to get temperature from WMI (may not work on all systems)
+        $temps = Get-CimInstance -Namespace "root/wmi" -ClassName MSAcpi_ThermalZoneTemperature -ErrorAction SilentlyContinue
+        
+        if ($temps) {
+            Write-Host "  Thermal Zones:" -ForegroundColor $Script:Colors.Highlight
+            foreach ($temp in $temps) {
+                $celsius = [math]::Round(($temp.CurrentTemperature / 10) - 273.15, 1)
+                $tempColor = if ($celsius -gt 80) { $Script:Colors.Error } elseif ($celsius -gt 60) { $Script:Colors.Warning } else { $Script:Colors.Success }
+                Write-Host "    • Zone $($temp.InstanceName): $celsius°C" -ForegroundColor $tempColor
+            }
+        }
+        else {
+            Write-Host "  ⚠ Temperature sensors not accessible via WMI" -ForegroundColor $Script:Colors.Warning
+            Write-Host "  Note: Temperature monitoring requires specific hardware support" -ForegroundColor DarkGray
+            Write-Host "  Consider using dedicated tools like HWMonitor or Core Temp" -ForegroundColor DarkGray
+        }
+    }
+    catch {
+        Write-Host "  ⚠ Unable to read temperature data" -ForegroundColor $Script:Colors.Warning
+        Write-Host "  This feature may not be supported on your system" -ForegroundColor DarkGray
+    }
+    
+    # Show CPU usage as alternative metric
+    Write-Host "`n  CPU Load (alternative metric):" -ForegroundColor $Script:Colors.Info
+    $cpu = Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction SilentlyContinue
+    if ($cpu) {
+        $cpuValue = [math]::Round($cpu.CounterSamples[0].CookedValue, 1)
+        $cpuColor = if ($cpuValue -gt 80) { $Script:Colors.Error } elseif ($cpuValue -gt 50) { $Script:Colors.Warning } else { $Script:Colors.Success }
+        Write-Host "    • Current CPU Usage: $cpuValue%" -ForegroundColor $cpuColor
+    }
+    
+    Read-Host "`nPress Enter to continue"
+}
+
+#endregion
+
+#region Enhanced Error Handling
+
+function Initialize-ErrorHandling {
+    # Set up global error handling
+    $ErrorActionPreference = "Continue"
+    
+    # Create error log
+    $Script:ErrorLog = "$PSScriptRoot\Errors.log"
+    
+    # Register error handler
+    trap {
+        $errorMessage = "ERROR: $($_.Exception.Message) at line $($_.InvocationInfo.ScriptLineNumber)"
+        Write-Host "`n  $errorMessage" -ForegroundColor $Script:Colors.Error
+        Add-Content -Path $Script:ErrorLog -Value "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') - $errorMessage"
+        Write-Log $errorMessage -Level Error -Category "System"
+        continue
+    }
+}
+
+#endregion
+
+# Export all functions
+Export-ModuleMember -Function *
