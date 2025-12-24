@@ -29,3 +29,9 @@ config.json
 test/
 tests/
 *.test.ps1
+
+# Ignore archive files (distribute via releases)
+*.rar
+*.zip
+*.7z
+*.tar.gz
