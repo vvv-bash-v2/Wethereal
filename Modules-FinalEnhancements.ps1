@@ -12,8 +12,10 @@ function Start-SystemHealthCheck {
     $healthScore = 100
     $issues = @()
     $warnings = @()
-    
+    $totalChecks = 10
+
     # Check 1: Disk Health
+    Write-Progress -Activity "🏥 System Health Check" -Status "[1/$totalChecks] Checking disk health..." -PercentComplete 10
     Write-Host "  [1/10] Checking disk health..." -ForegroundColor $Script:Colors.Info
     try {
         $drives = Get-Volume | Where-Object { $_.DriveLetter -and $_.DriveType -eq 'Fixed' }
@@ -35,6 +37,7 @@ function Start-SystemHealthCheck {
     }
     
     # Check 2: Memory Usage
+    Write-Progress -Activity "🏥 System Health Check" -Status "[2/$totalChecks] Checking memory usage..." -PercentComplete 20
     Write-Host "  [2/10] Checking memory usage..." -ForegroundColor $Script:Colors.Info
     try {
         $mem = Get-CimInstance Win32_OperatingSystem
@@ -54,6 +57,7 @@ function Start-SystemHealthCheck {
     }
     
     # Check 3: Windows Update Status
+    Write-Progress -Activity "🏥 System Health Check" -Status "[3/$totalChecks] Checking Windows Update status..." -PercentComplete 30
     Write-Host "  [3/10] Checking Windows Update status..." -ForegroundColor $Script:Colors.Info
     try {
         $updateService = Get-Service -Name wuauserv -ErrorAction SilentlyContinue
@@ -68,6 +72,7 @@ function Start-SystemHealthCheck {
     }
     
     # Check 4: Antivirus Status
+    Write-Progress -Activity "🏥 System Health Check" -Status "[4/$totalChecks] Checking antivirus status..." -PercentComplete 40
     Write-Host "  [4/10] Checking antivirus status..." -ForegroundColor $Script:Colors.Info
     try {
         $defender = Get-MpComputerStatus -ErrorAction SilentlyContinue
@@ -88,6 +93,7 @@ function Start-SystemHealthCheck {
     }
     
     # Check 5: System Uptime
+    Write-Progress -Activity "🏥 System Health Check" -Status "[5/$totalChecks] Checking system uptime..." -PercentComplete 50
     Write-Host "  [5/10] Checking system uptime..." -ForegroundColor $Script:Colors.Info
     try {
         $os = Get-CimInstance Win32_OperatingSystem
@@ -103,6 +109,7 @@ function Start-SystemHealthCheck {
     }
     
     # Check 6: Event Log Errors
+    Write-Progress -Activity "🏥 System Health Check" -Status "[6/$totalChecks] Checking recent errors..." -PercentComplete 60
     Write-Host "  [6/10] Checking recent errors..." -ForegroundColor $Script:Colors.Info
     try {
         $recentErrors = Get-EventLog -LogName System -EntryType Error -Newest 50 -ErrorAction SilentlyContinue | Measure-Object
@@ -117,6 +124,7 @@ function Start-SystemHealthCheck {
     }
     
     # Check 7: Startup Programs
+    Write-Progress -Activity "🏥 System Health Check" -Status "[7/$totalChecks] Checking startup programs..." -PercentComplete 70
     Write-Host "  [7/10] Checking startup programs..." -ForegroundColor $Script:Colors.Info
     try {
         $startupCount = 0
@@ -143,6 +151,7 @@ function Start-SystemHealthCheck {
     }
     
     # Check 8: Temporary Files
+    Write-Progress -Activity "🏥 System Health Check" -Status "[8/$totalChecks] Checking temporary files..." -PercentComplete 80
     Write-Host "  [8/10] Checking temporary files..." -ForegroundColor $Script:Colors.Info
     try {
         $tempSize = 0
@@ -164,6 +173,7 @@ function Start-SystemHealthCheck {
     }
     
     # Check 9: Network Connectivity
+    Write-Progress -Activity "🏥 System Health Check" -Status "[9/$totalChecks] Checking network connectivity..." -PercentComplete 90
     Write-Host "  [9/10] Checking network connectivity..." -ForegroundColor $Script:Colors.Info
     try {
         $ping = Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet -ErrorAction SilentlyContinue
@@ -178,9 +188,11 @@ function Start-SystemHealthCheck {
     }
     
     # Check 10: System Files
+    Write-Progress -Activity "🏥 System Health Check" -Status "[10/$totalChecks] Checking system file integrity..." -PercentComplete 100
     Write-Host "  [10/10] Checking system file integrity..." -ForegroundColor $Script:Colors.Info
     Write-Host "    ℹ System file check requires 'sfc /scannow' (run manually)" -ForegroundColor DarkGray
-    
+    Write-Progress -Activity "🏥 System Health Check" -Completed
+
     # Display Results
     Write-Host "`n  ════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
     Write-Host "`n  HEALTH SCORE: $healthScore/100" -ForegroundColor $(
@@ -219,7 +231,7 @@ function Start-SystemHealthCheck {
     
     Write-Log "System health check completed. Score: $healthScore/100" -Level Info -Category "Health"
     
-    Read-Host "`nPress Enter to continue"
+    Wait-ForUser
 }
 
 #endregion
@@ -239,107 +251,33 @@ function Optimize-Registry {
     # Create automatic backup
     Write-Host "  Creating automatic backup..." -ForegroundColor $Script:Colors.Info
     New-AutomaticBackup | Out-Null
-    
-    $optimizations = 0
-    
-    # 1. Disable Menu Delay
-    Write-Host "  [1/8] Reducing menu show delay..." -ForegroundColor $Script:Colors.Info
-    try {
-        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0" -ErrorAction Stop
-        $optimizations++
-        Write-Host "    ✓ Menu delay reduced" -ForegroundColor $Script:Colors.Success
-    }
-    catch {
-        Write-Host "    ✗ Failed to reduce menu delay" -ForegroundColor $Script:Colors.Error
-    }
-    
-    # 2. Disable Aero Shake
-    Write-Host "  [2/8] Disabling Aero Shake..." -ForegroundColor $Script:Colors.Info
-    try {
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "DisallowShaking" -Value 1 -ErrorAction Stop
-        $optimizations++
-        Write-Host "    ✓ Aero Shake disabled" -ForegroundColor $Script:Colors.Success
-    }
-    catch {
-        Write-Host "    ✗ Failed to disable Aero Shake" -ForegroundColor $Script:Colors.Error
-    }
-    
-    # 3. Disable Snap Assist
-    Write-Host "  [3/8] Optimizing Snap Assist..." -ForegroundColor $Script:Colors.Info
-    try {
-        Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WindowArrangementActive" -Value "0" -ErrorAction Stop
-        $optimizations++
-        Write-Host "    ✓ Snap Assist optimized" -ForegroundColor $Script:Colors.Success
-    }
-    catch {
-        Write-Host "    ✗ Failed to optimize Snap Assist" -ForegroundColor $Script:Colors.Error
-    }
-    
-    # 4. Disable Taskbar Animations
-    Write-Host "  [4/8] Disabling taskbar animations..." -ForegroundColor $Script:Colors.Info
-    try {
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Value 0 -ErrorAction Stop
-        $optimizations++
-        Write-Host "    ✓ Taskbar animations disabled" -ForegroundColor $Script:Colors.Success
-    }
-    catch {
-        Write-Host "    ✗ Failed to disable taskbar animations" -ForegroundColor $Script:Colors.Error
-    }
-    
-    # 5. Optimize Icon Cache
-    Write-Host "  [5/8] Optimizing icon cache..." -ForegroundColor $Script:Colors.Info
-    try {
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Value "4096" -ErrorAction Stop
-        $optimizations++
-        Write-Host "    ✓ Icon cache optimized" -ForegroundColor $Script:Colors.Success
-    }
-    catch {
-        Write-Host "    ✗ Failed to optimize icon cache" -ForegroundColor $Script:Colors.Error
-    }
-    
-    # 6. Disable Thumbnail Cache
-    Write-Host "  [6/8] Optimizing thumbnail cache..." -ForegroundColor $Script:Colors.Info
-    try {
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "DisableThumbnailCache" -Value 0 -ErrorAction Stop
-        $optimizations++
-        Write-Host "    ✓ Thumbnail cache optimized" -ForegroundColor $Script:Colors.Success
-    }
-    catch {
-        Write-Host "    ✗ Failed to optimize thumbnail cache" -ForegroundColor $Script:Colors.Error
-    }
-    
-    # 7. Optimize Search
-    Write-Host "  [7/8] Optimizing Windows Search..." -ForegroundColor $Script:Colors.Info
-    try {
-        Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Value 0 -ErrorAction Stop
-        $optimizations++
-        Write-Host "    ✓ Search optimized" -ForegroundColor $Script:Colors.Success
-    }
-    catch {
-        Write-Host "    ✗ Failed to optimize search" -ForegroundColor $Script:Colors.Error
-    }
-    
-    # 8. Disable Cortana
-    Write-Host "  [8/8] Disabling Cortana..." -ForegroundColor $Script:Colors.Info
-    try {
-        if (-not (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search")) {
-            New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Force | Out-Null
+
+    $steps = @(
+        @{ Name = "Reducing menu show delay"; Action = { Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "MenuShowDelay" -Value "0" -ErrorAction Stop } }
+        @{ Name = "Disabling Aero Shake"; Action = { Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "DisallowShaking" -Value 1 -ErrorAction Stop } }
+        @{ Name = "Optimizing Snap Assist"; Action = { Set-ItemProperty -Path "HKCU:\Control Panel\Desktop" -Name "WindowArrangementActive" -Value "0" -ErrorAction Stop } }
+        @{ Name = "Disabling taskbar animations"; Action = { Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "TaskbarAnimations" -Value 0 -ErrorAction Stop } }
+        @{ Name = "Optimizing icon cache"; Action = { Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" -Name "Max Cached Icons" -Value "4096" -ErrorAction Stop } }
+        @{ Name = "Optimizing thumbnail cache"; Action = { Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "DisableThumbnailCache" -Value 0 -ErrorAction Stop } }
+        @{ Name = "Optimizing Windows Search"; Action = { Set-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search" -Name "BingSearchEnabled" -Value 0 -ErrorAction Stop } }
+        @{
+            Name   = "Disabling Cortana"
+            Action = {
+                if (-not (Test-Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search")) {
+                    New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Force | Out-Null
+                }
+                Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Value 0 -ErrorAction Stop
+            }
         }
-        Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search" -Name "AllowCortana" -Value 0 -ErrorAction Stop
-        $optimizations++
-        Write-Host "    ✓ Cortana disabled" -ForegroundColor $Script:Colors.Success
-    }
-    catch {
-        Write-Host "    ✗ Failed to disable Cortana" -ForegroundColor $Script:Colors.Error
-    }
-    
+    )
+
+    $result = Invoke-TweakSequence -Title "Registry Optimizer" -Steps $steps -Category "Registry"
+
     Write-Host "`n  ✓ Registry optimization complete!" -ForegroundColor $Script:Colors.Success
-    Write-Host "  Applied $optimizations/8 optimizations" -ForegroundColor $Script:Colors.Highlight
+    Write-Host "  Applied $($result.Succeeded)/$($result.Total) optimizations" -ForegroundColor $Script:Colors.Highlight
     Write-Host "`n  ⚠ Restart required for changes to take effect" -ForegroundColor $Script:Colors.Warning
-    
-    Write-Log "Registry optimization completed. Applied $optimizations/8 tweaks." -Level Success -Category "Registry"
-    
-    Read-Host "`nPress Enter to continue"
+
+    Wait-ForUser
 }
 
 #endregion
@@ -367,42 +305,29 @@ function Optimize-ServicesIntelligent {
         @{Name = "XboxNetApiSvc"; DisplayName = "Xbox Live Networking Service" }
     )
     
-    $optimized = 0
-    $skipped = 0
-    
-    foreach ($svc in $servicesToDisable) {
-        $service = Get-Service -Name $svc.Name -ErrorAction SilentlyContinue
-        
-        if ($service) {
-            Write-Host "  Processing: $($svc.DisplayName)..." -ForegroundColor $Script:Colors.Info
-            
-            try {
-                # Backup current state
+    $steps = $servicesToDisable | ForEach-Object {
+        $svc = $_
+        @{
+            Name      = "Disabling: $($svc.DisplayName)"
+            Condition = { (Get-Service -Name $svc.Name -ErrorAction SilentlyContinue) -ne $null }.GetNewClosure()
+            Action    = {
+                $service = Get-Service -Name $svc.Name -ErrorAction SilentlyContinue
                 Backup-ServiceState -ServiceName $svc.Name
-                
-                # Stop and disable service
                 if ($service.Status -eq 'Running') {
                     Stop-Service -Name $svc.Name -Force -ErrorAction Stop
                 }
                 Set-Service -Name $svc.Name -StartupType Disabled -ErrorAction Stop
-                
-                Write-Host "    ✓ Disabled: $($svc.DisplayName)" -ForegroundColor $Script:Colors.Success
-                $optimized++
-            }
-            catch {
-                Write-Host "    ⚠ Skipped: $($svc.DisplayName)" -ForegroundColor $Script:Colors.Warning
-                $skipped++
-            }
+            }.GetNewClosure()
         }
     }
-    
+
+    $result = Invoke-TweakSequence -Title "Intelligent Service Optimizer" -Steps $steps -Category "Services"
+
     Write-Host "`n  ✓ Service optimization complete!" -ForegroundColor $Script:Colors.Success
-    Write-Host "  Optimized: $optimized services" -ForegroundColor $Script:Colors.Highlight
-    Write-Host "  Skipped: $skipped services" -ForegroundColor DarkGray
-    
-    Write-Log "Intelligent service optimization completed. Optimized: $optimized, Skipped: $skipped" -Level Success -Category "Services"
-    
-    Read-Host "`nPress Enter to continue"
+    Write-Host "  Optimized: $($result.Succeeded) services" -ForegroundColor $Script:Colors.Highlight
+    Write-Host "  Not present on this system: $($result.Skipped) services" -ForegroundColor DarkGray
+
+    Wait-ForUser
 }
 
 #endregion
@@ -428,9 +353,14 @@ function Set-WindowsUpdates {
         '1' {
             Write-Host "`n  Pausing updates for 7 days..." -ForegroundColor $Script:Colors.Info
             try {
-                $pauseUntil = (Get-Date).AddDays(7).ToString("yyyy-MM-ddTHH:mm:ssZ")
+                $resumeDate = (Get-Date).AddDays(7)
+                $pauseUntil = $resumeDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Name "PauseUpdatesExpiryTime" -Value $pauseUntil -ErrorAction Stop
-                Write-Host "  ✓ Updates paused until $(Get-Date).AddDays(7).ToString('yyyy-MM-dd')" -ForegroundColor $Script:Colors.Success
+                # Bug fix: the original code wrote `$(Get-Date).AddDays(7).ToString(...)`
+                # inside the string — only $(Get-Date) was evaluated as a subexpression,
+                # so ".AddDays(7).ToString('yyyy-MM-dd')" printed as LITERAL text after
+                # the timestamp instead of computing the actual resume date.
+                Write-Host "  ✓ Updates paused until $($resumeDate.ToString('yyyy-MM-dd'))" -ForegroundColor $Script:Colors.Success
             }
             catch {
                 Write-Host "  ✗ Failed to pause updates" -ForegroundColor $Script:Colors.Error
@@ -439,9 +369,10 @@ function Set-WindowsUpdates {
         '2' {
             Write-Host "`n  Pausing updates for 30 days..." -ForegroundColor $Script:Colors.Info
             try {
-                $pauseUntil = (Get-Date).AddDays(30).ToString("yyyy-MM-ddTHH:mm:ssZ")
+                $resumeDate = (Get-Date).AddDays(30)
+                $pauseUntil = $resumeDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Name "PauseUpdatesExpiryTime" -Value $pauseUntil -ErrorAction Stop
-                Write-Host "  ✓ Updates paused until $(Get-Date).AddDays(30).ToString('yyyy-MM-dd')" -ForegroundColor $Script:Colors.Success
+                Write-Host "  ✓ Updates paused until $($resumeDate.ToString('yyyy-MM-dd'))" -ForegroundColor $Script:Colors.Success
             }
             catch {
                 Write-Host "  ✗ Failed to pause updates" -ForegroundColor $Script:Colors.Error
@@ -487,14 +418,16 @@ function Set-WindowsUpdates {
                 Write-Host "  ✗ Failed to enable updates" -ForegroundColor $Script:Colors.Error
             }
         }
+        '0' { }
+        default {
+            Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+        }
     }
-    
+
     if ($choice -ne '0') {
-        Read-Host "`nPress Enter to continue"
+        Wait-ForUser
     }
 }
 
 #endregion
 
-# Export all functions
-Export-ModuleMember -Function *

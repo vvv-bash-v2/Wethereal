@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-3.5.0-blue)
+![Version](https://img.shields.io/badge/version-4.0.0-blue)
 ![PowerShell](https://img.shields.io/badge/PowerShell-5.1%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
@@ -44,7 +44,8 @@
 - ✅ **Zero Warnings**: Follows all PowerShell best practices
 - ✅ **Advanced Monitoring**: Real-time performance dashboard and diagnostics
 - ✅ **Safe & Reversible**: Automatic backups and restore functionality
-- ✅ **GPU Intelligent**: Auto-detects NVIDIA, AMD, and Intel GPUs
+- ✅ **Hardware Adaptive**: Auto-detects your CPU (Intel/AMD) and every installed GPU (NVIDIA/AMD/Intel, including hybrid laptops) and tailors optimizations accordingly
+- ✅ **Live Progress**: Every optimization step shows a real-time progress bar so you always know what's happening
 - ✅ **User Friendly**: Beautiful UI with automated profiles
 
 ---

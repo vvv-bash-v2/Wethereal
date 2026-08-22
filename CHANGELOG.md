@@ -5,6 +5,66 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-08-22 - ADAPTIVE HARDWARE EDITION: AMD Support & Live Progress
+
+### 🎉 New Features
+
+- **🧠 Automatic hardware platform detection** (`Modules-HardwareDetection.ps1`, new module)
+  - Detects CPU vendor (Intel / AMD) via `Win32_Processor`, including Intel hybrid
+    P-core/E-core CPUs
+  - Detects **every** installed GPU, not just the first — correctly represents
+    hybrid laptops (e.g. Intel iGPU + AMD/NVIDIA dGPU)
+  - Startup banner and system-info bar now show the detected platform (e.g.
+    "AMD CPU / hybrid GPU setup (AMD + NVIDIA)")
+  - Every optimization category adapts automatically: no more manual vendor
+    selection required
+- **🔴 Full AMD CPU (Ryzen) optimization pass** (`Optimize-AMDCPU`) — power plan
+  selection, core-parking/CCX scheduling, AMD Ryzen power scheme detection,
+  performance boost policy
+- **🔵 Full Intel CPU optimization pass** (`Optimize-IntelCPU`) — Speed Shift
+  (HWP), P-core scheduling bias on hybrid CPUs, performance boost policy
+- **🔴 Expanded AMD Radeon GPU optimizations** (`Optimize-AMD`) — now on par with
+  the NVIDIA/Intel GPU passes: telemetry, ReLive, Radeon Anti-Lag, overlay
+  control
+- **📊 Live progress bars on every optimization step** — a shared
+  `Invoke-TweakSequence` engine now drives every tweak function with a native
+  `Write-Progress` bar plus a per-step checklist, so the user always sees
+  exactly what is being applied, in real time
+- **↩️ Working Undo/Restore/Export** — these were previously stub menu items
+  ("coming in next update"); Undo now actually reverts the last change,
+  Restore actually replays a backup file's registry/service entries, and
+  Export actually writes a JSON snapshot
+
+### 🐛 Bug Fixes
+
+- Removed `Export-ModuleMember -Function *` from all six dot-sourced modules —
+  it threw a non-terminating error on every launch because these files are
+  loaded with `. $moduleFile`, not `Import-Module`
+- Fixed `Invoke-OptimizationProfile` calling non-existent functions
+  (`Clean-TemporaryFiles`, `Configure-WindowsFeaturesPrivacy`,
+  `Configure-CameraMicrophonePrivacy`, `Configure-NetworkPrivacy`) that would
+  abort the Work/Privacy profiles partway through
+  (correct names: `Clear-TemporaryFiles`, `Set-WindowsFeaturesPrivacy`, etc.)
+  - Profiles also now apply silently instead of prompting for confirmation and
+    a keypress after every single sub-tweak
+- Fixed `Test-NetworkSpeed`'s DNS check always reporting "Failed" — the result
+  variable was set inside a `Measure-Command` scriptblock, which runs in its
+  own child scope
+  - Fixed the Windows Update "pause" messages in `Set-WindowsUpdates`
+  printing literal text like `.AddDays(7).ToString('yyyy-MM-dd')` instead of
+  the actual resume date (broken string-interpolation subexpression)
+- Fixed `Get-WmiObject` (deprecated, unavailable on PowerShell 7+) in
+  `Optimize-NetworkAdapter`; replaced with `Get-CimInstance`/`Set-CimInstance`
+- Tightened the bloatware-detection pattern list — it previously matched bare
+  words like `Netflix`, `Facebook`, `Farm`, `Candy`, `Bubble` against every
+  installed app name, risking removal of apps the user actually wanted to
+  keep; patterns are now scoped to real package identifiers
+- Fixed a backup/restore correctness bug where re-touching the same registry
+  value or service twice in one session overwrote the backed-up "original"
+  value with an already-modified one, making restore a no-op
+- Removed dead-end duplicate menu entries (`Show-ProfilesMenu` stub in the
+  Tools menu now correctly opens the real profile picker)
+
 ## [3.5.0] - 2025-12-18 - PROFESSIONAL EDITION: Ultimate Diagnostic Tools
 
 ### 🎉 New Professional Features

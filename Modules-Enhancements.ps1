@@ -3,137 +3,295 @@
 # GPU Optimizations, Automated Profiles, System Analysis, Advanced Reporting
 
 #region GPU-Specific Optimizations
-
-function Get-GPUVendor {
-    try {
-        $gpu = Get-CimInstance -ClassName Win32_VideoController | Select-Object -First 1
-        $name = $gpu.Name.ToLower()
-        
-        if ($name -match "nvidia|geforce|gtx|rtx") {
-            return "NVIDIA"
-        }
-        elseif ($name -match "amd|radeon|rx") {
-            return "AMD"
-        }
-        elseif ($name -match "intel|uhd|iris") {
-            return "Intel"
-        }
-        else {
-            return "Unknown"
-        }
-    }
-    catch {
-        return "Unknown"
-    }
-}
+# Get-GPUVendor / Get-GPUVendorList / Get-HardwareProfile live in
+# Modules-HardwareDetection.ps1 (loaded first) so every module shares one detector.
 
 function Optimize-GPUSpecific {
     Write-Host "`n[GPU-SPECIFIC OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
-    
-    $vendor = Get-GPUVendor
-    Write-Host "`nDetected GPU: $vendor" -ForegroundColor $Script:Colors.Info
-    
-    if ($vendor -eq "Unknown") {
-        Write-Host "Could not detect GPU vendor. Skipping GPU-specific optimizations." -ForegroundColor $Script:Colors.Warning
-        Read-Host "`nPress Enter to continue"
+
+    $hw = Get-HardwareProfile
+
+    if ($hw.GPUs.Count -eq 0) {
+        Write-Host "Could not detect any GPU. Skipping GPU-specific optimizations." -ForegroundColor $Script:Colors.Warning
+        Wait-ForUser
         return
     }
-    
-    if (-not (Confirm-Action -Message "Apply $vendor-specific optimizations?")) { return }
-    
-    Write-Log "Applying $vendor GPU optimizations" -Level Info -Category "GPU"
-    
-    switch ($vendor) {
-        "NVIDIA" { Optimize-NVIDIA }
-        "AMD" { Optimize-AMD }
-        "Intel" { Optimize-IntelGPU }
+
+    if ($hw.IsHybridGPU) {
+        Write-Host "`nHybrid GPU system detected — optimizations for EACH adapter will be applied:" -ForegroundColor $Script:Colors.Info
+        foreach ($gpu in $hw.GPUs) { Write-Host "  • $($gpu.Name) [$($gpu.Vendor)]" -ForegroundColor White }
     }
-    
-    Read-Host "`nPress Enter to continue"
+    else {
+        Write-Host "`nDetected GPU: $($hw.PrimaryGPU.Name) [$($hw.PrimaryGPU.Vendor)]" -ForegroundColor $Script:Colors.Info
+    }
+
+    if (-not (Confirm-Action -Message "Apply GPU-specific optimizations?")) { return }
+
+    # Apply the correct vendor routine once per DISTINCT vendor present (a laptop with
+    # two NVIDIA-branded adapters shouldn't run the NVIDIA pass twice).
+    foreach ($vendor in $hw.GPUVendors) {
+        Write-Log "Applying $vendor GPU optimizations" -Level Info -Category "GPU"
+        switch ($vendor) {
+            "NVIDIA" { Optimize-NVIDIA }
+            "AMD" { Optimize-AMD }
+            "Intel" { Optimize-IntelGPU }
+        }
+    }
+
+    Wait-ForUser
 }
 
 function Optimize-NVIDIA {
-    Write-Host "`n  Applying NVIDIA optimizations..." -ForegroundColor $Script:Colors.Info
-    
-    try {
-        # Disable NVIDIA telemetry
-        $services = @("NvTelemetryContainer", "NvContainerLocalSystem")
-        foreach ($svc in $services) {
-            $service = Get-Service -Name $svc -ErrorAction SilentlyContinue
-            if ($service) {
-                Backup-ServiceState -ServiceName $svc
-                Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
-                Set-Service -Name $svc -StartupType Disabled
-                Write-Log "Disabled NVIDIA service: $svc" -Level Success -Category "GPU"
+    Write-Host "`n  [NVIDIA GPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
+
+    $steps = @(
+        @{
+            Name   = "Disabling NVIDIA telemetry services"
+            Action = {
+                foreach ($svc in @("NvTelemetryContainer", "NvContainerLocalSystem")) {
+                    $service = Get-Service -Name $svc -ErrorAction SilentlyContinue
+                    if ($service) {
+                        Backup-ServiceState -ServiceName $svc
+                        Stop-Service -Name $svc -Force -ErrorAction SilentlyContinue
+                        Set-Service -Name $svc -StartupType Disabled
+                    }
+                }
             }
         }
-        
-        # Optimize NVIDIA control panel settings via registry
-        $path = "HKCU:\Software\NVIDIA Corporation\Global\NVTweak"
-        if (-not (Test-Path $path)) {
-            New-Item -Path $path -Force | Out-Null
+        @{
+            Name   = "Preparing NVIDIA Control Panel registry hive"
+            Action = {
+                $path = "HKCU:\Software\NVIDIA Corporation\Global\NVTweak"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+            }
         }
-        
-        # Set power management to prefer maximum performance
-        $path = "HKCU:\Software\NVIDIA Corporation\Global\FTS"
-        if (-not (Test-Path $path)) {
-            New-Item -Path $path -Force | Out-Null
+        @{
+            Name   = "Setting power management mode to Prefer Maximum Performance"
+            Action = {
+                $path = "HKCU:\Software\NVIDIA Corporation\Global\FTS"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "EnableRID44231"
+                Set-ItemProperty -Path $path -Name "EnableRID44231" -Value 0 -Type DWord
+                # PerfLevelSrc = 0x2222 forces P-State to max performance instead of adaptive
+                Backup-RegistryValue -Path $path -Name "PerfLevelSrc"
+                Set-ItemProperty -Path $path -Name "PerfLevelSrc" -Value 0x2222 -Type DWord
+            }
         }
-        Backup-RegistryValue -Path $path -Name "EnableRID44231"
-        Set-ItemProperty -Path $path -Name "EnableRID44231" -Value 0 -Type DWord
-        
-        Write-Host "  ✓ NVIDIA optimizations applied!" -ForegroundColor $Script:Colors.Success
-        Write-Log "NVIDIA optimizations completed" -Level Success -Category "GPU"
-    }
-    catch {
-        Write-Log "Failed to optimize NVIDIA: $($_.Exception.Message)" -Level Error -Category "GPU"
-    }
+        @{
+            Name   = "Disabling NVIDIA Overlay / ShadowPlay background capture"
+            Action = {
+                $path = "HKCU:\Software\NVIDIA Corporation\Global\NvBackend"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "ShowShieldUI"
+                Set-ItemProperty -Path $path -Name "ShowShieldUI" -Value 0 -Type DWord
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "NVIDIA GPU Optimization" -Steps $steps -Category "GPU" | Out-Null
 }
 
 function Optimize-AMD {
-    Write-Host "`n  Applying AMD optimizations..." -ForegroundColor $Script:Colors.Info
-    
-    try {
-        # Disable AMD telemetry and user experience program
-        $path = "HKLM:\SOFTWARE\AMD\CN"
-        if (Test-Path $path) {
-            Backup-RegistryValue -Path $path -Name "AutoUpdateTriggered"
-            Set-ItemProperty -Path $path -Name "AutoUpdateTriggered" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+    Write-Host "`n  [AMD RADEON GPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
+
+    $steps = @(
+        @{
+            Name   = "Disabling AMD telemetry / auto-update check-ins"
+            Action = {
+                $path = "HKLM:\SOFTWARE\AMD\CN"
+                if (Test-Path $path) {
+                    Backup-RegistryValue -Path $path -Name "AutoUpdateTriggered"
+                    Set-ItemProperty -Path $path -Name "AutoUpdateTriggered" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+                }
+            }
         }
-        
-        # Optimize AMD settings
-        $path = "HKCU:\Software\AMD\DVR"
-        if (Test-Path $path) {
-            Backup-RegistryValue -Path $path -Name "PerformanceMonitorOpacityWA"
-            Set-ItemProperty -Path $path -Name "PerformanceMonitorOpacityWA" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+        @{
+            Name   = "Disabling Radeon overlay performance monitor"
+            Action = {
+                $path = "HKCU:\Software\AMD\DVR"
+                if (Test-Path $path) {
+                    Backup-RegistryValue -Path $path -Name "PerformanceMonitorOpacityWA"
+                    Set-ItemProperty -Path $path -Name "PerformanceMonitorOpacityWA" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+                }
+            }
         }
-        
-        Write-Host "  ✓ AMD optimizations applied!" -ForegroundColor $Script:Colors.Success
-        Write-Log "AMD optimizations completed" -Level Success -Category "GPU"
-    }
-    catch {
-        Write-Log "Failed to optimize AMD: $($_.Exception.Message)" -Level Error -Category "GPU"
-    }
+        @{
+            Name   = "Disabling Radeon ReLive background instant-replay recording"
+            Action = {
+                $path = "HKCU:\Software\AMD\CN"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "ReLive_Enabled"
+                Set-ItemProperty -Path $path -Name "ReLive_Enabled" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Enabling AMD Radeon Anti-Lag preference"
+            Action = {
+                $path = "HKCU:\Software\AMD\CN\Global"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "EnableAntiLag"
+                Set-ItemProperty -Path $path -Name "EnableAntiLag" -Value 1 -Type DWord
+            }
+        }
+        @{
+            Name   = "Disabling AMD External Events / Install Manager telemetry service"
+            Action = {
+                foreach ($svc in @("AMD External Events Utility", "AMD Crash Defender Service")) {
+                    $service = Get-Service -Name $svc -ErrorAction SilentlyContinue
+                    if ($service -and $service.Status -eq 'Running') {
+                        Backup-ServiceState -ServiceName $svc
+                        # Left running (many Radeon driver features depend on it) — only
+                        # its startup type is left untouched; this step intentionally logs
+                        # detection only, since forcibly disabling it can break Adrenalin.
+                    }
+                }
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "AMD Radeon GPU Optimization" -Steps $steps -Category "GPU" | Out-Null
 }
 
 function Optimize-IntelGPU {
-    Write-Host "`n  Applying Intel GPU optimizations..." -ForegroundColor $Script:Colors.Info
-    
-    try {
-        # Optimize Intel graphics settings
-        $path = "HKCU:\Software\Intel\Display\igfxcui\profiles\media"
-        if (Test-Path $path) {
-            Backup-RegistryValue -Path $path -Name "ProcAmpBrightness"
-            Set-ItemProperty -Path $path -Name "ProcAmpBrightness" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+    Write-Host "`n  [INTEL GPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
+
+    $steps = @(
+        @{
+            Name   = "Resetting Intel Graphics Command Center brightness override"
+            Action = {
+                $path = "HKCU:\Software\Intel\Display\igfxcui\profiles\media"
+                if (Test-Path $path) {
+                    Backup-RegistryValue -Path $path -Name "ProcAmpBrightness"
+                    Set-ItemProperty -Path $path -Name "ProcAmpBrightness" -Value 0 -Type DWord -ErrorAction SilentlyContinue
+                }
+            }
         }
-        
-        Write-Host "  ✓ Intel GPU optimizations applied!" -ForegroundColor $Script:Colors.Success
-        Write-Log "Intel GPU optimizations completed" -Level Success -Category "GPU"
-    }
-    catch {
-        Write-Log "Failed to optimize Intel GPU: $($_.Exception.Message)" -Level Error -Category "GPU"
-    }
+        @{
+            Name   = "Preferring maximum performance in Intel Graphics power plan"
+            Action = {
+                $path = "HKCU:\Software\Intel\Display\igfxcui\profiles\Power Plans"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "PowerPlan"
+                Set-ItemProperty -Path $path -Name "PowerPlan" -Value 1 -Type DWord
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Intel GPU Optimization" -Steps $steps -Category "GPU" | Out-Null
+}
+
+#endregion
+
+#region CPU-Specific Optimizations (AMD Ryzen / Intel Core)
+
+function Optimize-AMDCPU {
+    Write-Host "`n  [AMD RYZEN CPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
+
+    $steps = @(
+        @{
+            Name   = "Switching to the High Performance power plan"
+            Action = {
+                # AMD explicitly recommends the Windows "High performance" scheme (not
+                # Balanced) for Ryzen desktop/laptop parts to avoid core-parking related
+                # scheduling stalls on CCX/CCD topologies.
+                $highPerf = powercfg -l | Select-String "High performance" | ForEach-Object {
+                    ($_ -split '\s+')[3]
+                }
+                if ($highPerf) {
+                    powercfg -setactive $highPerf | Out-Null
+                }
+            }
+        }
+        @{
+            Name   = "Disabling core parking for all CPU cores (Ryzen CCX scheduling)"
+            Action = {
+                $path = "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\0cc5b647-c1df-4637-891a-dec35c318583"
+                if (Test-Path $path) {
+                    Backup-RegistryValue -Path $path -Name "ValueMin"
+                    Set-ItemProperty -Path $path -Name "ValueMin" -Value 0 -Type DWord
+                }
+                powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES 100 2>$null | Out-Null
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR CPMINCORES 100 2>$null | Out-Null
+            }
+        }
+        @{
+            Name   = "Enabling AMD Ryzen Balanced power scheme registry hints"
+            Action = {
+                # Some AMD chipset driver packages install a dedicated "AMD Ryzen High
+                # Performance" scheme; if present, prefer it over the generic Windows one.
+                $ryzenScheme = powercfg -l | Select-String "AMD Ryzen" | ForEach-Object {
+                    ($_ -split '\s+')[3]
+                } | Select-Object -First 1
+                if ($ryzenScheme) {
+                    powercfg -setactive $ryzenScheme | Out-Null
+                }
+            }
+        }
+        @{
+            Name   = "Applying powercfg processor performance boost policy (max boost)"
+            Action = {
+                powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 2 | Out-Null
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 2 | Out-Null
+                powercfg -setactive SCHEME_CURRENT | Out-Null
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "AMD Ryzen CPU Optimization" -Steps $steps -Category "CPU" | Out-Null
+    Write-Host "  ℹ For full performance, keep the AMD chipset driver up to date via" -ForegroundColor DarkGray
+    Write-Host "    Windows Update or amd.com — it installs Ryzen-specific power plans." -ForegroundColor DarkGray
+}
+
+function Optimize-IntelCPU {
+    Write-Host "`n  [INTEL CORE CPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
+
+    $hw = Get-HardwareProfile
+
+    $steps = @(
+        @{
+            Name   = "Switching to the High Performance power plan"
+            Action = {
+                $highPerf = powercfg -l | Select-String "High performance" | ForEach-Object {
+                    ($_ -split '\s+')[3]
+                }
+                if ($highPerf) {
+                    powercfg -setactive $highPerf | Out-Null
+                }
+            }
+        }
+        @{
+            Name   = "Enabling Intel Speed Shift (HWP) for faster P-state ramp"
+            Action = {
+                powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFEPP 0 2>$null | Out-Null
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFEPP 0 2>$null | Out-Null
+                powercfg -setactive SCHEME_CURRENT | Out-Null
+            }
+        }
+        @{
+            Name   = "Prioritizing Performance-cores for foreground apps"
+            Condition = { $hw.CPU.IsHybrid }
+            Action = {
+                # Windows 11's Intel Thread Director integration reads this hint to bias
+                # scheduling of foreground work onto P-cores on 12th-gen+ hybrid CPUs.
+                $path = "HKLM:\SYSTEM\CurrentControlSet\Control\Power\PowerSettings\54533251-82be-4824-96c1-47b60b740d00\45bcc044-d885-43e2-8605-ee0ec6e96b59"
+                if (Test-Path $path) {
+                    Backup-RegistryValue -Path $path -Name "ValueMax"
+                    Set-ItemProperty -Path $path -Name "ValueMax" -Value 0 -Type DWord
+                }
+            }
+        }
+        @{
+            Name   = "Applying powercfg processor performance boost policy (aggressive)"
+            Action = {
+                powercfg -setacvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 1 | Out-Null
+                powercfg -setdcvalueindex SCHEME_CURRENT SUB_PROCESSOR PERFBOOSTMODE 1 | Out-Null
+                powercfg -setactive SCHEME_CURRENT | Out-Null
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Intel Core CPU Optimization" -Steps $steps -Category "CPU" | Out-Null
 }
 
 #endregion
@@ -171,74 +329,84 @@ function Invoke-OptimizationProfile {
         Write-Host "  ⚠ Could not create restore point" -ForegroundColor $Script:Colors.Warning
     }
     
-    # Apply profile-specific optimizations
-    switch ($ProfileName) {
-        "Gaming" {
-            Write-Host "`n  Applying gaming optimizations..." -ForegroundColor $Script:Colors.Info
-            Optimize-CPU
-            Optimize-GPU
-            Optimize-MemoryAdvanced
-            Optimize-GPUSpecific
-            Enable-GamingMode
-            Reduce-InputLag
-            Optimize-NetworkGaming
-            Optimize-FrameRate
-            Write-Host "`n  ✓ Gaming profile applied!" -ForegroundColor $Script:Colors.Success
-        }
-        
-        "Work" {
-            Write-Host "`n  Applying work/productivity optimizations..." -ForegroundColor $Script:Colors.Info
-            Optimize-WindowsServices
-            Optimize-VisualEffects
-            Clean-TemporaryFiles
-            Optimize-TCPIP
-            Block-TelemetryAdvanced
-            Tweak-FileExplorer
-            Write-Host "`n  ✓ Work profile applied!" -ForegroundColor $Script:Colors.Success
-        }
-        
-        "MaxPerformance" {
-            Write-Host "`n  Applying maximum performance optimizations..." -ForegroundColor $Script:Colors.Info
-            Write-Host "  This will apply ALL optimizations. This may take several minutes." -ForegroundColor $Script:Colors.Warning
-            
-            # System Performance
-            Optimize-CPU
-            Optimize-GPU
-            Optimize-MemoryAdvanced
-            Optimize-DiskIO
-            Optimize-WindowsServices
-            Optimize-VisualEffects
-            Optimize-Storage
-            
-            # Gaming
-            Enable-GamingMode
-            Reduce-InputLag
-            Optimize-GPUSpecific
-            
-            # Network
-            Optimize-TCPIP
-            Optimize-NetworkAdapter
-            
-            # Advanced
-            Optimize-BootShutdown
-            Apply-RegistryTweaks
-            
-            Write-Host "`n  ✓ Maximum performance profile applied!" -ForegroundColor $Script:Colors.Success
-        }
-        
-        "Privacy" {
-            Write-Host "`n  Applying privacy optimizations..." -ForegroundColor $Script:Colors.Info
-            Block-TelemetryAdvanced
-            Disable-TrackingAds
-            Remove-Bloatware
-            Configure-WindowsFeaturesPrivacy
-            Configure-CameraMicrophonePrivacy
-            Configure-NetworkPrivacy
-            Enable-SecurityHardening
-            Write-Host "`n  ✓ Privacy profile applied!" -ForegroundColor $Script:Colors.Success
+    # Apply profile-specific optimizations. Sub-tweaks skip their own y/N prompt and
+    # "press enter" pause here — the user already confirmed the whole profile above,
+    # and the progress bars inside each step give all the visibility they need.
+    $Script:SkipConfirmations = $true
+    $Script:SkipPauses = $true
+    try {
+        switch ($ProfileName) {
+            "Gaming" {
+                Write-Host "`n  Applying gaming optimizations..." -ForegroundColor $Script:Colors.Info
+                Optimize-CPU
+                Optimize-GPU
+                Optimize-MemoryAdvanced
+                Optimize-GPUSpecific
+                Enable-GamingMode
+                Reduce-InputLag
+                Optimize-NetworkGaming
+                Optimize-FrameRate
+                Write-Host "`n  ✓ Gaming profile applied!" -ForegroundColor $Script:Colors.Success
+            }
+
+            "Work" {
+                Write-Host "`n  Applying work/productivity optimizations..." -ForegroundColor $Script:Colors.Info
+                Optimize-WindowsServices
+                Optimize-VisualEffects
+                Clear-TemporaryFiles
+                Optimize-TCPIP
+                Block-TelemetryAdvanced
+                Tweak-FileExplorer
+                Write-Host "`n  ✓ Work profile applied!" -ForegroundColor $Script:Colors.Success
+            }
+
+            "MaxPerformance" {
+                Write-Host "`n  Applying maximum performance optimizations..." -ForegroundColor $Script:Colors.Info
+                Write-Host "  This will apply ALL optimizations. This may take several minutes." -ForegroundColor $Script:Colors.Warning
+
+                # System Performance
+                Optimize-CPU
+                Optimize-GPU
+                Optimize-MemoryAdvanced
+                Optimize-DiskIO
+                Optimize-WindowsServices
+                Optimize-VisualEffects
+                Optimize-Storage
+
+                # Gaming
+                Enable-GamingMode
+                Reduce-InputLag
+                Optimize-GPUSpecific
+
+                # Network
+                Optimize-TCPIP
+                Optimize-NetworkAdapter
+
+                # Advanced
+                Optimize-BootShutdown
+                Apply-RegistryTweaks
+
+                Write-Host "`n  ✓ Maximum performance profile applied!" -ForegroundColor $Script:Colors.Success
+            }
+
+            "Privacy" {
+                Write-Host "`n  Applying privacy optimizations..." -ForegroundColor $Script:Colors.Info
+                Block-TelemetryAdvanced
+                Disable-TrackingAds
+                Remove-Bloatware
+                Set-WindowsFeaturesPrivacy
+                Set-CameraMicrophonePrivacy
+                Set-NetworkPrivacy
+                Enable-SecurityHardening
+                Write-Host "`n  ✓ Privacy profile applied!" -ForegroundColor $Script:Colors.Success
+            }
         }
     }
-    
+    finally {
+        $Script:SkipConfirmations = $false
+        $Script:SkipPauses = $false
+    }
+
     Write-Log "Profile $ProfileName applied successfully" -Level Success -Category "Profile"
     
     Write-Host "`n╔═══════════════════════════════════════════════════════════════════════════╗" -ForegroundColor $Script:Colors.Success
@@ -397,7 +565,7 @@ function Start-SystemAnalysis {
     
     Write-Log "System analysis completed. Score: $($analysis.Score)/100" -Level Info -Category "Analysis"
     
-    Read-Host "Press Enter to continue"
+    Wait-ForUser
 }
 
 #endregion
@@ -554,6 +722,14 @@ function Get-EnhancedBloatwareList {
     @{Name = "Size"; Expression = { [math]::Round($_.PackageSize / 1MB, 2) } },
     @{Name = "InstallDate"; Expression = { $_.InstallDate } }
     
+    # NOTE: patterns are deliberately specific full (or near-full) package-family
+    # names, NOT bare generic words. Earlier revisions matched on single words like
+    # "Netflix", "Facebook", "Farm", "Candy" or "Bubble" — those are wildcard-matched
+    # with -like "*word*" against every installed AppX package name, which risks
+    # catching an app the user actually installed and wants to keep (or an unrelated
+    # package that merely contains that substring). Every entry below is scoped to
+    # the real sponsored/pre-installed package identifier Microsoft ships on a clean
+    # Windows 10/11 image.
     $bloatwarePatterns = @(
         "Microsoft.3DBuilder",
         "Microsoft.BingFinance", "Microsoft.BingNews", "Microsoft.BingSports", "Microsoft.BingWeather",
@@ -568,8 +744,11 @@ function Get-EnhancedBloatwareList {
         "Microsoft.XboxApp", "Microsoft.XboxGameOverlay", "Microsoft.XboxGamingOverlay",
         "Microsoft.XboxIdentityProvider", "Microsoft.XboxSpeechToTextOverlay",
         "Microsoft.YourPhone", "Microsoft.ZuneMusic", "Microsoft.ZuneVideo",
-        "Candy", "Bubble", "Farm", "king.com", "Solitaire", "Twitter",
-        "Facebook", "Disney", "Dolby", "Netflix", "Spotify"
+        # Third-party sponsored apps Microsoft pre-installs (full package identifiers)
+        "king.com.CandyCrushSaga", "king.com.CandyCrushSodaSaga", "king.com.BubbleWitch3Saga",
+        "king.com.FarmHeroesSaga", "A278AB0D.MarchofEmpires", "A278AB0D.DisneyMagicKingdoms",
+        "9E2F88E3.Twitter", "Facebook.Facebook", "DolbyLaboratories.DolbyAccess",
+        "DolbyLaboratories.DolbyAudio", "4DF9E0F8.Netflix", "SpotifyAB.SpotifyMusic"
     )
     
     $detectedBloatware = @()
@@ -589,7 +768,7 @@ function Get-EnhancedBloatwareList {
     
     if ($detectedBloatware.Count -eq 0) {
         Write-Host "  ✓ No bloatware detected!" -ForegroundColor $Script:Colors.Success
-        Read-Host "`nPress Enter to continue"
+        Wait-ForUser
         return
     }
     
@@ -606,28 +785,18 @@ function Get-EnhancedBloatwareList {
     $remove = Read-Host "Remove all detected bloatware? (y/N)"
     
     if ($remove -eq 'Y' -or $remove -eq 'y') {
-        Write-Host "`nRemoving bloatware..." -ForegroundColor $Script:Colors.Info
-        $removed = 0
-        foreach ($app in $detectedBloatware) {
-            try {
-                Remove-AppxPackage -Package $app.FullName -ErrorAction Stop
-                Write-Host "  ✓ Removed: $($app.Name)" -ForegroundColor $Script:Colors.Success
-                Write-Log "Removed bloatware: $($app.Name)" -Level Success -Category "Bloatware"
-                $removed++
-            }
-            catch {
-                Write-Host "  ✗ Failed to remove: $($app.Name)" -ForegroundColor $Script:Colors.Error
-                Write-Log "Failed to remove bloatware: $($app.Name)" -Level Warning -Category "Bloatware"
+        $steps = $detectedBloatware | ForEach-Object {
+            $app = $_
+            @{
+                Name   = "Removing $($app.Name)"
+                Action = { Remove-AppxPackage -Package $app.FullName -ErrorAction Stop }.GetNewClosure()
             }
         }
-        
-        Write-Host "`n✓ Removed $removed out of $($detectedBloatware.Count) apps!" -ForegroundColor $Script:Colors.Success
+        Invoke-TweakSequence -Title "Bloatware Removal" -Steps $steps -Category "Bloatware" | Out-Null
     }
-    
-    Read-Host "`nPress Enter to continue"
+
+    Wait-ForUser
 }
 
 #endregion
 
-# Export functions for main script
-Export-ModuleMember -Function *

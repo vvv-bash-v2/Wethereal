@@ -54,7 +54,7 @@ function Show-PerformanceDashboard {
         Write-Host "`n  Monitoring stopped." -ForegroundColor $Script:Colors.Warning
     }
     
-    Read-Host "`nPress Enter to continue"
+    Wait-ForUser
 }
 
 #endregion
@@ -79,8 +79,11 @@ function New-AutomaticBackup {
         Timestamp     = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
         Version       = $Script:Version
         SystemInfo    = Get-SystemInfo
-        UndoStack     = $Script:UndoStack
-        Configuration = @{}
+        # Configuration carries the actual restorable registry/service entries —
+        # this is what Invoke-QuickRestore replays. UndoStack scriptblocks cannot
+        # survive a JSON round-trip, so they're intentionally not persisted here;
+        # in-session undo uses $Script:UndoStack directly instead (see Undo-LastOptimization).
+        Configuration = $Script:ConfigBackup
     }
     
     # Save backup
@@ -103,7 +106,7 @@ function Invoke-QuickRestore {
     $backupDir = "$PSScriptRoot\Backups"
     if (-not (Test-Path $backupDir)) {
         Write-Host "  No backups found." -ForegroundColor $Script:Colors.Warning
-        Read-Host "`nPress Enter to continue"
+        Wait-ForUser
         return
     }
     
@@ -111,7 +114,7 @@ function Invoke-QuickRestore {
     
     if ($backups.Count -eq 0) {
         Write-Host "  No backup files available." -ForegroundColor $Script:Colors.Warning
-        Read-Host "`nPress Enter to continue"
+        Wait-ForUser
         return
     }
     
@@ -131,17 +134,14 @@ function Invoke-QuickRestore {
         $selectedBackup = $backups[$index]
         
         if (Confirm-Action -Message "Restore from backup: $($selectedBackup.Name)?") {
-            Write-Host "`n  Restoring from backup..." -ForegroundColor $Script:Colors.Info
-            
             try {
                 $backupData = Get-Content -Path $selectedBackup.FullName -Raw | ConvertFrom-Json
-                
-                # Restore undo stack
-                if ($backupData.UndoStack) {
-                    $Script:UndoStack = $backupData.UndoStack
-                }
-                
-                Write-Host "  ✓ Backup restored successfully!" -ForegroundColor $Script:Colors.Success
+                $entries = @($backupData.Configuration)
+
+                Write-Log "Restoring from backup: $($selectedBackup.Name)" -Level Info -Category "Restore"
+                Invoke-BackupRestore -Entries $entries
+
+                Write-Host "`n✓ Backup restored successfully!" -ForegroundColor $Script:Colors.Success
                 Write-Log "Restored from backup: $($selectedBackup.Name)" -Level Success -Category "Restore"
             }
             catch {
@@ -151,7 +151,7 @@ function Invoke-QuickRestore {
         }
     }
     
-    Read-Host "`nPress Enter to continue"
+    Wait-ForUser
 }
 
 #endregion
@@ -267,7 +267,7 @@ function Show-StartupImpact {
     
     Write-Log "Startup impact analysis completed. Found $($startupItems.Count) items." -Level Info -Category "Analysis"
     
-    Read-Host "`nPress Enter to continue"
+    Wait-ForUser
 }
 
 #endregion
@@ -281,17 +281,22 @@ function Test-NetworkSpeed {
     Write-Host ""
     
     # Test DNS Resolution
+    # NOTE: $dnsSuccess must be set OUTSIDE the Measure-Command scriptblock — a
+    # scriptblock invoked via Measure-Command runs in its own child scope, so a
+    # variable assigned inside it never becomes visible here (this previously made
+    # the DNS check report "Failed" every time regardless of the real result).
     Write-Host "  Testing DNS resolution..." -ForegroundColor $Script:Colors.Info
-    $dnsTest = Measure-Command {
-        try {
+    $dnsSuccess = $false
+    try {
+        $dnsTest = Measure-Command {
             [System.Net.Dns]::GetHostAddresses("www.google.com") | Out-Null
-            $dnsSuccess = $true
         }
-        catch {
-            $dnsSuccess = $false
-        }
+        $dnsSuccess = $true
     }
-    
+    catch {
+        $dnsTest = [TimeSpan]::Zero
+    }
+
     if ($dnsSuccess) {
         Write-Host "  ✓ DNS Resolution: $([math]::Round($dnsTest.TotalMilliseconds, 0)) ms" -ForegroundColor $Script:Colors.Success
     }
@@ -333,7 +338,7 @@ function Test-NetworkSpeed {
     
     Write-Log "Network speed test completed" -Level Info -Category "Network"
     
-    Read-Host "`nPress Enter to continue"
+    Wait-ForUser
 }
 
 #endregion
@@ -378,7 +383,7 @@ function Show-SystemTemperature {
         Write-Host "    • Current CPU Usage: $cpuValue%" -ForegroundColor $cpuColor
     }
     
-    Read-Host "`nPress Enter to continue"
+    Wait-ForUser
 }
 
 #endregion
@@ -404,5 +409,3 @@ function Initialize-ErrorHandling {
 
 #endregion
 
-# Export all functions
-Export-ModuleMember -Function *
