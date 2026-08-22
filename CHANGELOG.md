@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.1] - 2026-08-22 - GUI window: draggable custom title bar (WinUtil-style chrome)
+
+### 🎉 Changes
+
+- The GUI (`-Gui`) now uses `WindowStyle="None"` for a clean, chromeless
+  window like WinUtil's, with a slim custom title bar (36px) that:
+  - Is draggable — click and drag anywhere on it to move the window
+    (double-click to maximize/restore)
+  - Has custom minimize and close buttons (Segoe Fluent icons), with a
+    red hover highlight on close matching native Windows 11 behavior
+  - The window keeps a subtle 1px border outline since removing the native
+    chrome also removes the OS-drawn window edge
+  - Still resizable by dragging any edge (`ResizeMode="CanResize"`)
+
 ## [4.4.0] - 2026-08-22 - Pro Suite, Streaming/Presentation profiles, WinUtil-style GUI
 
 ### 🐛 Critical bug fix

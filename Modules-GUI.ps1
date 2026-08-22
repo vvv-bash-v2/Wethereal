@@ -114,9 +114,51 @@ function Show-GraphicalMenu {
     [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Wethereal" Height="840" Width="1240" WindowStartupLocation="CenterScreen"
+        Title="Wethereal" Height="840" Width="1240" MinHeight="560" MinWidth="900"
+        WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
+        BorderBrush="#2A3454" BorderThickness="1"
         Background="#080B14" FontFamily="Segoe UI">
   <Window.Resources>
+    <Style TargetType="Button" x:Key="TitleBarButton">
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="Foreground" Value="#8C99BC"/>
+      <Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="FontSize" Value="14"/>
+      <Setter Property="Width" Value="42"/>
+      <Setter Property="Height" Value="36"/>
+      <Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Name="BtnBd" Background="{TemplateBinding Background}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="BtnBd" Property="Background" Value="#1D2740"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style TargetType="Button" x:Key="CloseBarButton" BasedOn="{StaticResource TitleBarButton}">
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border Name="BtnBd" Background="{TemplateBinding Background}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="BtnBd" Property="Background" Value="#E81123"/>
+                <Setter Property="Foreground" Value="White"/>
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
     <Style TargetType="TabItem">
       <Setter Property="Background" Value="#080B14"/>
       <Setter Property="Foreground" Value="#8C99BC"/>
@@ -174,6 +216,22 @@ function Show-GraphicalMenu {
   </Window.Resources>
 
   <DockPanel>
+    <Border x:Name="TitleBar" DockPanel.Dock="Top" Background="#0B0F1C" Height="36">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
+          <TextBlock Text="⚡" FontSize="13" Foreground="#5391FE" VerticalAlignment="Center"/>
+          <TextBlock Text="Wethereal" FontSize="12" FontWeight="SemiBold" Foreground="#8C99BC" FontFamily="Consolas" Margin="8,0,0,0" VerticalAlignment="Center"/>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+          <Button x:Name="MinimizeButton" Content="&#xE921;" FontFamily="Segoe MDL2 Assets" Style="{StaticResource TitleBarButton}" ToolTip="Minimize"/>
+          <Button x:Name="CloseButton" Content="&#xE8BB;" FontFamily="Segoe MDL2 Assets" Style="{StaticResource CloseBarButton}" ToolTip="Close"/>
+        </StackPanel>
+      </Grid>
+    </Border>
     <Border DockPanel.Dock="Top" Background="#0F1422" Padding="24,16">
       <StackPanel Orientation="Horizontal">
         <TextBlock Text="WETHEREAL" FontSize="24" FontWeight="Bold" Foreground="#E8ECF4" FontFamily="Consolas" VerticalAlignment="Center"/>
@@ -246,6 +304,22 @@ function Show-GraphicalMenu {
 
     $reader = New-Object System.Xml.XmlNodeReader $xaml
     $window = [Windows.Markup.XamlReader]::Load($reader)
+
+    # ---- Custom title bar: draggable (WindowStyle="None" has no native one) ----
+    $titleBar = $window.FindName("TitleBar")
+    $titleBar.Add_MouseLeftButtonDown({
+            param($sender, $e)
+            if ($e.ButtonState -eq [System.Windows.Input.MouseButtonState]::Pressed) {
+                if ($e.ClickCount -eq 2) {
+                    $window.WindowState = if ($window.WindowState -eq 'Maximized') { 'Normal' } else { 'Maximized' }
+                }
+                else {
+                    try { $window.DragMove() } catch {}
+                }
+            }
+        }.GetNewClosure())
+    $window.FindName("MinimizeButton").Add_Click({ $window.WindowState = 'Minimized' }.GetNewClosure())
+    $window.FindName("CloseButton").Add_Click({ $window.Close() }.GetNewClosure())
 
     $subtitleText = $window.FindName("SubtitleText")
     $logBox = $window.FindName("LogBox")
