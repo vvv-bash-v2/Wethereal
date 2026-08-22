@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.3.0] - 2026-08-22 - Pro Gaming Tools, Automation & Updates, GUI
+
+### 🎉 New: Category 10 — Pro Gaming Tools (`Modules-ProGamingTools.ps1`, new module)
+
+- **🔥 Overclock / Undervolt Guide**: purely informational — Wethereal never
+  touches voltages/clocks directly. Detects your CPU/GPU vendor(s) and points
+  you at the right official tool (AMD Ryzen Master, Intel XTU, MSI
+  Afterburner) with a safe starting point for each
+- **🧭 CPU/GPU Bottleneck Detector**: an ~8 second synthetic CPU load while
+  sampling CPU and GPU (`\GPU Engine(*)\Utilization Percentage`) performance
+  counters, with a verdict on which one is more likely limiting your FPS
+- **🎯 Per-Game Process Tuning**: applies Windows' own per-executable hooks
+  (Above Normal CPU priority via Image File Execution Options,
+  "High performance" GPU preference) scoped to one game's `.exe` only —
+  curated list includes Valorant, CS2, Fortnite, Apex Legends, League of
+  Legends, Warzone, or any custom executable
+- **🧹 Clean GPU Driver Reinstall**: best-effort DDU-style clean-up via
+  `pnputil` (removes matched third-party driver packages) plus known driver
+  cache folders — clearly labeled as best-effort, not a Safe-Mode-level DDU
+  replacement, with a direct link to the vendor's official driver page after
+- **📟 FPS Overlay**: detects/launches RivaTuner Statistics Server, or offers
+  to install MSI Afterburner (which bundles it) via winget if missing
+
+### 🎉 New: Category 11 — Automation & Updates (`Modules-SystemAutomation.ps1`, new module)
+
+- **⬆️ Self-Update**: checks the GitHub repo for a newer version, backs up
+  current script files, and downloads/replaces them in place
+- **📈 Before/After Benchmark**: runs a quick CPU/RAM benchmark, applies a
+  profile of your choice, benchmarks again, and reports the real measured
+  difference — with an honest note that this is a CPU/RAM signal, not an FPS
+  benchmark
+- **💾 Virtual Memory / Pagefile Manager**: reports detected RAM with a sizing
+  recommendation, and lets you set system-managed, a custom fixed size, or
+  (with strong warnings) disable the pagefile entirely
+- **⏰ Scheduled Profile Re-Apply**: registers a scheduled task to silently
+  re-run a profile at logon, weekly, or event-triggered right after Windows
+  Update installs updates (Event ID 19) — since Windows Update sometimes
+  resets services/telemetry/tasks Wethereal had disabled
+
+### 🎉 New: Graphical interface (`Modules-GUI.ps1`, new module, `-Gui` switch)
+
+- `.\Win-Tweaker.ps1 -Gui` opens a WinForms quick-launch window (dark,
+  PowerShell-terminal palette) with one-click buttons for all 5 profiles and
+  all 11 categories. It's a launcher over the existing console functions, not
+  a rebuild of every menu as native controls — category buttons bring the
+  console window to the front since those still run as interactive prompts;
+  profile buttons run fully from the GUI with a confirmation dialog first.
+  Needs an STA PowerShell session; the tool detects and warns if it isn't one.
+
+### 🔧 Other changes
+
+- Main menu restructured again for categories 10-11: everything from the old
+  10-25 range shifted to 12-27. Updated the two in-app text references that
+  pointed at the old option numbers, and the option-range prompt to `(0-27)`.
+
 ## [4.2.0] - 2026-08-22 - Ultimate Extras, Low-End Gaming profile, silent CLI mode
 
 ### 🎉 New: Category 9 — Extras & App Manager (`Modules-UltimateExtras.ps1`, new module)

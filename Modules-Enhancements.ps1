@@ -420,8 +420,8 @@ function Invoke-OptimizationProfile {
     Write-Host "╚═══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $Script:Colors.Success
     Write-Host "`n  ⚠️  RESTART REQUIRED for all changes to take effect." -ForegroundColor $Script:Colors.Warning
 
-    if ($Script:SilentMode) {
-        Write-Host "  (Silent mode: not restarting automatically. Restart manually when ready.)" -ForegroundColor DarkGray
+    if ($Script:SilentMode -or $Script:SkipPauses) {
+        Write-Host "  (Not prompting to restart right now — restart manually when ready.)" -ForegroundColor DarkGray
         return
     }
 

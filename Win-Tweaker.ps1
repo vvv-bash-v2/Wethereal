@@ -2,15 +2,15 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.2.0
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.3.0
 .DESCRIPTION
-    A comprehensive Windows optimization tool with 150+ tweaks across 9 categories,
+    A comprehensive Windows optimization tool with 170+ tweaks across 11 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
     laptops) hardware detection with vendor-adaptive optimizations, and a live
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.2.0 Ultimate Edition
+    Version: 4.3.0 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 .PARAMETER Silent
@@ -21,16 +21,25 @@
     Profile to apply when -Silent is used: Gaming, Work, MaxPerformance,
     Privacy, or LowEndGaming. (Named ProfileName, not Profile, to avoid
     colliding with PowerShell's built-in $Profile automatic variable.)
+.PARAMETER Gui
+    Launches the WinForms graphical front-end instead of the console menu.
+    Needs an STA session — if launched from an MTA host, relaunch with
+    'powershell -STA -File Win-Tweaker.ps1 -Gui'.
 .EXAMPLE
     .\Win-Tweaker.ps1 -Silent -ProfileName LowEndGaming
     Applies the Low-End Gaming / Max FPS profile with zero interaction, then exits.
+.EXAMPLE
+    .\Win-Tweaker.ps1 -Gui
+    Opens the graphical quick-launch window.
 #>
 
 param(
     [switch]$Silent,
 
     [ValidateSet('Gaming', 'Work', 'MaxPerformance', 'Privacy', 'LowEndGaming')]
-    [string]$ProfileName
+    [string]$ProfileName,
+
+    [switch]$Gui
 )
 
 if ($Silent -and -not $ProfileName) {
@@ -39,7 +48,7 @@ if ($Silent -and -not $ProfileName) {
 }
 
 # Script configuration
-$Script:Version = "4.2.0"
+$Script:Version = "4.3.0"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
@@ -209,33 +218,36 @@ function Show-MainMenu {
     Write-Host "   7. 📊 Monitoring & System Info" -ForegroundColor White
     Write-Host "   8. 🛠️  Tools & Utilities" -ForegroundColor White
     Write-Host "   9. 🚀 Extras & App Manager (winget, Ultimate Perf, more)" -ForegroundColor White
+    Write-Host "  10. 🕹️  Pro Gaming Tools (OC guide, bottleneck, per-game tuning)" -ForegroundColor White
+    Write-Host "  11. 🤖 Automation & Updates (self-update, benchmark, scheduling)" -ForegroundColor White
     Write-Host ""
     Write-Host "  QUICK ACTIONS" -ForegroundColor $Script:Colors.Menu
     Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  10. ⚡ Apply Optimization Profile" -ForegroundColor Green
-    Write-Host "  11. 🔍 System Analysis & Recommendations" -ForegroundColor Cyan
-    Write-Host "  12. 🎮 GPU-Specific Optimizations" -ForegroundColor Magenta
-    Write-Host "  13. 🗑️  Enhanced Bloatware Removal" -ForegroundColor Yellow
-    Write-Host "  14. 📈 Generate Optimization Report" -ForegroundColor White
-    Write-Host "  15. 🔄 Restore Previous Settings" -ForegroundColor Yellow
-    Write-Host "  16. 📋 View Optimization Log" -ForegroundColor White
+    Write-Host "  12. ⚡ Apply Optimization Profile" -ForegroundColor Green
+    Write-Host "  13. 🔍 System Analysis & Recommendations" -ForegroundColor Cyan
+    Write-Host "  14. 🎮 GPU-Specific Optimizations" -ForegroundColor Magenta
+    Write-Host "  15. 🗑️  Enhanced Bloatware Removal" -ForegroundColor Yellow
+    Write-Host "  16. 📈 Generate Optimization Report" -ForegroundColor White
+    Write-Host "  17. 🔄 Restore Previous Settings" -ForegroundColor Yellow
+    Write-Host "  18. 📋 View Optimization Log" -ForegroundColor White
     Write-Host ""
     Write-Host "  ADVANCED TOOLS (NEW!)" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  17. 📊 Real-Time Performance Dashboard" -ForegroundColor Cyan
-    Write-Host "  18. 🌐 Network Speed Test" -ForegroundColor Green
-    Write-Host "  19. 🚀 Startup Impact Analyzer" -ForegroundColor Yellow
-    Write-Host "  20. 🌡️  System Temperature Monitor" -ForegroundColor Magenta
-    Write-Host "  21. 🔄 One-Click Restore" -ForegroundColor White
+    Write-Host "  19. 📊 Real-Time Performance Dashboard" -ForegroundColor Cyan
+    Write-Host "  20. 🌐 Network Speed Test" -ForegroundColor Green
+    Write-Host "  21. 🚀 Startup Impact Analyzer" -ForegroundColor Yellow
+    Write-Host "  22. 🌡️  System Temperature Monitor" -ForegroundColor Magenta
+    Write-Host "  23. 🔄 One-Click Restore" -ForegroundColor White
     Write-Host ""
     Write-Host "  PROFESSIONAL TOOLS (ULTIMATE!)" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  22. 🏥 Comprehensive System Health Check" -ForegroundColor Cyan
-    Write-Host "  23. 📝 Registry Optimizer" -ForegroundColor Green
-    Write-Host "  24. ⚙️  Intelligent Service Optimizer" -ForegroundColor Yellow
-    Write-Host "  25. 🔄 Windows Update Manager" -ForegroundColor Magenta
+    Write-Host "  24. 🏥 Comprehensive System Health Check" -ForegroundColor Cyan
+    Write-Host "  25. 📝 Registry Optimizer" -ForegroundColor Green
+    Write-Host "  26. ⚙️  Intelligent Service Optimizer" -ForegroundColor Yellow
+    Write-Host "  27. 🔄 Windows Update Manager" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "   0. ❌ Exit" -ForegroundColor Red
+    Write-Host "     (Tip: relaunch with -Gui for the graphical quick-launch window)" -ForegroundColor DarkGray
     Write-Host ""
 }
 
@@ -481,7 +493,10 @@ $moduleFiles = @(
     "$PSScriptRoot\Modules-Enhancements.ps1",
     "$PSScriptRoot\Modules-Advanced.ps1",
     "$PSScriptRoot\Modules-FinalEnhancements.ps1",
-    "$PSScriptRoot\Modules-UltimateExtras.ps1"
+    "$PSScriptRoot\Modules-UltimateExtras.ps1",
+    "$PSScriptRoot\Modules-ProGamingTools.ps1",
+    "$PSScriptRoot\Modules-SystemAutomation.ps1",
+    "$PSScriptRoot\Modules-GUI.ps1"
 )
 
 foreach ($moduleFile in $moduleFiles) {
@@ -969,6 +984,15 @@ function Main {
         exit 0
     }
 
+    if ($Gui) {
+        Get-HardwareProfile -Refresh | Out-Null
+        Write-Log "Wethereal v$($Script:Version) started in -Gui mode" -Level Info -Category "System"
+        Write-Host "Wethereal v$($Script:Version) - Launching graphical quick-launch window..." -ForegroundColor Cyan
+        Write-Host "(This console window stays open — live progress for anything you run prints here.)" -ForegroundColor DarkGray
+        Show-GraphicalMenu
+        Write-Host "`nGUI closed. Falling back to the console menu below." -ForegroundColor Cyan
+    }
+
     # Startup Animation
     Clear-Host
     Write-Host ""
@@ -1017,7 +1041,7 @@ function Main {
     
     do {
         Show-MainMenu
-        $choice = Read-Host "Select an option (0-25)"
+        $choice = Read-Host "Select an option (0-27)"
 
         switch ($choice) {
             '1' { Show-SystemPerformanceMenu }
@@ -1029,22 +1053,24 @@ function Main {
             '7' { Show-MonitoringMenu }
             '8' { Show-ToolsMenu }
             '9' { Show-UltimateExtrasMenu }
-            '10' { Show-ProfilesMenuEnhanced }
-            '11' { Start-SystemAnalysis }
-            '12' { Optimize-GPUSpecific }
-            '13' { Get-EnhancedBloatwareList }
-            '14' { New-OptimizationReport }
-            '15' { Restore-PreviousSettings }
-            '16' { Show-OptimizationLog }
-            '17' { Show-PerformanceDashboard }
-            '18' { Test-NetworkSpeed }
-            '19' { Show-StartupImpact }
-            '20' { Show-SystemTemperature }
-            '21' { Invoke-QuickRestore }
-            '22' { Start-SystemHealthCheck }
-            '23' { Optimize-Registry }
-            '24' { Optimize-ServicesIntelligent }
-            '25' { Set-WindowsUpdates }
+            '10' { Show-ProGamingToolsMenu }
+            '11' { Show-AutomationMenu }
+            '12' { Show-ProfilesMenuEnhanced }
+            '13' { Start-SystemAnalysis }
+            '14' { Optimize-GPUSpecific }
+            '15' { Get-EnhancedBloatwareList }
+            '16' { New-OptimizationReport }
+            '17' { Restore-PreviousSettings }
+            '18' { Show-OptimizationLog }
+            '19' { Show-PerformanceDashboard }
+            '20' { Test-NetworkSpeed }
+            '21' { Show-StartupImpact }
+            '22' { Show-SystemTemperature }
+            '23' { Invoke-QuickRestore }
+            '24' { Start-SystemHealthCheck }
+            '25' { Optimize-Registry }
+            '26' { Optimize-ServicesIntelligent }
+            '27' { Set-WindowsUpdates }
             '0' {
                 Write-Host "`nThank you for using Wethereal Ultimate Edition!" -ForegroundColor $Script:Colors.Success
                 Write-Log "Wethereal exited" -Level Info -Category "System"
