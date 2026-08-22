@@ -301,7 +301,7 @@ function Optimize-IntelCPU {
 function Invoke-OptimizationProfile {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet("Gaming", "Work", "MaxPerformance", "Privacy")]
+        [ValidateSet("Gaming", "Work", "MaxPerformance", "Privacy", "LowEndGaming")]
         [string]$ProfileName
     )
     
@@ -400,6 +400,12 @@ function Invoke-OptimizationProfile {
                 Enable-SecurityHardening
                 Write-Host "`n  ✓ Privacy profile applied!" -ForegroundColor $Script:Colors.Success
             }
+
+            "LowEndGaming" {
+                Write-Host "`n  Applying Low-End Gaming / Max FPS optimizations..." -ForegroundColor $Script:Colors.Info
+                Optimize-LowEndGaming
+                Write-Host "`n  ✓ Low-End Gaming / Max FPS profile applied!" -ForegroundColor $Script:Colors.Success
+            }
         }
     }
     finally {
@@ -413,7 +419,12 @@ function Invoke-OptimizationProfile {
     Write-Host "║  ✓ PROFILE APPLIED SUCCESSFULLY!                                          ║" -ForegroundColor $Script:Colors.Success
     Write-Host "╚═══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $Script:Colors.Success
     Write-Host "`n  ⚠️  RESTART REQUIRED for all changes to take effect." -ForegroundColor $Script:Colors.Warning
-    
+
+    if ($Script:SilentMode) {
+        Write-Host "  (Silent mode: not restarting automatically. Restart manually when ready.)" -ForegroundColor DarkGray
+        return
+    }
+
     $restart = Read-Host "`nRestart computer now? (y/N)"
     if ($restart -eq 'Y' -or $restart -eq 'y') {
         Write-Host "`nRestarting in 10 seconds..." -ForegroundColor $Script:Colors.Warning
@@ -442,16 +453,22 @@ function Show-ProfilesMenuEnhanced {
     Write-Host "     $($Script:Profiles.Privacy.Description)" -ForegroundColor White
     Write-Host "     Optimizations: Telemetry, Tracking, Bloatware, Privacy Controls" -ForegroundColor DarkGray
     Write-Host ""
+    Write-Host "  5. 🕹️  $($Script:Profiles.LowEndGaming.Name)" -ForegroundColor Red
+    Write-Host "     $($Script:Profiles.LowEndGaming.Description)" -ForegroundColor White
+    Write-Host "     For: budget/older PCs where every FPS counts. Not recommended on" -ForegroundColor DarkGray
+    Write-Host "     work PCs — disables Widgets, Chat, background apps and more." -ForegroundColor DarkGray
+    Write-Host ""
     Write-Host "  0. ← Cancel" -ForegroundColor Red
     Write-Host ""
-    
-    $choice = Read-Host "Select profile (1-4)"
-    
+
+    $choice = Read-Host "Select profile (1-5)"
+
     switch ($choice) {
         '1' { Invoke-OptimizationProfile -ProfileName "Gaming" }
         '2' { Invoke-OptimizationProfile -ProfileName "Work" }
         '3' { Invoke-OptimizationProfile -ProfileName "MaxPerformance" }
         '4' { Invoke-OptimizationProfile -ProfileName "Privacy" }
+        '5' { Invoke-OptimizationProfile -ProfileName "LowEndGaming" }
         '0' { return }
         default {
             Write-Host "`n✗ Invalid selection" -ForegroundColor $Script:Colors.Error

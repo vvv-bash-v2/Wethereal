@@ -222,8 +222,8 @@ function Start-SystemHealthCheck {
     Write-Host "`n  RECOMMENDATIONS:" -ForegroundColor $Script:Colors.Info
     if ($healthScore -lt 80) {
         Write-Host "    → Run cleanup tasks (Category 5)" -ForegroundColor Cyan
-        Write-Host "    → Apply optimization profile (Option 9)" -ForegroundColor Cyan
-        Write-Host "    → Check startup programs (Option 18)" -ForegroundColor Cyan
+        Write-Host "    → Apply optimization profile (Option 10)" -ForegroundColor Cyan
+        Write-Host "    → Check startup programs (Option 19)" -ForegroundColor Cyan
     }
     else {
         Write-Host "    ✓ System is well optimized!" -ForegroundColor $Script:Colors.Success

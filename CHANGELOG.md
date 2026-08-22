@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2026-08-22 - Ultimate Extras, Low-End Gaming profile, silent CLI mode
+
+### 🎉 New: Category 9 — Extras & App Manager (`Modules-UltimateExtras.ps1`, new module)
+
+- **📦 App Manager (Install)**: curated catalog of 20+ common apps (browsers,
+  7-Zip, VLC, Discord, Steam, VS Code, PowerToys, CPU-Z/GPU-Z/HWMonitor,
+  runtimes, …) installed via `winget`, multi-select by number or `all`
+- **🗑️ App Manager (Uninstall)**: lists every winget-managed package
+  currently installed and lets you multi-select which to remove
+- **⬆️ Update All Apps**: `winget upgrade --all`
+- **🚀 Ultimate Performance Power Plan**: surfaces and activates Windows'
+  hidden Ultimate Performance power scheme (more aggressive than "High
+  performance")
+- **🖱️ Classic Right-Click Context Menu**: restores the full Windows
+  10-style context menu on Windows 11 (toggle on/off)
+- **📌 Taskbar Alignment**: left-align or center-align taskbar icons on
+  Windows 11
+- **🚫 Hosts File Ad-Blocking**: appends a curated ad/telemetry domain block
+  list to the hosts file, with automatic backup and a one-click restore
+- **✅ Quick Tweak Checklist**: pick any combination of 10 common, safe,
+  independent tweaks (telemetry, dark mode, Game Bar, Cortana, Widgets, Chat
+  icon, Ultimate Performance, temp cleanup, DNS flush, taskbar alignment) and
+  apply them all in one pass instead of hunting through menus
+- **🔍 Compare Two Backups**: diffs two `WinTweaker_Backup_*.json` files and
+  reports what was newly tracked, no longer tracked, or changed value
+  between them
+- **🔐 TPM & Secure Boot Check**: reports TPM presence/readiness and Secure
+  Boot status for Windows 11 hardware-readiness auditing
+
+### 🎉 New: Low-End Gaming / Max FPS profile
+
+- 5th optimization profile (`Category 2, Option 8`, and profile picker
+  option 5), purpose-built for budget/low-spec PCs. Composes the existing
+  CPU/GPU/memory/visual-effects/service/network/input-lag tweaks with new
+  FPS-specific ones: `SystemResponsiveness=0` (stops Windows reserving CPU
+  for background tasks away from the foreground game), disabling background
+  apps, hiding Widgets/Chat icons, and trimming a couple of low-value
+  services. Aimed at users going from ~100 FPS to ~150-200 FPS in lighter
+  titles on modest hardware.
+
+### 🎉 New: Unattended / silent CLI mode
+
+- `.\Win-Tweaker.ps1 -Silent -ProfileName LowEndGaming` (or any of the 5
+  profile names) applies a profile with zero prompts and exits — for
+  scripted/fleet deployment. `-Silent` without `-ProfileName` now fails fast
+  with a clear error instead of hanging on a prompt.
+
+### 🔧 Other changes
+
+- Main menu restructured: category 9 ("Extras & App Manager") added after
+  "Tools & Utilities"; every option from the old 9-24 range shifted to
+  10-25 accordingly. Updated the two in-app text references that pointed at
+  the old option numbers.
+- Menu option-range prompt updated to `(0-25)`.
+
 ## [4.1.0] - 2026-08-22 - Menu renumbering & detailed HTML report
 
 ### 🎉 Changes
