@@ -301,7 +301,7 @@ function Optimize-IntelCPU {
 function Invoke-OptimizationProfile {
     param(
         [Parameter(Mandatory = $true)]
-        [ValidateSet("Gaming", "Work", "MaxPerformance", "Privacy", "LowEndGaming")]
+        [ValidateSet("Gaming", "Work", "MaxPerformance", "Privacy", "LowEndGaming", "Streaming", "Presentation")]
         [string]$ProfileName
     )
     
@@ -406,6 +406,18 @@ function Invoke-OptimizationProfile {
                 Optimize-LowEndGaming
                 Write-Host "`n  ✓ Low-End Gaming / Max FPS profile applied!" -ForegroundColor $Script:Colors.Success
             }
+
+            "Streaming" {
+                Write-Host "`n  Applying Streaming optimizations..." -ForegroundColor $Script:Colors.Info
+                Optimize-Streaming
+                Write-Host "`n  ✓ Streaming profile applied!" -ForegroundColor $Script:Colors.Success
+            }
+
+            "Presentation" {
+                Write-Host "`n  Applying Presentation / Battery optimizations..." -ForegroundColor $Script:Colors.Info
+                Optimize-Presentation
+                Write-Host "`n  ✓ Presentation / Battery profile applied!" -ForegroundColor $Script:Colors.Success
+            }
         }
     }
     finally {
@@ -458,10 +470,16 @@ function Show-ProfilesMenuEnhanced {
     Write-Host "     For: budget/older PCs where every FPS counts. Not recommended on" -ForegroundColor DarkGray
     Write-Host "     work PCs — disables Widgets, Chat, background apps and more." -ForegroundColor DarkGray
     Write-Host ""
+    Write-Host "  6. 📡 $($Script:Profiles.Streaming.Name)" -ForegroundColor Blue
+    Write-Host "     $($Script:Profiles.Streaming.Description)" -ForegroundColor White
+    Write-Host ""
+    Write-Host "  7. 🔋 $($Script:Profiles.Presentation.Name)" -ForegroundColor DarkGreen
+    Write-Host "     $($Script:Profiles.Presentation.Description)" -ForegroundColor White
+    Write-Host ""
     Write-Host "  0. ← Cancel" -ForegroundColor Red
     Write-Host ""
 
-    $choice = Read-Host "Select profile (1-5)"
+    $choice = Read-Host "Select profile (1-7)"
 
     switch ($choice) {
         '1' { Invoke-OptimizationProfile -ProfileName "Gaming" }
@@ -469,6 +487,8 @@ function Show-ProfilesMenuEnhanced {
         '3' { Invoke-OptimizationProfile -ProfileName "MaxPerformance" }
         '4' { Invoke-OptimizationProfile -ProfileName "Privacy" }
         '5' { Invoke-OptimizationProfile -ProfileName "LowEndGaming" }
+        '6' { Invoke-OptimizationProfile -ProfileName "Streaming" }
+        '7' { Invoke-OptimizationProfile -ProfileName "Presentation" }
         '0' { return }
         default {
             Write-Host "`n✗ Invalid selection" -ForegroundColor $Script:Colors.Error

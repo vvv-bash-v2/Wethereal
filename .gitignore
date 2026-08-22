@@ -3,6 +3,10 @@
 
 # Ignore backup files
 *_Backup_*.json
+Wethereal_MasterBackup.json
+Wethereal_Config_*.json
+Telemetry.json
+OptimizationReport_*.html
 
 # Ignore temporary files
 *.tmp

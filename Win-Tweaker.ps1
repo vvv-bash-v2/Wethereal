@@ -2,15 +2,15 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.3.0
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.4.0
 .DESCRIPTION
-    A comprehensive Windows optimization tool with 170+ tweaks across 11 categories,
+    A comprehensive Windows optimization tool with 190+ tweaks across 12 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
     laptops) hardware detection with vendor-adaptive optimizations, and a live
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.3.0 Ultimate Edition
+    Version: 4.4.0 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 .PARAMETER Silent
@@ -19,8 +19,9 @@
     (e.g. imaging a fleet of gaming PCs with the same tweak set).
 .PARAMETER ProfileName
     Profile to apply when -Silent is used: Gaming, Work, MaxPerformance,
-    Privacy, or LowEndGaming. (Named ProfileName, not Profile, to avoid
-    colliding with PowerShell's built-in $Profile automatic variable.)
+    Privacy, LowEndGaming, Streaming, or Presentation. (Named ProfileName,
+    not Profile, to avoid colliding with PowerShell's built-in $Profile
+    automatic variable.)
 .PARAMETER Gui
     Launches the WinForms graphical front-end instead of the console menu.
     Needs an STA session — if launched from an MTA host, relaunch with
@@ -36,25 +37,31 @@
 param(
     [switch]$Silent,
 
-    [ValidateSet('Gaming', 'Work', 'MaxPerformance', 'Privacy', 'LowEndGaming')]
+    [ValidateSet('Gaming', 'Work', 'MaxPerformance', 'Privacy', 'LowEndGaming', 'Streaming', 'Presentation')]
     [string]$ProfileName,
 
     [switch]$Gui
 )
 
 if ($Silent -and -not $ProfileName) {
-    Write-Host "ERROR: -Silent requires -ProfileName <Gaming|Work|MaxPerformance|Privacy|LowEndGaming>" -ForegroundColor Red
+    Write-Host "ERROR: -Silent requires -ProfileName <Gaming|Work|MaxPerformance|Privacy|LowEndGaming|Streaming|Presentation>" -ForegroundColor Red
     exit 1
 }
 
 # Script configuration
-$Script:Version = "4.3.0"
+$Script:Version = "4.4.0"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
-$Script:ConfigBackup = @{}
+# NOTE: this MUST be an array (@()), never a hashtable (@{}). Backup-RegistryValue
+# and Backup-ServiceState append structured entries with `+=` — on a Hashtable,
+# `+=` invokes the Hashtable `+` operator (a key MERGE that throws on the very
+# next call once two entries share a key like "Type"), silently breaking every
+# backup after the first and making Restore/Undo/Export/Compare no-ops.
+$Script:ConfigBackup = @()
 $Script:UndoStack = @()
 $Script:Hardware = $null
+$Script:MasterBackupFile = "$PSScriptRoot\Wethereal_MasterBackup.json"
 
 # When $true (set while a profile applies a batch of optimizations), individual
 # tweak functions skip their own y/N confirmation and "press enter" pause so a
@@ -111,6 +118,16 @@ $Script:Profiles = @{
         Name        = "🕹️ Low-End Gaming / Max FPS"
         Description = "Aggressive FPS-focused profile for low-spec/budget PCs — strips every non-essential background process, service and visual effect to hand as much CPU/GPU/RAM headroom as possible to the foreground game"
         Tweaks      = @('low-end-gaming')
+    }
+    Streaming      = @{
+        Name        = "📡 Streaming"
+        Description = "Tuned for streaming/recording with OBS — frees the GPU hardware encoder from Windows' own capture, mutes on-screen popups, and keeps upload bandwidth stable"
+        Tweaks      = @('streaming')
+    }
+    Presentation   = @{
+        Name        = "🔋 Presentation / Battery"
+        Description = "The inverse profile: quiet notifications, battery-friendly power plan, screen kept awake, Windows Update paused — for presenting or maximizing battery life"
+        Tweaks      = @('presentation')
     }
 }
 
@@ -207,44 +224,45 @@ function Show-Header {
 
 function Show-MainMenu {
     Show-Header
-    Write-Host "  SELECT A CATEGORY" -ForegroundColor $Script:Colors.Menu
+    Write-Host "  $(Get-Str 'MainMenuTitle')" -ForegroundColor $Script:Colors.Menu
     Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "   1. 🖥️  System Performance (CPU, GPU, RAM, Disk)" -ForegroundColor White
-    Write-Host "   2. 🎮 Gaming & Graphics Optimization" -ForegroundColor White
-    Write-Host "   3. 🌐 Network & Internet Tweaks" -ForegroundColor White
-    Write-Host "   4. 🔒 Privacy & Security" -ForegroundColor White
-    Write-Host "   5. 🗑️  Cleanup & Maintenance" -ForegroundColor White
-    Write-Host "   6. ⚙️  Advanced System Tweaks" -ForegroundColor White
-    Write-Host "   7. 📊 Monitoring & System Info" -ForegroundColor White
-    Write-Host "   8. 🛠️  Tools & Utilities" -ForegroundColor White
-    Write-Host "   9. 🚀 Extras & App Manager (winget, Ultimate Perf, more)" -ForegroundColor White
-    Write-Host "  10. 🕹️  Pro Gaming Tools (OC guide, bottleneck, per-game tuning)" -ForegroundColor White
-    Write-Host "  11. 🤖 Automation & Updates (self-update, benchmark, scheduling)" -ForegroundColor White
+    Write-Host "   1. 🖥️  $(Get-Str 'Cat1')" -ForegroundColor White
+    Write-Host "   2. 🎮 $(Get-Str 'Cat2')" -ForegroundColor White
+    Write-Host "   3. 🌐 $(Get-Str 'Cat3')" -ForegroundColor White
+    Write-Host "   4. 🔒 $(Get-Str 'Cat4')" -ForegroundColor White
+    Write-Host "   5. 🗑️  $(Get-Str 'Cat5')" -ForegroundColor White
+    Write-Host "   6. ⚙️  $(Get-Str 'Cat6')" -ForegroundColor White
+    Write-Host "   7. 📊 $(Get-Str 'Cat7')" -ForegroundColor White
+    Write-Host "   8. 🛠️  $(Get-Str 'Cat8')" -ForegroundColor White
+    Write-Host "   9. 🚀 $(Get-Str 'Cat9')" -ForegroundColor White
+    Write-Host "  10. 🕹️  $(Get-Str 'Cat10')" -ForegroundColor White
+    Write-Host "  11. 🤖 $(Get-Str 'Cat11')" -ForegroundColor White
+    Write-Host "  12. 🧰 $(Get-Str 'Cat12')" -ForegroundColor White
     Write-Host ""
-    Write-Host "  QUICK ACTIONS" -ForegroundColor $Script:Colors.Menu
+    Write-Host "  $(Get-Str 'QuickActions')" -ForegroundColor $Script:Colors.Menu
     Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  12. ⚡ Apply Optimization Profile" -ForegroundColor Green
-    Write-Host "  13. 🔍 System Analysis & Recommendations" -ForegroundColor Cyan
-    Write-Host "  14. 🎮 GPU-Specific Optimizations" -ForegroundColor Magenta
-    Write-Host "  15. 🗑️  Enhanced Bloatware Removal" -ForegroundColor Yellow
-    Write-Host "  16. 📈 Generate Optimization Report" -ForegroundColor White
-    Write-Host "  17. 🔄 Restore Previous Settings" -ForegroundColor Yellow
-    Write-Host "  18. 📋 View Optimization Log" -ForegroundColor White
+    Write-Host "  13. ⚡ Apply Optimization Profile" -ForegroundColor Green
+    Write-Host "  14. 🔍 System Analysis & Recommendations" -ForegroundColor Cyan
+    Write-Host "  15. 🎮 GPU-Specific Optimizations" -ForegroundColor Magenta
+    Write-Host "  16. 🗑️  Enhanced Bloatware Removal" -ForegroundColor Yellow
+    Write-Host "  17. 📈 Generate Optimization Report" -ForegroundColor White
+    Write-Host "  18. 🔄 Restore Previous Settings" -ForegroundColor Yellow
+    Write-Host "  19. 📋 View Optimization Log" -ForegroundColor White
     Write-Host ""
     Write-Host "  ADVANCED TOOLS (NEW!)" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  19. 📊 Real-Time Performance Dashboard" -ForegroundColor Cyan
-    Write-Host "  20. 🌐 Network Speed Test" -ForegroundColor Green
-    Write-Host "  21. 🚀 Startup Impact Analyzer" -ForegroundColor Yellow
-    Write-Host "  22. 🌡️  System Temperature Monitor" -ForegroundColor Magenta
-    Write-Host "  23. 🔄 One-Click Restore" -ForegroundColor White
+    Write-Host "  20. 📊 Real-Time Performance Dashboard" -ForegroundColor Cyan
+    Write-Host "  21. 🌐 Network Speed Test" -ForegroundColor Green
+    Write-Host "  22. 🚀 Startup Impact Analyzer" -ForegroundColor Yellow
+    Write-Host "  23. 🌡️  System Temperature Monitor" -ForegroundColor Magenta
+    Write-Host "  24. 🔄 One-Click Restore" -ForegroundColor White
     Write-Host ""
     Write-Host "  PROFESSIONAL TOOLS (ULTIMATE!)" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  24. 🏥 Comprehensive System Health Check" -ForegroundColor Cyan
-    Write-Host "  25. 📝 Registry Optimizer" -ForegroundColor Green
-    Write-Host "  26. ⚙️  Intelligent Service Optimizer" -ForegroundColor Yellow
-    Write-Host "  27. 🔄 Windows Update Manager" -ForegroundColor Magenta
+    Write-Host "  25. 🏥 Comprehensive System Health Check" -ForegroundColor Cyan
+    Write-Host "  26. 📝 Registry Optimizer" -ForegroundColor Green
+    Write-Host "  27. ⚙️  Intelligent Service Optimizer" -ForegroundColor Yellow
+    Write-Host "  28. 🔄 Windows Update Manager" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "   0. ❌ Exit" -ForegroundColor Red
     Write-Host "     (Tip: relaunch with -Gui for the graphical quick-launch window)" -ForegroundColor DarkGray
@@ -297,6 +315,37 @@ function Add-UndoAction {
     }
 }
 
+function Add-MasterBackupEntry {
+    <#
+        Appends one backup entry to Wethereal_MasterBackup.json, a file that
+        accumulates across EVERY run of Wethereal on this machine (never
+        truncated) — the "original value the very first time Wethereal ever
+        touched this setting". Invoke-FullRollback replays this whole file,
+        so it's how "undo everything Wethereal has ever changed" works, as
+        opposed to $Script:ConfigBackup which only covers this session.
+    #>
+    param([hashtable]$Entry)
+
+    try {
+        $existing = if (Test-Path $Script:MasterBackupFile) {
+            @(Get-Content -Path $Script:MasterBackupFile -Raw -ErrorAction Stop | ConvertFrom-Json)
+        }
+        else { @() }
+
+        $isDup = $existing | Where-Object {
+            if ($Entry.Type -eq 'Registry') { $_.Type -eq 'Registry' -and $_.Path -eq $Entry.Path -and $_.Name -eq $Entry.Name }
+            else { $_.Type -eq 'Service' -and $_.Name -eq $Entry.Name }
+        }
+        if (-not $isDup) {
+            $existing = @($existing) + [PSCustomObject]$Entry
+            $existing | ConvertTo-Json -Depth 10 | Out-File -FilePath $Script:MasterBackupFile -Encoding UTF8
+        }
+    }
+    catch {
+        Write-Log "Failed to update master backup file: $($_.Exception.Message)" -Level Warning -Category "Backup"
+    }
+}
+
 function Backup-ServiceState {
     param([string]$ServiceName)
     
@@ -308,12 +357,14 @@ function Backup-ServiceState {
             # capture the now-modified state as "original", making restore a no-op.
             $alreadyBacked = $Script:ConfigBackup | Where-Object { $_.Type -eq 'Service' -and $_.Name -eq $ServiceName }
             if (-not $alreadyBacked) {
-                $Script:ConfigBackup += @{
+                $entry = @{
                     Type      = 'Service'
                     Name      = $ServiceName
                     Status    = $service.Status.ToString()
                     StartType = $service.StartType.ToString()
                 }
+                $Script:ConfigBackup += $entry
+                Add-MasterBackupEntry -Entry $entry
 
                 Add-UndoAction -Description "Restore service: $ServiceName" -UndoScript {
                     param($Name, $StartType, $Status)
@@ -341,12 +392,14 @@ function Backup-RegistryValue {
                 # Same original-value guard as Backup-ServiceState above.
                 $alreadyBacked = $Script:ConfigBackup | Where-Object { $_.Type -eq 'Registry' -and $_.Path -eq $Path -and $_.Name -eq $Name }
                 if (-not $alreadyBacked) {
-                    $Script:ConfigBackup += @{
+                    $entry = @{
                         Type  = 'Registry'
                         Path  = $Path
                         Name  = $Name
                         Value = $value.$Name
                     }
+                    $Script:ConfigBackup += $entry
+                    Add-MasterBackupEntry -Entry $entry
 
                     Add-UndoAction -Description "Restore registry: $Path\$Name" -UndoScript {
                         param($RegPath, $RegName, $RegValue)
@@ -453,6 +506,9 @@ function Invoke-TweakSequence {
             Write-Host ("  [{0,2}/{1,-2}] ✓ {2}" -f $current, $total, $step.Name) -ForegroundColor $Script:Colors.Success
             Write-Log $step.Name -Level Success -Category $Category
             $succeeded++
+            if (Get-Command -Name Add-TelemetryEvent -ErrorAction SilentlyContinue) {
+                Add-TelemetryEvent -Category $Category -StepName $step.Name
+            }
         }
         catch {
             Write-Host ("  [{0,2}/{1,-2}] ✗ {2} — {3}" -f $current, $total, $step.Name, $_.Exception.Message) -ForegroundColor $Script:Colors.Error
@@ -496,6 +552,7 @@ $moduleFiles = @(
     "$PSScriptRoot\Modules-UltimateExtras.ps1",
     "$PSScriptRoot\Modules-ProGamingTools.ps1",
     "$PSScriptRoot\Modules-SystemAutomation.ps1",
+    "$PSScriptRoot\Modules-ProSuite.ps1",
     "$PSScriptRoot\Modules-GUI.ps1"
 )
 
@@ -971,7 +1028,10 @@ function Main {
         if (-not $Silent) { Read-Host "`nPress Enter to exit" }
         exit 1
     }
-    
+
+    Import-TelemetrySettings
+    Import-LanguageSetting
+
     if ($Silent) {
         # Unattended mode: no banner, no prompts — apply the requested profile
         # and exit. Intended for scripted/fleet deployment.
@@ -1041,7 +1101,7 @@ function Main {
     
     do {
         Show-MainMenu
-        $choice = Read-Host "Select an option (0-27)"
+        $choice = Read-Host "Select an option (0-28)"
 
         switch ($choice) {
             '1' { Show-SystemPerformanceMenu }
@@ -1055,22 +1115,23 @@ function Main {
             '9' { Show-UltimateExtrasMenu }
             '10' { Show-ProGamingToolsMenu }
             '11' { Show-AutomationMenu }
-            '12' { Show-ProfilesMenuEnhanced }
-            '13' { Start-SystemAnalysis }
-            '14' { Optimize-GPUSpecific }
-            '15' { Get-EnhancedBloatwareList }
-            '16' { New-OptimizationReport }
-            '17' { Restore-PreviousSettings }
-            '18' { Show-OptimizationLog }
-            '19' { Show-PerformanceDashboard }
-            '20' { Test-NetworkSpeed }
-            '21' { Show-StartupImpact }
-            '22' { Show-SystemTemperature }
-            '23' { Invoke-QuickRestore }
-            '24' { Start-SystemHealthCheck }
-            '25' { Optimize-Registry }
-            '26' { Optimize-ServicesIntelligent }
-            '27' { Set-WindowsUpdates }
+            '12' { Show-ProSuiteMenu }
+            '13' { Show-ProfilesMenuEnhanced }
+            '14' { Start-SystemAnalysis }
+            '15' { Optimize-GPUSpecific }
+            '16' { Get-EnhancedBloatwareList }
+            '17' { New-OptimizationReport }
+            '18' { Restore-PreviousSettings }
+            '19' { Show-OptimizationLog }
+            '20' { Show-PerformanceDashboard }
+            '21' { Test-NetworkSpeed }
+            '22' { Show-StartupImpact }
+            '23' { Show-SystemTemperature }
+            '24' { Invoke-QuickRestore }
+            '25' { Start-SystemHealthCheck }
+            '26' { Optimize-Registry }
+            '27' { Optimize-ServicesIntelligent }
+            '28' { Set-WindowsUpdates }
             '0' {
                 Write-Host "`nThank you for using Wethereal Ultimate Edition!" -ForegroundColor $Script:Colors.Success
                 Write-Log "Wethereal exited" -Level Info -Category "System"

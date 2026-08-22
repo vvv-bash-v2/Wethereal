@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.0] - 2026-08-22 - Pro Suite, Streaming/Presentation profiles, WinUtil-style GUI
+
+### 🐛 Critical bug fix
+
+- **`$Script:ConfigBackup` was declared as a hashtable (`@{}`) but every backup
+  function appended to it with `+=` expecting array semantics.** On a
+  Hashtable, `+=` invokes the `+` merge operator, which throws
+  "Item has already been added" on the very next call once two entries share
+  a key (every entry has a `Type` key) — silently breaking Restore Previous
+  Settings, Undo, Export Configuration, Compare Backups and the report's
+  "Settings Changed" table for everything after the FIRST tweak applied in a
+  session. Fixed by initializing it as an array (`@()`). This shipped in
+  4.0.0's redesign and is fixed here; anyone on 4.0.0-4.3.0 should update.
+
+### 🎉 New: Category 12 — Pro Suite (`Modules-ProSuite.ps1`, new module)
+
+- **⏮️ Full Rollback**: a new `Wethereal_MasterBackup.json` now accumulates
+  the first-ever value of every registry/service setting Wethereal touches,
+  across ALL sessions (not just the current one) — Full Rollback replays the
+  whole file, undoing everything Wethereal has ever changed on the machine
+- **🕵️ Third-Party Adware/Bloatware Scanner**: scans the Uninstall registry
+  (not just Microsoft Store apps) for known toolbar/PUP/fake-optimizer
+  patterns (Conduit, MyWebSearch, Ask Toolbar, PC Optimizer Pro, etc.) and
+  lets you uninstall matches
+- **💽 SSD/Disk Health Check**: reads S.M.A.R.T. reliability counters
+  (temperature, SSD wear %, read/write errors, power-on hours) per physical
+  disk
+- **📊 Opt-in local usage telemetry**: honestly scoped — Wethereal has no
+  analytics backend, so this only counts locally which tweaks you apply
+  most; an optional user-supplied webhook URL can receive the same events if
+  you're centralizing stats across machines you manage yourself
+- **🔏 Code-signing**: generates a local self-signed code-signing
+  certificate, trusts it, and signs every `.ps1` file — clearly labeled as a
+  local-trust mechanism, not a substitute for a real CA-issued certificate
+  for public distribution
+- **🌐 EN/ES language toggle**: translates the main menu, category names and
+  common prompts; individual tweak descriptions deep in each category remain
+  English-only for now (full line-by-line translation of 190+ tweaks is a
+  larger follow-up project, noted honestly rather than claimed as done)
+
+### 🎉 New profiles: Streaming and Presentation/Battery
+
+- **📡 Streaming**: frees the GPU hardware encoder from Windows' own Game
+  DVR capture, mutes toast notifications, removes network throttling, High
+  Performance power plan, and gives OBS Studio Above Normal CPU priority if
+  installed
+- **🔋 Presentation / Battery**: the inverse profile — mutes notifications,
+  Balanced power plan, keeps the screen from sleeping mid-presentation,
+  pauses Windows Update for a week
+
+### 🎉 Rebuilt GUI: WinUtil-style WPF interface
+
+- Replaced the WinForms button-launcher with a proper WPF/XAML interface
+  styled after Chris Titus Tech's WinUtil: a left sidebar of tabs (Install /
+  Tweaks / Profiles / Updates / Info), a searchable, checkbox-driven tweak
+  list (24 curated tweaks across 6 groups) and app catalog (from the App
+  Manager), and a live log + progress bar built into the window itself —
+  Tweaks/Install/Profiles/Updates no longer need to alt-tab to the console
+  (only the other, less-common console categories still do, and the Info
+  tab says so plainly)
+
+### 🔧 Other changes
+
+- Main menu restructured for category 12: Quick Actions now starts at 13
+  (was 12), Advanced Tools at 20 (was 19), Professional Tools at 25 (was
+  24) — everything shifted by +1 to make room. Option-range prompt updated
+  to `(0-28)`.
+
 ## [4.3.0] - 2026-08-22 - Pro Gaming Tools, Automation & Updates, GUI
 
 ### 🎉 New: Category 10 — Pro Gaming Tools (`Modules-ProGamingTools.ps1`, new module)

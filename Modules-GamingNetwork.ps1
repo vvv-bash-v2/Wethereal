@@ -366,6 +366,76 @@ function Optimize-LowEndGaming {
     Wait-ForUser
 }
 
+function Optimize-Streaming {
+    Write-Host "`n[STREAMING MODE]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "Tuned for streaming/recording (OBS + a game at once): frees the GPU's" -ForegroundColor $Script:Colors.Info
+    Write-Host "hardware encoder from Windows' own capture, quiets popups that would show" -ForegroundColor $Script:Colors.Info
+    Write-Host "on stream, and keeps network upload stable." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action -Message "Apply Streaming mode?" -DefaultYes)) { return }
+
+    Write-Log "Applying Streaming profile" -Level Info -Category "Gaming"
+
+    $steps = @(
+        @{
+            Name   = "Disabling Xbox Game DVR (frees the hardware encoder for OBS)"
+            Action = {
+                $path = "HKCU:\System\GameConfigStore"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "GameDVR_Enabled"
+                Set-ItemProperty -Path $path -Name "GameDVR_Enabled" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Muting toast notifications (keeps popups off your stream)"
+            Action = {
+                $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\PushNotifications"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "ToastEnabled"
+                Set-ItemProperty -Path $path -Name "ToastEnabled" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Disabling network throttling (steadier upload for the stream)"
+            Action = {
+                $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"
+                Backup-RegistryValue -Path $path -Name "NetworkThrottlingIndex"
+                Set-ItemProperty -Path $path -Name "NetworkThrottlingIndex" -Value 0xffffffff -Type DWord
+            }
+        }
+        @{
+            Name   = "Switching to the High Performance power plan"
+            Action = {
+                $highPerf = powercfg -l | Select-String "High performance" | ForEach-Object { ($_ -split '\s+')[3] }
+                if ($highPerf) { powercfg -setactive $highPerf | Out-Null }
+            }
+        }
+        @{
+            Name      = "Giving OBS Studio Above Normal CPU priority"
+            Condition = {
+                $obsPaths = @("${env:ProgramFiles}\obs-studio\bin\64bit\obs64.exe", "${env:ProgramFiles(x86)}\obs-studio\bin\32bit\obs32.exe")
+                ($obsPaths | Where-Object { Test-Path $_ }).Count -gt 0
+            }
+            Action    = {
+                $obsPaths = @("${env:ProgramFiles}\obs-studio\bin\64bit\obs64.exe", "${env:ProgramFiles(x86)}\obs-studio\bin\32bit\obs32.exe")
+                $obsExeName = Split-Path ($obsPaths | Where-Object { Test-Path $_ } | Select-Object -First 1) -Leaf
+                $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$obsExeName\PerfOptions"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "CpuPriorityClass"
+                Set-ItemProperty -Path $path -Name "CpuPriorityClass" -Value 3 -Type DWord
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Streaming Mode" -Steps $steps -Category "Gaming" | Out-Null
+
+    Write-Host "`n✓ Streaming mode applied!" -ForegroundColor $Script:Colors.Success
+    Write-Host "  Tip: use your GPU's hardware encoder in OBS (NVENC/AMF/QuickSync) instead" -ForegroundColor $Script:Colors.Info
+    Write-Host "  of x264 — it costs almost no CPU/GPU headroom compared to software encoding." -ForegroundColor $Script:Colors.Info
+    Wait-ForUser
+}
+
 #endregion
 
 #region Category 3: Network & Internet

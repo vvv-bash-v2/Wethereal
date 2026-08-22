@@ -303,6 +303,64 @@ function Apply-AllAdvancedTweaks {
     Wait-ForUser
 }
 
+function Optimize-Presentation {
+    Write-Host "`n[PRESENTATION / BATTERY MODE]" -ForegroundColor $Script:Colors.Title
+    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "The inverse of the performance profiles: quiet notifications so nothing" -ForegroundColor $Script:Colors.Info
+    Write-Host "pops up mid-presentation, a battery-friendly power plan, the screen kept" -ForegroundColor $Script:Colors.Info
+    Write-Host "awake while you're presenting, and Windows Update paused for a week so it" -ForegroundColor $Script:Colors.Info
+    Write-Host "doesn't force a restart on you." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action -Message "Apply Presentation / Battery mode?" -DefaultYes)) { return }
+
+    Write-Log "Applying Presentation/Battery profile" -Level Info -Category "Advanced"
+
+    $steps = @(
+        @{
+            Name   = "Muting toast notifications for the session"
+            Action = {
+                $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\PushNotifications"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "ToastEnabled"
+                Set-ItemProperty -Path $path -Name "ToastEnabled" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Switching to the Balanced power plan (battery-friendly)"
+            Action = {
+                $balanced = powercfg -l | Select-String "Balanced" | ForEach-Object { ($_ -split '\s+')[3] }
+                if ($balanced) { powercfg -setactive $balanced | Out-Null }
+            }
+        }
+        @{
+            Name   = "Keeping the screen awake while plugged in and on battery"
+            Action = {
+                powercfg -change -monitor-timeout-ac 0 | Out-Null
+                powercfg -change -monitor-timeout-dc 0 | Out-Null
+                powercfg -change -standby-timeout-ac 0 | Out-Null
+                powercfg -change -standby-timeout-dc 0 | Out-Null
+            }
+        }
+        @{
+            Name   = "Pausing Windows Update for 7 days"
+            Action = {
+                $path = "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                $pauseUntil = (Get-Date).AddDays(7).ToString("yyyy-MM-ddTHH:mm:ssZ")
+                Backup-RegistryValue -Path $path -Name "PauseUpdatesExpiryTime"
+                Set-ItemProperty -Path $path -Name "PauseUpdatesExpiryTime" -Value $pauseUntil -Type String
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Presentation / Battery Mode" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n✓ Presentation / Battery mode applied!" -ForegroundColor $Script:Colors.Success
+    Write-Host "  Note: screen-timeout is set to 'never' until you change your power plan" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  settings again — remember to turn it back on afterward." -ForegroundColor $Script:Colors.Warning
+    Wait-ForUser
+}
+
 #endregion
 
 #region Category 7: Monitoring & System Info
