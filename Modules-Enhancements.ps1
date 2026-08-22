@@ -575,21 +575,89 @@ function Start-SystemAnalysis {
 function New-OptimizationReport {
     Write-Host "`n[GENERATE OPTIMIZATION REPORT]" -ForegroundColor $Script:Colors.Title
     Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
-    
+
     $reportPath = "$PSScriptRoot\OptimizationReport_$(Get-Date -Format 'yyyyMMdd_HHmmss').html"
-    
+
     Write-Host "`nGenerating comprehensive report..." -ForegroundColor $Script:Colors.Info
-    
-    # Gather system information
-    $sysInfo = Get-SystemInfo
-    $vendor = Get-GPUVendor
-    
-    # Create HTML report
+
+    # Each step below does its real share of the work (not a decorative delay) —
+    # the report data is gathered inside the step closures so the progress bar
+    # reflects what is actually happening at that moment.
+    $data = @{
+        SysInfo         = $null
+        HW              = $null
+        Drives          = @()
+        Issues          = @()
+        ChangedRegistry = @()
+        ChangedServices = @()
+    }
+
+    $reportSteps = @(
+        @{
+            Name   = "Gathering system & hardware information"
+            Action = {
+                $data.SysInfo = Get-SystemInfo
+                $data.HW = Get-HardwareProfile
+            }.GetNewClosure()
+        }
+        @{
+            Name   = "Collecting disk information"
+            Action = { $data.Drives = @(Get-Volume | Where-Object { $_.DriveLetter -and $_.DriveType -eq 'Fixed' }) }.GetNewClosure()
+        }
+        @{
+            Name   = "Analyzing services, telemetry and disk headroom"
+            Action = {
+                $issues = @()
+                $unnecessaryServices = @('DiagTrack', 'dmwappushservice', 'SysMain', 'WSearch')
+                $runningUnnecessary = ($unnecessaryServices | ForEach-Object {
+                        $s = Get-Service -Name $_ -ErrorAction SilentlyContinue
+                        if ($s -and $s.Status -eq 'Running') { $_ }
+                    }).Count
+                if ($runningUnnecessary -gt 0) { $issues += "$runningUnnecessary unnecessary background service(s) still running" }
+
+                $telemetry = Get-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection" -Name "AllowTelemetry" -ErrorAction SilentlyContinue
+                if (-not $telemetry -or $telemetry.AllowTelemetry -ne 0) { $issues += "Windows telemetry is not blocked" }
+
+                $visualFX = Get-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects" -Name "VisualFXSetting" -ErrorAction SilentlyContinue
+                if (-not $visualFX -or $visualFX.VisualFXSetting -ne 2) { $issues += "Visual effects are not set to best performance" }
+
+                foreach ($drive in $data.Drives) {
+                    $freePercent = ($drive.SizeRemaining / $drive.Size) * 100
+                    if ($freePercent -lt 15) { $issues += "Drive $($drive.DriveLetter): only $([math]::Round($freePercent, 1))% free" }
+                }
+
+                $data.Issues = $issues
+            }.GetNewClosure()
+        }
+        @{
+            Name   = "Summarizing settings changed this session"
+            Action = {
+                $data.ChangedRegistry = @($Script:ConfigBackup | Where-Object { $_.Type -eq 'Registry' })
+                $data.ChangedServices = @($Script:ConfigBackup | Where-Object { $_.Type -eq 'Service' })
+            }.GetNewClosure()
+        }
+    )
+
+    Invoke-TweakSequence -Title "Building Optimization Report" -Steps $reportSteps -Category "Report" | Out-Null
+
+    $sysInfo = $data.SysInfo
+    $hw = $data.HW
+    $drives = $data.Drives
+    $issues = $data.Issues
+    $changedRegistry = $data.ChangedRegistry
+    $changedServices = $data.ChangedServices
+
+    $healthScore = [math]::Max(0, 100 - ($issues.Count * 15))
+    $scoreClass = if ($healthScore -ge 80) { 'success' } elseif ($healthScore -ge 60) { 'warning' } else { 'error' }
+
+    # ---- Build HTML ---------------------------------------------------------
+    Write-Host "`n  Rendering HTML report..." -ForegroundColor $Script:Colors.Info
     $html = @"
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Windows Performance Tweaker - Optimization Report</title>
+    <meta charset="UTF-8">
+    <title>Wethereal - Optimization Report</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background: #f5f5f5; }
         .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -602,41 +670,99 @@ function New-OptimizationReport {
         .success { color: #107c10; }
         .warning { color: #ff8c00; }
         .error { color: #d13438; }
+        .score { font-size: 48px; font-weight: bold; }
+        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; color: white; }
+        .badge.nvidia { background: #76b900; } .badge.amd { background: #ed1c24; } .badge.intel { background: #0071c5; } .badge.unknown { background: #888; }
         table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #ddd; font-size: 14px; }
         th { background: #0078d4; color: white; }
         tr:hover { background: #f5f5f5; }
+        .bar-bg { background: #e0e0e0; border-radius: 6px; height: 10px; overflow: hidden; }
+        .bar-fill { background: #0078d4; height: 100%; }
         .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #666; }
+        .empty { color: #888; font-style: italic; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🚀 Windows Performance Tweaker - Optimization Report</h1>
+        <h1>🚀 Wethereal - Optimization Report</h1>
         <p><strong>Generated:</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>
-        <p><strong>Version:</strong> 2.1.0 Ultimate Edition</p>
-        
+        <p><strong>Wethereal Version:</strong> $($Script:Version) Ultimate Edition</p>
+
+        <h2>🎯 Optimization Score</h2>
+        <p class="score $scoreClass">$healthScore/100</p>
+$(
+        if ($issues.Count -gt 0) {
+            "<p><strong>Open items:</strong></p><ul>" + (($issues | ForEach-Object { "<li class='warning'>⚠ $_</li>" }) -join "`n") + "</ul>"
+        }
+        else {
+            "<p class='success'>✓ No open optimization issues detected.</p>"
+        }
+)
+
         <h2>📊 System Information</h2>
         <div class="info-grid">
             <div class="info-box">
                 <div class="info-label">💻 CPU</div>
-                <div class="info-value">$($sysInfo.CPU)</div>
+                <div class="info-value">$($sysInfo.CPU) <span class="badge $($hw.CPU.Vendor.ToLower())">$($hw.CPU.Vendor)</span></div>
             </div>
             <div class="info-box">
                 <div class="info-label">🧠 RAM</div>
                 <div class="info-value">$($sysInfo.RAM)</div>
             </div>
             <div class="info-box">
-                <div class="info-label">🎮 GPU</div>
-                <div class="info-value">$($sysInfo.GPU) ($vendor)</div>
+                <div class="info-label">🎮 GPU(s)</div>
+                <div class="info-value">$(
+        if ($hw.GPUs.Count -eq 0) { "Not detected" }
+        else { ($hw.GPUs | ForEach-Object { "$($_.Name) <span class='badge $($_.Vendor.ToLower())'>$($_.Vendor)</span>" }) -join "<br>" }
+)</div>
             </div>
             <div class="info-box">
                 <div class="info-label">🪟 Operating System</div>
                 <div class="info-value">$($sysInfo.OS)</div>
             </div>
+            <div class="info-box">
+                <div class="info-label">⏱️ Uptime</div>
+                <div class="info-value">$($sysInfo.Uptime.Days)d $($sysInfo.Uptime.Hours)h $($sysInfo.Uptime.Minutes)m</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">🏗️ Platform Profile</div>
+                <div class="info-value">$(if ($hw.IsHybridGPU) { "Hybrid GPU ($($hw.GPUVendors -join ' + '))" } else { "Single-vendor $($hw.GPUVendors -join ', ')" })</div>
+            </div>
         </div>
-        
-        <h2>📋 Optimization Log Summary</h2>
-        <p>Recent optimization activities:</p>
+
+        <h2>💾 Disk Information</h2>
+        <table>
+            <tr><th>Drive</th><th>Free</th><th>Total</th><th>Used</th><th></th></tr>
+$(
+    ($drives | ForEach-Object {
+                $freeGB = [math]::Round($_.SizeRemaining / 1GB, 2)
+                $totalGB = [math]::Round($_.Size / 1GB, 2)
+                $usedPct = [math]::Round((($_.Size - $_.SizeRemaining) / $_.Size) * 100, 1)
+                "<tr><td>$($_.DriveLetter):</td><td>$freeGB GB</td><td>$totalGB GB</td><td>$usedPct%</td><td><div class='bar-bg'><div class='bar-fill' style='width:$usedPct%'></div></div></td></tr>"
+            }) -join "`n"
+)
+        </table>
+
+        <h2>🛠️ Settings Changed This Session</h2>
+        <p>$($changedRegistry.Count) registry value(s) and $($changedServices.Count) service(s) modified by Wethereal since it started (originals were backed up before each change):</p>
+        <table>
+            <tr><th>Type</th><th>Target</th><th>Original Value</th></tr>
+$(
+        if ($changedRegistry.Count -eq 0 -and $changedServices.Count -eq 0) {
+            "<tr><td colspan='3' class='empty'>No changes recorded in this session yet.</td></tr>"
+        }
+        else {
+            $rows = @()
+            $rows += $changedRegistry | ForEach-Object { "<tr><td>Registry</td><td>$($_.Path)\$($_.Name)</td><td>$($_.Value)</td></tr>" }
+            $rows += $changedServices | ForEach-Object { "<tr><td>Service</td><td>$($_.Name)</td><td>Status=$($_.Status), StartType=$($_.StartType)</td></tr>" }
+            $rows -join "`n"
+        }
+)
+        </table>
+
+        <h2>📋 Optimization Log</h2>
+        <p>Most recent activity (last 50 entries):</p>
         <table>
             <tr>
                 <th>Timestamp</th>
@@ -645,24 +771,24 @@ function New-OptimizationReport {
                 <th>Message</th>
             </tr>
 "@
-    
+
     # Add log entries
     if (Test-Path $Script:LogFile) {
-        $logEntries = Get-Content -Path $Script:LogFile -Tail 20
+        $logEntries = Get-Content -Path $Script:LogFile -Tail 50
         foreach ($entry in $logEntries) {
             if ($entry -match '\[(.*?)\] \[(.*?)\] \[(.*?)\] (.*)') {
                 $timestamp = $matches[1]
                 $level = $matches[2]
                 $category = $matches[3]
                 $message = $matches[4]
-                
+
                 $levelClass = switch ($level) {
                     'Success' { 'success' }
                     'Warning' { 'warning' }
                     'Error' { 'error' }
                     default { '' }
                 }
-                
+
                 $html += @"
             <tr>
                 <td>$timestamp</td>
@@ -674,34 +800,41 @@ function New-OptimizationReport {
             }
         }
     }
-    
+    else {
+        $html += "<tr><td colspan='4' class='empty'>No log file found yet.</td></tr>"
+    }
+
+    $recommendations = @()
+    if ($issues.Count -gt 0) { $recommendations += "Re-run the relevant optimizations listed under 'Optimization Score' above" }
+    $recommendations += "Restart your computer to fully apply all changes"
+    $recommendations += "Run the Performance Benchmark (Category 7, Option 2) to measure improvements"
+    $recommendations += "Create a system restore point before further optimizations (Category 8, Option 2)"
+    $recommendations += "Monitor system performance over the next few days"
+
     $html += @"
         </table>
-        
+
         <h2>✅ Recommendations</h2>
         <ul>
-            <li>Restart your computer to apply all changes</li>
-            <li>Run performance benchmark to measure improvements</li>
-            <li>Create a system restore point before further optimizations</li>
-            <li>Monitor system performance over the next few days</li>
+$(($recommendations | ForEach-Object { "            <li>$_</li>" }) -join "`n")
         </ul>
-        
+
         <div class="footer">
-            <p>Windows Performance Tweaker Ultimate Edition v2.1.0</p>
+            <p>Wethereal Ultimate Edition v$($Script:Version)</p>
             <p>For more information, visit the project documentation</p>
         </div>
     </div>
 </body>
 </html>
 "@
-    
+
     # Save report
     $html | Out-File -FilePath $reportPath -Encoding UTF8
-    
+
     Write-Host "`n✓ Report generated successfully!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Location: $reportPath" -ForegroundColor $Script:Colors.Info
     Write-Log "Generated optimization report: $reportPath" -Level Success -Category "Report"
-    
+
     $open = Read-Host "`nOpen report in browser? (Y/n)"
     if ($open -ne 'N' -and $open -ne 'n') {
         Start-Process $reportPath

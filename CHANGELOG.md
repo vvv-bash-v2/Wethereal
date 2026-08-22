@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-08-22 - Menu renumbering & detailed HTML report
+
+### 🎉 Changes
+
+- **Fixed main menu numbering**: options 14 ("Restore Previous Settings") and 15
+  ("View Optimization Log") were being drawn at the very bottom of the menu,
+  under the "PROFESSIONAL TOOLS" section, even though their numbers belong
+  right after option 13 — so the visible list jumped straight from 13 to 16.
+  They're now printed in their correct numeric position, right after option
+  13 in the QUICK ACTIONS block. The underlying option numbers/behavior are
+  unchanged (no switch/case logic changed), only where they're displayed.
+- Fixed the "Select an option" prompt on the main menu, which said
+  `(0-15)` even though valid choices go up to 24
+- **Optimization Report is now far more detailed** (`New-OptimizationReport`):
+  - Optimization score (0-100) computed from live checks (unnecessary
+    services running, telemetry blocked, visual effects, disk headroom)
+  - CPU/GPU vendor badges (color-coded per vendor) from the hardware
+    detection module, including every GPU on hybrid systems
+  - Full disk table per fixed drive with a visual used-space bar
+  - New "Settings Changed This Session" table listing every registry value
+    and service Wethereal has modified, with the original (pre-change) value
+    it backed up — so the report doubles as an audit trail
+  - Optimization log expanded from the last 20 to the last 50 entries
+  - Dynamic recommendations based on what the live analysis actually found
+  - Report now shows the real running version (`$Script:Version`) instead of
+    a hardcoded "2.1.0" left over from an earlier release
+  - Report generation now shows its own progress bar per gathering step
+
 ## [4.0.1] - 2026-08-22 - HOTFIX: UTF-8 BOM (fixes script failing to parse on Windows PowerShell 5.1)
 
 ### 🐛 Bug Fixes

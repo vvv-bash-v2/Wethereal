@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.0.1
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.1.0
 .DESCRIPTION
     A comprehensive Windows optimization tool with 135+ tweaks across 8 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
@@ -10,13 +10,13 @@
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.0.1 Ultimate Edition
+    Version: 4.1.0 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 #>
 
 # Script configuration
-$Script:Version = "4.0.1"
+$Script:Version = "4.1.0"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
@@ -185,6 +185,8 @@ function Show-MainMenu {
     Write-Host "  11. 🎮 GPU-Specific Optimizations" -ForegroundColor Magenta
     Write-Host "  12. 🗑️  Enhanced Bloatware Removal" -ForegroundColor Yellow
     Write-Host "  13. 📈 Generate Optimization Report" -ForegroundColor White
+    Write-Host "  14. 🔄 Restore Previous Settings" -ForegroundColor Yellow
+    Write-Host "  15. 📋 View Optimization Log" -ForegroundColor White
     Write-Host ""
     Write-Host "  ADVANCED TOOLS (NEW!)" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
@@ -201,8 +203,6 @@ function Show-MainMenu {
     Write-Host "  23. ⚙️  Intelligent Service Optimizer" -ForegroundColor Yellow
     Write-Host "  24. 🔄 Windows Update Manager" -ForegroundColor Magenta
     Write-Host ""
-    Write-Host "  14. 🔄 Restore Previous Settings" -ForegroundColor Yellow
-    Write-Host "  15. 📋 View Optimization Log" -ForegroundColor White
     Write-Host "   0. ❌ Exit" -ForegroundColor Red
     Write-Host ""
 }
@@ -972,7 +972,7 @@ function Main {
     
     do {
         Show-MainMenu
-        $choice = Read-Host "Select an option (0-15)"
+        $choice = Read-Host "Select an option (0-24)"
         
         switch ($choice) {
             '1' { Show-SystemPerformanceMenu }
