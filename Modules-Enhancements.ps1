@@ -1,4 +1,4 @@
-# Windows Performance Tweaker Ultimate Edition v2.1.0
+﻿# Windows Performance Tweaker Ultimate Edition v2.1.0
 # Enhancement Module - Advanced Features
 # GPU Optimizations, Automated Profiles, System Analysis, Advanced Reporting
 

@@ -1,4 +1,4 @@
-# Wethereal Ultimate Edition - Advanced Features Module
+﻿# Wethereal Ultimate Edition - Advanced Features Module
 # Additional Professional Features for Complete Optimization
 
 #region Advanced Performance Monitoring

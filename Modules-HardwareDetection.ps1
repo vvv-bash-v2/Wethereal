@@ -1,4 +1,4 @@
-# Wethereal Ultimate Edition - Hardware Detection Module
+﻿# Wethereal Ultimate Edition - Hardware Detection Module
 # Detects CPU vendor (Intel/AMD) and ALL installed GPUs (Intel/AMD/NVIDIA, including
 # hybrid laptop configurations with an integrated + a discrete GPU) so the rest of the
 # tool can automatically adapt which optimizations it offers and applies.

@@ -1,8 +1,8 @@
-#Requires -RunAsAdministrator
+﻿#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.0.0
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.0.1
 .DESCRIPTION
     A comprehensive Windows optimization tool with 135+ tweaks across 8 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
@@ -10,13 +10,13 @@
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.0.0 Ultimate Edition
+    Version: 4.0.1 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 #>
 
 # Script configuration
-$Script:Version = "4.0.0"
+$Script:Version = "4.0.1"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"

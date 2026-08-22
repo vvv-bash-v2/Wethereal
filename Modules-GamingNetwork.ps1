@@ -1,4 +1,4 @@
-# Windows Performance Tweaker Ultimate Edition v3.5.0
+﻿# Windows Performance Tweaker Ultimate Edition v3.5.0
 # Additional Optimization Modules - Part 2
 # Gaming, Network
 

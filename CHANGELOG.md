@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1] - 2026-08-22 - HOTFIX: UTF-8 BOM (fixes script failing to parse on Windows PowerShell 5.1)
+
+### 🐛 Bug Fixes
+
+- **Critical: script failed to run at all on Windows PowerShell 5.1** with parser
+  errors like `Token '’ Privacy Focused"' inesperado` and
+  `No se permite usar el carácter de Y comercial (&)`. Root cause: none of the
+  `.ps1` files carried a UTF-8 byte-order-mark (BOM). Windows PowerShell 5.1
+  (unlike PowerShell 7/pwsh) reads a BOM-less script using the system's
+  legacy ANSI code page instead of UTF-8 — on a Spanish-locale machine that's
+  Windows-1252 — so every emoji (🔒, 🎮, 📊, …) in the source, which is stored
+  as multi-byte UTF-8, was misdecoded byte-by-byte into mojibake. Some of
+  those misdecoded bytes happened to land on `"` and `&`, which broke string
+  literals and tripped the "reserved for future use" `&` operator error.
+  - Fix: added a UTF-8 BOM (`EF BB BF`) to the start of all 8 `.ps1` files.
+    File content is otherwise unchanged; this only changes how the very first
+    bytes tell the interpreter which encoding to use.
+
 ## [4.0.0] - 2026-08-22 - ADAPTIVE HARDWARE EDITION: AMD Support & Live Progress
 
 ### 🎉 New Features

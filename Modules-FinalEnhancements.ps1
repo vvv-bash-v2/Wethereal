@@ -1,4 +1,4 @@
-# Wethereal Ultimate Edition - Final Enhancement Module
+﻿# Wethereal Ultimate Edition - Final Enhancement Module
 # Ultimate Professional Features for Complete System Control
 
 #region System Health Check
