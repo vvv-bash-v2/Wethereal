@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.2] - 2026-08-22 - HOTFIX: GUI window too large, opened off-screen on smaller displays
+
+### 🐛 Bug Fixes
+
+- The GUI's default size (840×1240) was too large for smaller/laptop
+  screens (1366×768 and similar) and could open partially off-screen.
+  Reduced the default startup size to 700×980, and added a runtime check
+  against `SystemParameters.WorkArea` (the actual visible screen area,
+  excluding the taskbar) that shrinks the window further on smaller or
+  scaled displays — it now always opens fully on-screen regardless of
+  monitor size. Still resizable up to the full work area afterward.
+
 ## [4.4.1] - 2026-08-22 - GUI window: draggable custom title bar (WinUtil-style chrome)
 
 ### 🎉 Changes

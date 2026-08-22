@@ -114,7 +114,7 @@ function Show-GraphicalMenu {
     [xml]$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Wethereal" Height="840" Width="1240" MinHeight="560" MinWidth="900"
+        Title="Wethereal" Height="700" Width="980" MinHeight="480" MinWidth="760"
         WindowStartupLocation="CenterScreen" WindowStyle="None" ResizeMode="CanResize"
         BorderBrush="#2A3454" BorderThickness="1"
         Background="#080B14" FontFamily="Segoe UI">
@@ -304,6 +304,16 @@ function Show-GraphicalMenu {
 
     $reader = New-Object System.Xml.XmlNodeReader $xaml
     $window = [Windows.Markup.XamlReader]::Load($reader)
+
+    # ---- Fit the window to the actual screen — the XAML size is just a
+    # ---- default for typical 1080p+ displays; on smaller/scaled screens
+    # ---- (laptops, 1366x768, high DPI scaling) shrink to fit the visible
+    # ---- work area (excludes the taskbar) so it never opens off-screen.
+    $workArea = [System.Windows.SystemParameters]::WorkArea
+    $window.MaxHeight = $workArea.Height
+    $window.MaxWidth = $workArea.Width
+    if ($window.Height -gt $workArea.Height * 0.9) { $window.Height = [math]::Max($window.MinHeight, [math]::Floor($workArea.Height * 0.85)) }
+    if ($window.Width -gt $workArea.Width * 0.9) { $window.Width = [math]::Max($window.MinWidth, [math]::Floor($workArea.Width * 0.85)) }
 
     # ---- Custom title bar: draggable (WindowStyle="None" has no native one) ----
     $titleBar = $window.FindName("TitleBar")
