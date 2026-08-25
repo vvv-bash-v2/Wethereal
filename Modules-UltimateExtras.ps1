@@ -5,7 +5,7 @@
 
 #region Category 9: Ultimate Extras
 
-function Show-UltimateExtrasMenu {
+function Global:Show-UltimateExtrasMenu {
     do {
         Show-Header "Ultimate Extras"
         Write-Host "  ULTIMATE EXTRAS" -ForegroundColor $Script:Colors.Menu
@@ -49,7 +49,7 @@ function Show-UltimateExtrasMenu {
 
 #region App Manager (winget)
 
-function Test-WingetAvailable {
+function Global:Test-WingetAvailable {
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if (-not $winget) {
         Write-Host "`n[X] winget (App Installer) was not found on this system." -ForegroundColor $Script:Colors.Error
@@ -88,7 +88,7 @@ $Script:AppCatalog = @(
     @{ Name = "Visual C++ Redistributables (all)"; Id = "Microsoft.VCRedist.2015+.x64" }
 )
 
-function Show-AppInstaller {
+function Global:Show-AppInstaller {
     Write-Host "`n[APP MANAGER - INSTALL]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -142,7 +142,7 @@ function Show-AppInstaller {
     Wait-ForUser
 }
 
-function Show-AppUninstaller {
+function Global:Show-AppUninstaller {
     Write-Host "`n[APP MANAGER - UNINSTALL]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -215,7 +215,7 @@ function Show-AppUninstaller {
     Wait-ForUser
 }
 
-function Invoke-WingetUpgradeAll {
+function Global:Invoke-WingetUpgradeAll {
     Write-Host "`n[UPDATE ALL APPS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -244,7 +244,7 @@ function Invoke-WingetUpgradeAll {
 
 #region Ultimate Performance Power Plan
 
-function Enable-UltimatePerformancePlan {
+function Global:Enable-UltimatePerformancePlan {
     Write-Host "`n[ULTIMATE PERFORMANCE POWER PLAN]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Surfaces and activates Windows' hidden 'Ultimate Performance' power" -ForegroundColor $Script:Colors.Info
@@ -292,7 +292,7 @@ function Enable-UltimatePerformancePlan {
 
 #region Classic Context Menu (Windows 11)
 
-function Set-ClassicContextMenu {
+function Global:Set-ClassicContextMenu {
     Write-Host "`n[CLASSIC RIGHT-CLICK CONTEXT MENU]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Windows 11 hides most right-click options behind 'Show more options'." -ForegroundColor $Script:Colors.Info
@@ -355,7 +355,7 @@ function Set-ClassicContextMenu {
 
 #region Taskbar Alignment (Windows 11)
 
-function Set-TaskbarAlignment {
+function Global:Set-TaskbarAlignment {
     Write-Host "`n[TASKBAR ALIGNMENT]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "  1. Left-align taskbar icons (classic Windows 10 style)" -ForegroundColor White
@@ -414,7 +414,7 @@ $Script:HostsBlockDomains = @(
     "settings-win.data.microsoft.com", "browser.events.data.msn.com"
 )
 
-function Set-HostsAdBlock {
+function Global:Set-HostsAdBlock {
     Write-Host "`n[HOSTS FILE AD-BLOCKING]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     $hostsPath = "$env:SystemRoot\System32\drivers\etc\hosts"
@@ -488,7 +488,7 @@ function Set-HostsAdBlock {
 
 #region Quick Tweak Checklist
 
-function Show-TweakChecklist {
+function Global:Show-TweakChecklist {
     Write-Host "`n[QUICK TWEAK CHECKLIST]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Pick any combination of quick, independent tweaks and apply them all" -ForegroundColor $Script:Colors.Info
@@ -557,7 +557,7 @@ function Show-TweakChecklist {
 
 #region Backup Comparison
 
-function Compare-Backups {
+function Global:Compare-Backups {
     Write-Host "`n[COMPARE TWO BACKUPS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -647,7 +647,7 @@ function Compare-Backups {
 
 #region TPM & Secure Boot Check
 
-function Test-TpmSecureBoot {
+function Global:Test-TpmSecureBoot {
     Write-Host "`n[TPM & SECURE BOOT CHECK]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Checking Windows 11 hardware readiness requirements..." -ForegroundColor $Script:Colors.Info

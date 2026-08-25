@@ -7,7 +7,7 @@ $Script:UpdateRepoName = "Wethereal"
 
 #region Category 11: Automation & Updates
 
-function Show-AutomationMenu {
+function Global:Show-AutomationMenu {
     do {
         Show-Header "Automation & Updates"
         Write-Host "  AUTOMATION & UPDATES" -ForegroundColor $Script:Colors.Menu
@@ -39,7 +39,7 @@ function Show-AutomationMenu {
 
 #region Self-Update from GitHub
 
-function Update-Wethereal {
+function Global:Update-Wethereal {
     Write-Host "`n[CHECK FOR WETHEREAL UPDATES]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Checking $Script:UpdateRepoOwner/$Script:UpdateRepoName on GitHub..." -ForegroundColor $Script:Colors.Info
@@ -127,7 +127,7 @@ function Update-Wethereal {
 
 #region Before/After Benchmark
 
-function Invoke-BeforeAfterBenchmark {
+function Global:Invoke-BeforeAfterBenchmark {
     Write-Host "`n[BEFORE/AFTER BENCHMARK]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Runs a quick benchmark, applies a profile of your choice, then benchmarks" -ForegroundColor $Script:Colors.Info
@@ -206,7 +206,7 @@ function Invoke-BeforeAfterBenchmark {
 
 #region Pagefile Manager
 
-function Optimize-PageFile {
+function Global:Optimize-PageFile {
     Write-Host "`n[VIRTUAL MEMORY / PAGEFILE MANAGER]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -321,7 +321,7 @@ function Optimize-PageFile {
 
 #region Scheduled Profile Re-Apply
 
-function Set-ScheduledProfileReapply {
+function Global:Set-ScheduledProfileReapply {
     Write-Host "`n[SCHEDULE AUTOMATIC PROFILE RE-APPLY]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Creates a Windows scheduled task that silently re-runs a profile - useful" -ForegroundColor $Script:Colors.Info

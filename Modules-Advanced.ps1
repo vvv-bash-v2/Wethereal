@@ -3,7 +3,7 @@
 
 #region Advanced Performance Monitoring
 
-function Show-PerformanceDashboard {
+function Global:Show-PerformanceDashboard {
     Write-Host "`n[REAL-TIME PERFORMANCE DASHBOARD]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Monitoring system performance... Press Ctrl+C to exit" -ForegroundColor $Script:Colors.Info
@@ -61,7 +61,7 @@ function Show-PerformanceDashboard {
 
 #region Automatic Backup System
 
-function New-AutomaticBackup {
+function Global:New-AutomaticBackup {
     Write-Host "`n[AUTOMATIC BACKUP]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     
@@ -99,7 +99,7 @@ function New-AutomaticBackup {
 
 #region One-Click Restore
 
-function Invoke-QuickRestore {
+function Global:Invoke-QuickRestore {
     Write-Host "`n[ONE-CLICK RESTORE]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     
@@ -158,7 +158,7 @@ function Invoke-QuickRestore {
 
 #region Startup Impact Analyzer
 
-function Show-StartupImpact {
+function Global:Show-StartupImpact {
     Write-Host "`n[STARTUP IMPACT ANALYZER]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Analyzing startup programs..." -ForegroundColor $Script:Colors.Info
@@ -274,7 +274,7 @@ function Show-StartupImpact {
 
 #region Network Speed Test
 
-function Test-NetworkSpeed {
+function Global:Test-NetworkSpeed {
     Write-Host "`n[NETWORK SPEED TEST]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Testing network connectivity and speed..." -ForegroundColor $Script:Colors.Info
@@ -345,7 +345,7 @@ function Test-NetworkSpeed {
 
 #region Temperature Monitoring
 
-function Show-SystemTemperature {
+function Global:Show-SystemTemperature {
     Write-Host "`n[SYSTEM TEMPERATURE MONITOR]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Attempting to read system temperatures..." -ForegroundColor $Script:Colors.Info
@@ -390,7 +390,7 @@ function Show-SystemTemperature {
 
 #region Enhanced Error Handling
 
-function Initialize-ErrorHandling {
+function Global:Initialize-ErrorHandling {
     # Set up global error handling
     $ErrorActionPreference = "Continue"
     

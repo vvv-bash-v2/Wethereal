@@ -6,7 +6,7 @@
 # Get-GPUVendor / Get-GPUVendorList / Get-HardwareProfile live in
 # Modules-HardwareDetection.ps1 (loaded first) so every module shares one detector.
 
-function Optimize-GPUSpecific {
+function Global:Optimize-GPUSpecific {
     Write-Host "`n[GPU-SPECIFIC OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -42,7 +42,7 @@ function Optimize-GPUSpecific {
     Wait-ForUser
 }
 
-function Optimize-NVIDIA {
+function Global:Optimize-NVIDIA {
     Write-Host "`n  [NVIDIA GPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
 
     $steps = @(
@@ -92,7 +92,7 @@ function Optimize-NVIDIA {
     Invoke-TweakSequence -Title "NVIDIA GPU Optimization" -Steps $steps -Category "GPU" | Out-Null
 }
 
-function Optimize-AMD {
+function Global:Optimize-AMD {
     Write-Host "`n  [AMD RADEON GPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
 
     $steps = @(
@@ -153,7 +153,7 @@ function Optimize-AMD {
     Invoke-TweakSequence -Title "AMD Radeon GPU Optimization" -Steps $steps -Category "GPU" | Out-Null
 }
 
-function Optimize-IntelGPU {
+function Global:Optimize-IntelGPU {
     Write-Host "`n  [INTEL GPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
 
     $steps = @(
@@ -185,7 +185,7 @@ function Optimize-IntelGPU {
 
 #region CPU-Specific Optimizations (AMD Ryzen / Intel Core)
 
-function Optimize-AMDCPU {
+function Global:Optimize-AMDCPU {
     Write-Host "`n  [AMD RYZEN CPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
 
     $steps = @(
@@ -243,7 +243,7 @@ function Optimize-AMDCPU {
     Write-Host "    Windows Update or amd.com - it installs Ryzen-specific power plans." -ForegroundColor DarkGray
 }
 
-function Optimize-IntelCPU {
+function Global:Optimize-IntelCPU {
     Write-Host "`n  [INTEL CORE CPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Highlight
 
     $hw = Get-HardwareProfile
@@ -298,7 +298,7 @@ function Optimize-IntelCPU {
 
 #region Automated Profile System
 
-function Invoke-OptimizationProfile {
+function Global:Invoke-OptimizationProfile {
     param(
         [Parameter(Mandatory = $true)]
         [ValidateSet("Gaming", "Work", "MaxPerformance", "Privacy", "LowEndGaming", "Streaming", "Presentation")]
@@ -444,7 +444,7 @@ function Invoke-OptimizationProfile {
     }
 }
 
-function Show-ProfilesMenuEnhanced {
+function Global:Show-ProfilesMenuEnhanced {
     Write-Host "`n[OPTIMIZATION PROFILES]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Select a profile to apply:" -ForegroundColor $Script:Colors.Info
@@ -501,7 +501,7 @@ function Show-ProfilesMenuEnhanced {
 
 #region System Analysis
 
-function Start-SystemAnalysis {
+function Global:Start-SystemAnalysis {
     Write-Host "`n[SYSTEM ANALYSIS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Analyzing your system for optimization opportunities..." -ForegroundColor $Script:Colors.Info
@@ -609,7 +609,7 @@ function Start-SystemAnalysis {
 
 #region Advanced Reporting
 
-function New-OptimizationReport {
+function Global:New-OptimizationReport {
     Write-Host "`n[GENERATE OPTIMIZATION REPORT]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -882,7 +882,7 @@ $(($recommendations | ForEach-Object { "            <li>$_</li>" }) -join "`n")
 
 #region Enhanced Bloatware Detection
 
-function Get-EnhancedBloatwareList {
+function Global:Get-EnhancedBloatwareList {
     Write-Host "`n[ENHANCED BLOATWARE DETECTION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Scanning for bloatware and unnecessary apps..." -ForegroundColor $Script:Colors.Info

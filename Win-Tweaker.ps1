@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.4.3
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.4.4
 .DESCRIPTION
     A comprehensive Windows optimization tool with 190+ tweaks across 12 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
@@ -10,7 +10,7 @@
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.4.3 Ultimate Edition
+    Version: 4.4.4 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 .PARAMETER Silent
@@ -49,7 +49,7 @@ if ($Silent -and -not $ProfileName) {
 }
 
 # Script configuration
-$Script:Version = "4.4.3"
+$Script:Version = "4.4.4"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
@@ -133,7 +133,7 @@ $Script:Profiles = @{
 
 #region Helper Functions
 
-function Write-Log {
+function Global:Write-Log {
     param(
         [string]$Message,
         [ValidateSet('Debug', 'Info', 'Success', 'Warning', 'Error', 'Critical')]
@@ -157,7 +157,7 @@ function Write-Log {
     Write-Host $logMessage -ForegroundColor $color
 }
 
-function Show-Header {
+function Global:Show-Header {
     param([string]$Subtitle = "")
     
     Clear-Host
@@ -222,7 +222,7 @@ function Show-Header {
     Write-Host ""
 }
 
-function Show-MainMenu {
+function Global:Show-MainMenu {
     Show-Header
     Write-Host "  $(Get-Str 'MainMenuTitle')" -ForegroundColor $Script:Colors.Menu
     Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
@@ -269,7 +269,7 @@ function Show-MainMenu {
     Write-Host ""
 }
 
-function Confirm-Action {
+function Global:Confirm-Action {
     param(
         [string]$Message = "Do you want to proceed?",
         [switch]$DefaultYes
@@ -287,7 +287,7 @@ function Confirm-Action {
     return $response -eq 'Y' -or $response -eq 'y'
 }
 
-function Wait-ForUser {
+function Global:Wait-ForUser {
     <#
         Replaces the old inline "Read-Host 'Press Enter to continue'" calls used at
         the end of every tweak function. When a profile is applying a whole batch of
@@ -300,7 +300,7 @@ function Wait-ForUser {
     Read-Host $Message
 }
 
-function Add-UndoAction {
+function Global:Add-UndoAction {
     param(
         [string]$Description,
         [scriptblock]$UndoScript,
@@ -315,7 +315,7 @@ function Add-UndoAction {
     }
 }
 
-function Add-MasterBackupEntry {
+function Global:Add-MasterBackupEntry {
     <#
         Appends one backup entry to Wethereal_MasterBackup.json, a file that
         accumulates across EVERY run of Wethereal on this machine (never
@@ -346,7 +346,7 @@ function Add-MasterBackupEntry {
     }
 }
 
-function Backup-ServiceState {
+function Global:Backup-ServiceState {
     param([string]$ServiceName)
     
     try {
@@ -379,7 +379,7 @@ function Backup-ServiceState {
     }
 }
 
-function Backup-RegistryValue {
+function Global:Backup-RegistryValue {
     param(
         [string]$Path,
         [string]$Name
@@ -414,7 +414,7 @@ function Backup-RegistryValue {
     }
 }
 
-function Invoke-BackupRestore {
+function Global:Invoke-BackupRestore {
     <#
         Applies every entry captured by Backup-RegistryValue / Backup-ServiceState -
         either the live in-memory $Script:ConfigBackup, or one deserialized from a
@@ -450,7 +450,7 @@ function Invoke-BackupRestore {
     Invoke-TweakSequence -Title "Restoring Previous Settings" -Steps $steps -Category "Restore" | Out-Null
 }
 
-function Get-SystemInfo {
+function Global:Get-SystemInfo {
     $cpu = Get-CimInstance -ClassName Win32_Processor | Select-Object -First 1
     $ram = Get-CimInstance -ClassName Win32_ComputerSystem
     $os = Get-CimInstance -ClassName Win32_OperatingSystem
@@ -465,7 +465,7 @@ function Get-SystemInfo {
     }
 }
 
-function Invoke-TweakSequence {
+function Global:Invoke-TweakSequence {
     <#
         Shared progress-bar engine used by every optimization function in Wethereal.
         Takes an ordered array of steps (@{ Name = "..."; Action = { <scriptblock> } })
@@ -570,7 +570,7 @@ foreach ($moduleFile in $moduleFiles) {
 
 #region Category 1: System Performance
 
-function Show-SystemPerformanceMenu {
+function Global:Show-SystemPerformanceMenu {
     do {
         Show-Header "System Performance"
         Write-Host "  SYSTEM PERFORMANCE OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
@@ -604,7 +604,7 @@ function Show-SystemPerformanceMenu {
     } while ($true)
 }
 
-function Optimize-CPU {
+function Global:Optimize-CPU {
     Write-Host "`n[CPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -666,7 +666,7 @@ function Optimize-CPU {
     Wait-ForUser
 }
 
-function Optimize-GPU {
+function Global:Optimize-GPU {
     Write-Host "`n[GPU & GRAPHICS OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -731,7 +731,7 @@ function Optimize-GPU {
     Wait-ForUser
 }
 
-function Optimize-MemoryAdvanced {
+function Global:Optimize-MemoryAdvanced {
     Write-Host "`n[ADVANCED MEMORY OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -795,7 +795,7 @@ function Optimize-MemoryAdvanced {
     Wait-ForUser
 }
 
-function Optimize-DiskIO {
+function Global:Optimize-DiskIO {
     Write-Host "`n[DISK I/O OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -816,7 +816,7 @@ function Optimize-DiskIO {
     Wait-ForUser
 }
 
-function Optimize-WindowsServices {
+function Global:Optimize-WindowsServices {
     Write-Host "`n[WINDOWS SERVICES OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     
@@ -871,7 +871,7 @@ function Optimize-WindowsServices {
     Wait-ForUser
 }
 
-function Optimize-VisualEffects {
+function Global:Optimize-VisualEffects {
     Write-Host "`n[VISUAL EFFECTS OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -922,7 +922,7 @@ function Optimize-VisualEffects {
     Wait-ForUser
 }
 
-function Optimize-Storage {
+function Global:Optimize-Storage {
     Write-Host "`n[STORAGE OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -952,7 +952,7 @@ function Optimize-Storage {
     Wait-ForUser
 }
 
-function Optimize-WindowsUpdate {
+function Global:Optimize-WindowsUpdate {
     Write-Host "`n[WINDOWS UPDATE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -987,7 +987,7 @@ function Optimize-WindowsUpdate {
     Wait-ForUser
 }
 
-function Invoke-AllSystemOptimizations {
+function Global:Invoke-AllSystemOptimizations {
     Write-Host "`n[APPLY ALL SYSTEM OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will apply ALL system performance optimizations." -ForegroundColor $Script:Colors.Warning
@@ -1018,7 +1018,7 @@ function Invoke-AllSystemOptimizations {
 
 #region Main Program (Simplified for now)
 
-function Main {
+function Global:Main {
     # Check for admin privileges
     $isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     

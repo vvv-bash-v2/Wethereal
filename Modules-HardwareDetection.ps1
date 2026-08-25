@@ -5,7 +5,7 @@
 
 #region CPU Detection
 
-function Get-CPUVendorInfo {
+function Global:Get-CPUVendorInfo {
     <#
         Returns a hashtable describing the installed CPU(s):
         Vendor      : "Intel", "AMD", or "Unknown"
@@ -53,7 +53,7 @@ function Get-CPUVendorInfo {
     }
 }
 
-function Get-CPUVendor {
+function Global:Get-CPUVendor {
     # Lightweight accessor kept for call sites that only need the vendor string
     return (Get-CPUVendorInfo).Vendor
 }
@@ -62,7 +62,7 @@ function Get-CPUVendor {
 
 #region GPU Detection
 
-function Get-GPUVendorList {
+function Global:Get-GPUVendorList {
     <#
         Returns an array of hashtables, one per detected video controller, so hybrid
         systems (e.g. Intel iGPU + AMD/NVIDIA dGPU) are fully represented instead of
@@ -110,7 +110,7 @@ function Get-GPUVendorList {
     }
 }
 
-function Get-GPUVendor {
+function Global:Get-GPUVendor {
     <#
         Backward-compatible accessor: returns the vendor of the PRIMARY GPU
         (first active adapter, or first adapter if none report as active).
@@ -129,7 +129,7 @@ function Get-GPUVendor {
 
 #region Unified Hardware Profile
 
-function Get-HardwareProfile {
+function Global:Get-HardwareProfile {
     <#
         Builds (and caches on $Script:Hardware) a complete picture of the machine:
         CPU vendor/name, every GPU detected, whether this is a hybrid multi-GPU
@@ -158,7 +158,7 @@ function Get-HardwareProfile {
     return $Script:Hardware
 }
 
-function Show-HardwarePlatformSummary {
+function Global:Show-HardwarePlatformSummary {
     <#
         Human-readable one-liner used by the startup banner, e.g.:
         "AMD Ryzen 9 7900X + AMD Radeon RX 7900 XTX (single-vendor AMD platform)"

@@ -4,7 +4,7 @@
 
 #region Category 10: Pro Gaming Tools
 
-function Show-ProGamingToolsMenu {
+function Global:Show-ProGamingToolsMenu {
     do {
         Show-Header "Pro Gaming Tools"
         Write-Host "  PRO GAMING TOOLS" -ForegroundColor $Script:Colors.Menu
@@ -38,7 +38,7 @@ function Show-ProGamingToolsMenu {
 
 #region Overclock / Undervolt Guide (informational only)
 
-function Show-OverclockGuide {
+function Global:Show-OverclockGuide {
     Write-Host "`n[OVERCLOCK / UNDERVOLT GUIDE]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "[!]  Wethereal does NOT touch voltages, clocks or power limits directly -" -ForegroundColor $Script:Colors.Warning
@@ -106,7 +106,7 @@ function Show-OverclockGuide {
 
 #region CPU/GPU Bottleneck Detector
 
-function Test-Bottleneck {
+function Global:Test-Bottleneck {
     Write-Host "`n[CPU/GPU BOTTLENECK DETECTOR]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Runs a ~8 second synthetic CPU load while sampling CPU and GPU usage to" -ForegroundColor $Script:Colors.Info
@@ -205,7 +205,7 @@ $Script:CuratedGames = @(
     @{ Name = "Other / custom .exe"; Hint = $null }
 )
 
-function Show-GameProfiles {
+function Global:Show-GameProfiles {
     Write-Host "`n[PER-GAME PROCESS TUNING]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Applies Windows' own per-executable performance hooks to a specific game:" -ForegroundColor $Script:Colors.Info
@@ -274,7 +274,7 @@ function Show-GameProfiles {
 
 #region Clean GPU Driver Reinstall (DDU-style, best-effort)
 
-function Invoke-CleanGpuDriverReinstall {
+function Global:Invoke-CleanGpuDriverReinstall {
     Write-Host "`n[CLEAN GPU DRIVER REINSTALL]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "[!]  This is a BEST-EFFORT clean-up, not a full DDU replacement." -ForegroundColor $Script:Colors.Warning
@@ -376,7 +376,7 @@ function Invoke-CleanGpuDriverReinstall {
 
 #region FPS Overlay (RTSS)
 
-function Enable-FpsOverlay {
+function Global:Enable-FpsOverlay {
     Write-Host "`n[FPS OVERLAY]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Wethereal can't draw its own in-game overlay (that needs a DirectX/OpenGL" -ForegroundColor $Script:Colors.Info

@@ -3,7 +3,7 @@
 
 #region System Health Check
 
-function Start-SystemHealthCheck {
+function Global:Start-SystemHealthCheck {
     Write-Host "`n[COMPREHENSIVE SYSTEM HEALTH CHECK]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Performing comprehensive system diagnostics..." -ForegroundColor $Script:Colors.Info
@@ -238,7 +238,7 @@ function Start-SystemHealthCheck {
 
 #region Registry Optimizer
 
-function Optimize-Registry {
+function Global:Optimize-Registry {
     Write-Host "`n[REGISTRY OPTIMIZER]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Optimizing Windows Registry..." -ForegroundColor $Script:Colors.Info
@@ -284,7 +284,7 @@ function Optimize-Registry {
 
 #region Service Optimizer
 
-function Optimize-ServicesIntelligent {
+function Global:Optimize-ServicesIntelligent {
     Write-Host "`n[INTELLIGENT SERVICE OPTIMIZER]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Analyzing and optimizing Windows services..." -ForegroundColor $Script:Colors.Info
@@ -334,7 +334,7 @@ function Optimize-ServicesIntelligent {
 
 #region Update Manager
 
-function Set-WindowsUpdates {
+function Global:Set-WindowsUpdates {
     Write-Host "`n[WINDOWS UPDATE MANAGER]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host ""

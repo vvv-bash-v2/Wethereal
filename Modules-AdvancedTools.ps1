@@ -4,7 +4,7 @@
 
 #region Category 6: Advanced Tweaks
 
-function Show-AdvancedMenu {
+function Global:Show-AdvancedMenu {
     do {
         Show-Header "Advanced Tweaks"
         Write-Host "  ADVANCED SYSTEM TWEAKS" -ForegroundColor $Script:Colors.Menu
@@ -40,7 +40,7 @@ function Show-AdvancedMenu {
     } while ($true)
 }
 
-function Optimize-BootShutdown {
+function Global:Optimize-BootShutdown {
     Write-Host "`n[BOOT & SHUTDOWN OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -75,7 +75,7 @@ function Optimize-BootShutdown {
     Wait-ForUser
 }
 
-function Tweak-FileExplorer {
+function Global:Tweak-FileExplorer {
     Write-Host "`n[FILE EXPLORER TWEAKS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -105,7 +105,7 @@ function Tweak-FileExplorer {
     Wait-ForUser
 }
 
-function Tweak-TaskbarStartMenu {
+function Global:Tweak-TaskbarStartMenu {
     Write-Host "`n[TASKBAR & START MENU TWEAKS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -147,7 +147,7 @@ function Tweak-TaskbarStartMenu {
     Wait-ForUser
 }
 
-function Configure-Notifications {
+function Global:Configure-Notifications {
     Write-Host "`n[NOTIFICATION & ACTION CENTER]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -181,7 +181,7 @@ function Configure-Notifications {
     Wait-ForUser
 }
 
-function Optimize-WindowsDefender {
+function Global:Optimize-WindowsDefender {
     Write-Host "`n[WINDOWS DEFENDER OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will optimize Windows Defender for performance." -ForegroundColor $Script:Colors.Info
@@ -202,7 +202,7 @@ function Optimize-WindowsDefender {
     Wait-ForUser
 }
 
-function Configure-FontRendering {
+function Global:Configure-FontRendering {
     Write-Host "`n[FONT RENDERING & CLEARTYPE]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -229,7 +229,7 @@ function Configure-FontRendering {
     Wait-ForUser
 }
 
-function Apply-RegistryTweaks {
+function Global:Apply-RegistryTweaks {
     Write-Host "`n[REGISTRY PERFORMANCE TWEAKS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -278,7 +278,7 @@ function Apply-RegistryTweaks {
     Wait-ForUser
 }
 
-function Apply-AllAdvancedTweaks {
+function Global:Apply-AllAdvancedTweaks {
     Write-Host "`n[APPLY ALL ADVANCED TWEAKS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -303,7 +303,7 @@ function Apply-AllAdvancedTweaks {
     Wait-ForUser
 }
 
-function Optimize-Presentation {
+function Global:Optimize-Presentation {
     Write-Host "`n[PRESENTATION / BATTERY MODE]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "The inverse of the performance profiles: quiet notifications so nothing" -ForegroundColor $Script:Colors.Info
@@ -365,7 +365,7 @@ function Optimize-Presentation {
 
 #region Category 7: Monitoring & System Info
 
-function Show-MonitoringMenu {
+function Global:Show-MonitoringMenu {
     do {
         Show-Header "Monitoring & System Info"
         Write-Host "  MONITORING & SYSTEM INFORMATION" -ForegroundColor $Script:Colors.Menu
@@ -395,7 +395,7 @@ function Show-MonitoringMenu {
     } while ($true)
 }
 
-function Show-SystemInfoDashboard {
+function Global:Show-SystemInfoDashboard {
     Show-Header "System Information Dashboard"
 
     $sysInfo = Get-SystemInfo
@@ -434,7 +434,7 @@ function Show-SystemInfoDashboard {
     Wait-ForUser
 }
 
-function Run-PerformanceBenchmark {
+function Global:Run-PerformanceBenchmark {
     Write-Host "`n[PERFORMANCE BENCHMARK]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will run a quick performance benchmark." -ForegroundColor $Script:Colors.Info
@@ -481,7 +481,7 @@ function Run-PerformanceBenchmark {
     Wait-ForUser
 }
 
-function Show-ResourceMonitor {
+function Global:Show-ResourceMonitor {
     Write-Host "`n[RESOURCE MONITOR]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Opening Windows Resource Monitor..." -ForegroundColor $Script:Colors.Info
@@ -492,7 +492,7 @@ function Show-ResourceMonitor {
     Wait-ForUser
 }
 
-function Show-OptimizationHistory {
+function Global:Show-OptimizationHistory {
     Write-Host "`n[OPTIMIZATION HISTORY]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -509,7 +509,7 @@ function Show-OptimizationHistory {
     Wait-ForUser
 }
 
-function Run-SystemHealthCheck {
+function Global:Run-SystemHealthCheck {
     Write-Host "`n[SYSTEM HEALTH CHECK]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -538,7 +538,7 @@ function Run-SystemHealthCheck {
 
 #region Category 8: Tools & Utilities
 
-function Show-ToolsMenu {
+function Global:Show-ToolsMenu {
     do {
         Show-Header "Tools & Utilities"
         Write-Host "  TOOLS & UTILITIES" -ForegroundColor $Script:Colors.Menu
@@ -572,7 +572,7 @@ function Show-ToolsMenu {
     } while ($true)
 }
 
-function Create-SystemRestorePoint {
+function Global:Create-SystemRestorePoint {
     Write-Host "`n[CREATE SYSTEM RESTORE POINT]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -597,7 +597,7 @@ function Create-SystemRestorePoint {
     Wait-ForUser
 }
 
-function Backup-CurrentSettings {
+function Global:Backup-CurrentSettings {
     Write-Host "`n[BACKUP CURRENT SETTINGS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -622,7 +622,7 @@ function Backup-CurrentSettings {
     Wait-ForUser
 }
 
-function Restore-PreviousSettings {
+function Global:Restore-PreviousSettings {
     Write-Host "`n[RESTORE PREVIOUS SETTINGS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -673,7 +673,7 @@ function Restore-PreviousSettings {
     Wait-ForUser
 }
 
-function Show-OptimizationLog {
+function Global:Show-OptimizationLog {
     Write-Host "`n[OPTIMIZATION LOG]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -690,7 +690,7 @@ function Show-OptimizationLog {
     Wait-ForUser
 }
 
-function Undo-LastOptimization {
+function Global:Undo-LastOptimization {
     Write-Host "`n[UNDO LAST OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -733,7 +733,7 @@ function Undo-LastOptimization {
     Wait-ForUser
 }
 
-function Export-Configuration {
+function Global:Export-Configuration {
     Write-Host "`n[EXPORT CONFIGURATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 

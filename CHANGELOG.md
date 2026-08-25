@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.4] - 2026-08-26 - CRITICAL HOTFIX: backup/undo functions unreachable from closured tweak steps
+
+### 🐛 Bug Fixes
+
+- Real-world run logs showed every service-disable step in "Windows
+  Services Optimization" (and several other tweaks that call
+  `Backup-ServiceState` / `Backup-RegistryValue` from inside a
+  dynamically-built step) failing with:
+  `The term 'Backup-ServiceState' is not recognized as the name of a
+  cmdlet, function, script file, or operable program.`
+- Root cause: several tweak functions build their `$steps` array inside a
+  `ForEach-Object` loop (e.g. looping over the list of services to
+  disable) and call `.GetNewClosure()` on each step's `Action` scriptblock
+  so it correctly captures that iteration's loop variable (without it,
+  every closure would end up disabling only the LAST service in the
+  list — a real, separate bug that `GetNewClosure()` was there to
+  prevent). The side effect: `GetNewClosure()` rebinds the scriptblock to
+  a brand-new, isolated dynamic module session state. That new session
+  state can still see PowerShell cmdlets and any truly **global**
+  function, but it cannot see functions that only exist in the
+  intermediate "script scope" that Win-Tweaker.ps1 and its dot-sourced
+  modules were defining them in - so calls to shared helpers like
+  `Backup-ServiceState`, `Backup-RegistryValue`, `Write-Log`,
+  `Confirm-Action`, etc. silently failed the moment they were reached
+  from inside one of these closures.
+- Fixed by declaring every one of Wethereal's ~150 top-level functions
+  (across `Win-Tweaker.ps1` and all 12 `Modules-*.ps1` files) with the
+  `Global:` scope modifier (e.g. `function Global:Backup-ServiceState`).
+  This makes them resolve correctly from literally anywhere in the
+  process - including from inside a `GetNewClosure()`-bound scriptblock,
+  a WPF GUI button's `Add_Click` handler, or any future closure pattern -
+  without changing how any of them are called. Two genuinely private,
+  nested helper functions (`Measure-QuickBenchmark`,
+  `Get-EntryKey`) were intentionally left local since they're never
+  called from outside their enclosing function.
+- Net effect: every tweak that backs up state before changing it (which
+  is most of them - this is also what powers Undo/Restore/Rollback/the
+  audit report) now actually records that backup instead of throwing a
+  swallowed-by-try/catch warning, across every module.
+
 ## [4.4.3] - 2026-08-25 - CRITICAL HOTFIX: permanently eliminate the mojibake/parse-error bug
 
 ### 🐛 Bug Fixes

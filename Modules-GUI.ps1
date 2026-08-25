@@ -8,7 +8,7 @@
 
 #region Graphical Interface
 
-function New-GuiBrush([string]$Hex) {
+function Global:New-GuiBrush([string]$Hex) {
     return (New-Object System.Windows.Media.BrushConverter).ConvertFromString($Hex)
 }
 
@@ -18,7 +18,7 @@ function New-GuiBrush([string]$Hex) {
 # goes through Backup-RegistryValue/Backup-ServiceState, so anything applied
 # from the GUI is tracked by the same Restore/Undo/Full Rollback system as
 # the console tweaks.
-function Get-GuiTweakCatalog {
+function Global:Get-GuiTweakCatalog {
     return [ordered]@{
         "[BOOST] Performance" = @(
             @{ Name = "Disable Xbox Game Bar auto-launch"; Desc = "Stops Game Bar popping up when you launch a game"; Action = { $p = "HKCU:\Software\Microsoft\GameBar"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "AllowAutoGameMode"; Set-ItemProperty -Path $p -Name "AllowAutoGameMode" -Value 0 -Type DWord } }
@@ -59,7 +59,7 @@ function Get-GuiTweakCatalog {
     }
 }
 
-function Invoke-GuiStepBatch {
+function Global:Invoke-GuiStepBatch {
     <#
         Runs a list of {Name, Action} steps one at a time, updating the
         GUI's log box and progress bar after each - instead of blocking
@@ -100,7 +100,7 @@ function Invoke-GuiStepBatch {
     $LogBox.ScrollToEnd()
 }
 
-function Show-GraphicalMenu {
+function Global:Show-GraphicalMenu {
     Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Xaml
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {

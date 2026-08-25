@@ -4,7 +4,7 @@
 
 #region Category 4: Privacy & Security
 
-function Show-PrivacyMenu {
+function Global:Show-PrivacyMenu {
     do {
         Show-Header "Privacy & Security"
         Write-Host "  PRIVACY & SECURITY OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
@@ -40,7 +40,7 @@ function Show-PrivacyMenu {
     } while ($true)
 }
 
-function Block-TelemetryAdvanced {
+function Global:Block-TelemetryAdvanced {
     Write-Host "`n[ADVANCED TELEMETRY BLOCKING]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -99,7 +99,7 @@ function Block-TelemetryAdvanced {
     Wait-ForUser
 }
 
-function Disable-TrackingAds {
+function Global:Disable-TrackingAds {
     Write-Host "`n[DISABLE TRACKING & ADS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -148,7 +148,7 @@ function Disable-TrackingAds {
     Wait-ForUser
 }
 
-function Remove-Bloatware {
+function Global:Remove-Bloatware {
     Write-Host "`n[REMOVE BLOATWARE & PRE-INSTALLED APPS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "[!]  WARNING: This will remove pre-installed Windows apps." -ForegroundColor $Script:Colors.Warning
@@ -209,7 +209,7 @@ function Remove-Bloatware {
     Wait-ForUser
 }
 
-function Set-WindowsFeaturesPrivacy {
+function Global:Set-WindowsFeaturesPrivacy {
     Write-Host "`n[WINDOWS FEATURES PRIVACY]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -254,7 +254,7 @@ function Set-WindowsFeaturesPrivacy {
     Wait-ForUser
 }
 
-function Set-CameraMicrophonePrivacy {
+function Global:Set-CameraMicrophonePrivacy {
     Write-Host "`n[CAMERA & MICROPHONE PRIVACY]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -292,7 +292,7 @@ function Set-CameraMicrophonePrivacy {
     Wait-ForUser
 }
 
-function Set-NetworkPrivacy {
+function Global:Set-NetworkPrivacy {
     Write-Host "`n[NETWORK PRIVACY SETTINGS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -319,7 +319,7 @@ function Set-NetworkPrivacy {
     Wait-ForUser
 }
 
-function Enable-SecurityHardening {
+function Global:Enable-SecurityHardening {
     Write-Host "`n[SECURITY HARDENING]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -339,7 +339,7 @@ function Enable-SecurityHardening {
     Wait-ForUser
 }
 
-function Invoke-AllPrivacyOptimizations {
+function Global:Invoke-AllPrivacyOptimizations {
     Write-Host "`n[APPLY ALL PRIVACY OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -367,7 +367,7 @@ function Invoke-AllPrivacyOptimizations {
 
 #region Category 5: Cleanup & Maintenance
 
-function Show-CleanupMenu {
+function Global:Show-CleanupMenu {
     do {
         Show-Header "Cleanup & Maintenance"
         Write-Host "  CLEANUP & MAINTENANCE" -ForegroundColor $Script:Colors.Menu
@@ -403,7 +403,7 @@ function Show-CleanupMenu {
     } while ($true)
 }
 
-function Start-AdvancedDiskCleanup {
+function Global:Start-AdvancedDiskCleanup {
     Write-Host "`n[ADVANCED DISK CLEANUP]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -428,7 +428,7 @@ function Start-AdvancedDiskCleanup {
     Wait-ForUser
 }
 
-function Clear-TemporaryFiles {
+function Global:Clear-TemporaryFiles {
     Write-Host "`n[CLEAN TEMPORARY FILES]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -464,7 +464,7 @@ function Clear-TemporaryFiles {
     Wait-ForUser
 }
 
-function Update-EventLogs {
+function Global:Update-EventLogs {
     Write-Host "`n[EVENT LOG MANAGEMENT]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will clear all event logs." -ForegroundColor $Script:Colors.Warning
@@ -488,7 +488,7 @@ function Update-EventLogs {
     Wait-ForUser
 }
 
-function Optimize-ScheduledTasks {
+function Global:Optimize-ScheduledTasks {
     Write-Host "`n[SCHEDULED TASKS OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -518,7 +518,7 @@ function Optimize-ScheduledTasks {
     Wait-ForUser
 }
 
-function Clear-ContextMenu {
+function Global:Clear-ContextMenu {
     Write-Host "`n[CONTEXT MENU CLEANUP]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will remove unnecessary context menu items." -ForegroundColor $Script:Colors.Info
@@ -544,7 +544,7 @@ function Clear-ContextMenu {
     Wait-ForUser
 }
 
-function Optimize-SearchIndexing {
+function Global:Optimize-SearchIndexing {
     Write-Host "`n[SEARCH INDEXING OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Choose an option:" -ForegroundColor $Script:Colors.Info
@@ -589,7 +589,7 @@ function Optimize-SearchIndexing {
     Wait-ForUser
 }
 
-function Start-SystemMaintenance {
+function Global:Start-SystemMaintenance {
     Write-Host "`n[SYSTEM MAINTENANCE TASKS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -614,7 +614,7 @@ function Start-SystemMaintenance {
     Wait-ForUser
 }
 
-function Start-AllCleanupTasks {
+function Global:Start-AllCleanupTasks {
     Write-Host "`n[RUN ALL CLEANUP TASKS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 

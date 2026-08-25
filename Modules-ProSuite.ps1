@@ -10,7 +10,7 @@ $Script:Language = 'EN'
 
 #region Category 12: Pro Suite
 
-function Show-ProSuiteMenu {
+function Global:Show-ProSuiteMenu {
     do {
         Show-Header "Pro Suite"
         Write-Host "  PRO SUITE" -ForegroundColor $Script:Colors.Menu
@@ -46,7 +46,7 @@ function Show-ProSuiteMenu {
 
 #region Full Rollback
 
-function Invoke-FullRollback {
+function Global:Invoke-FullRollback {
     Write-Host "`n[FULL ROLLBACK]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Reverts EVERY registry value and service Wethereal has EVER changed on" -ForegroundColor $Script:Colors.Info
@@ -101,7 +101,7 @@ $Script:AdwarePatterns = @(
     "Coupon Server", "Systweak", "Advanced SystemCare"
 )
 
-function Find-ThirdPartyAdware {
+function Global:Find-ThirdPartyAdware {
     Write-Host "`n[THIRD-PARTY ADWARE / BLOATWARE SCANNER]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Scans installed-program entries (beyond just Microsoft Store apps) for" -ForegroundColor $Script:Colors.Info
@@ -200,7 +200,7 @@ function Find-ThirdPartyAdware {
 
 #region SSD/Disk Health (S.M.A.R.T.)
 
-function Test-DiskHealth {
+function Global:Test-DiskHealth {
     Write-Host "`n[SSD/DISK HEALTH CHECK]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Reading S.M.A.R.T. reliability counters for every physical disk..." -ForegroundColor $Script:Colors.Info
@@ -250,7 +250,7 @@ function Test-DiskHealth {
 
 #region Opt-In Usage Telemetry (local, anonymous)
 
-function Import-TelemetrySettings {
+function Global:Import-TelemetrySettings {
     if (Test-Path $Script:TelemetryFile) {
         try {
             $cfg = Get-Content -Path $Script:TelemetryFile -Raw | ConvertFrom-Json
@@ -261,12 +261,12 @@ function Import-TelemetrySettings {
     }
 }
 
-function Save-TelemetrySettings {
+function Global:Save-TelemetrySettings {
     @{ Enabled = $Script:TelemetryEnabled; WebhookUrl = $Script:TelemetryWebhookUrl } |
         ConvertTo-Json | Out-File -FilePath $Script:TelemetryFile -Encoding UTF8
 }
 
-function Add-TelemetryEvent {
+function Global:Add-TelemetryEvent {
     <#
         Called by Invoke-TweakSequence (Win-Tweaker.ps1) after each step, when
         telemetry is opted in. 100% local - counts which tweak names get
@@ -303,7 +303,7 @@ function Add-TelemetryEvent {
     catch { }
 }
 
-function Show-TelemetryMenu {
+function Global:Show-TelemetryMenu {
     Write-Host "`n[ANONYMOUS USAGE TELEMETRY]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "[!]  Honest disclosure: Wethereal has no analytics backend of its own." -ForegroundColor $Script:Colors.Warning
@@ -378,7 +378,7 @@ function Show-TelemetryMenu {
 
 #region Code Signing
 
-function Set-WetherealCodeSignature {
+function Global:Set-WetherealCodeSignature {
     Write-Host "`n[CODE-SIGN WETHEREAL SCRIPTS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Creates a self-signed code-signing certificate and signs every .ps1 file" -ForegroundColor $Script:Colors.Info
@@ -499,14 +499,14 @@ $Script:Strings = @{
     }
 }
 
-function Get-Str {
+function Global:Get-Str {
     param([Parameter(Mandatory = $true)][string]$Key)
     $lang = if ($Script:Strings.ContainsKey($Script:Language)) { $Script:Language } else { 'EN' }
     if ($Script:Strings[$lang].ContainsKey($Key)) { return $Script:Strings[$lang][$Key] }
     return $Script:Strings['EN'][$Key]
 }
 
-function Import-LanguageSetting {
+function Global:Import-LanguageSetting {
     if (Test-Path $Script:LanguageFile) {
         try {
             $cfg = Get-Content -Path $Script:LanguageFile -Raw | ConvertFrom-Json
@@ -516,7 +516,7 @@ function Import-LanguageSetting {
     }
 }
 
-function Set-WetherealLanguage {
+function Global:Set-WetherealLanguage {
     Write-Host "`n[LANGUAGE / IDIOMA]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Currently: $Script:Language" -ForegroundColor White

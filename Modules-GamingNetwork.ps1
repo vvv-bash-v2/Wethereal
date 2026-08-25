@@ -4,7 +4,7 @@
 
 #region Category 2: Gaming & Graphics
 
-function Show-GamingMenu {
+function Global:Show-GamingMenu {
     do {
         Show-Header "Gaming & Graphics"
         Write-Host "  GAMING & GRAPHICS OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
@@ -40,7 +40,7 @@ function Show-GamingMenu {
     } while ($true)
 }
 
-function Enable-GamingMode {
+function Global:Enable-GamingMode {
     Write-Host "`n[GAMING MODE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -81,7 +81,7 @@ function Enable-GamingMode {
     Wait-ForUser
 }
 
-function Reduce-InputLag {
+function Global:Reduce-InputLag {
     Write-Host "`n[INPUT LAG REDUCTION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -128,7 +128,7 @@ function Reduce-InputLag {
     Wait-ForUser
 }
 
-function Optimize-NetworkGaming {
+function Global:Optimize-NetworkGaming {
     Write-Host "`n[NETWORK GAMING OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -167,7 +167,7 @@ function Optimize-NetworkGaming {
     Wait-ForUser
 }
 
-function Disable-FullscreenOptimizations {
+function Global:Disable-FullscreenOptimizations {
     Write-Host "`n[DISABLE FULLSCREEN OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This disables Windows fullscreen optimizations for better gaming performance." -ForegroundColor $Script:Colors.Info
@@ -196,7 +196,7 @@ function Disable-FullscreenOptimizations {
     Wait-ForUser
 }
 
-function Optimize-AudioGaming {
+function Global:Optimize-AudioGaming {
     Write-Host "`n[AUDIO OPTIMIZATIONS FOR GAMING]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -222,7 +222,7 @@ function Optimize-AudioGaming {
     Wait-ForUser
 }
 
-function Optimize-FrameRate {
+function Global:Optimize-FrameRate {
     Write-Host "`n[FRAME RATE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -247,7 +247,7 @@ function Optimize-FrameRate {
     Wait-ForUser
 }
 
-function Apply-AllGamingOptimizations {
+function Global:Apply-AllGamingOptimizations {
     Write-Host "`n[APPLY ALL GAMING OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -272,7 +272,7 @@ function Apply-AllGamingOptimizations {
     Wait-ForUser
 }
 
-function Optimize-LowEndGaming {
+function Global:Optimize-LowEndGaming {
     Write-Host "`n[LOW-END GAMING / MAX FPS MODE]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Aggressive profile for budget/low-spec PCs: strips every non-essential" -ForegroundColor $Script:Colors.Info
@@ -366,7 +366,7 @@ function Optimize-LowEndGaming {
     Wait-ForUser
 }
 
-function Optimize-Streaming {
+function Global:Optimize-Streaming {
     Write-Host "`n[STREAMING MODE]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Tuned for streaming/recording (OBS + a game at once): frees the GPU's" -ForegroundColor $Script:Colors.Info
@@ -440,7 +440,7 @@ function Optimize-Streaming {
 
 #region Category 3: Network & Internet
 
-function Show-NetworkMenu {
+function Global:Show-NetworkMenu {
     do {
         Show-Header "Network & Internet"
         Write-Host "  NETWORK & INTERNET OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
@@ -472,7 +472,7 @@ function Show-NetworkMenu {
     } while ($true)
 }
 
-function Optimize-TCPIP {
+function Global:Optimize-TCPIP {
     Write-Host "`n[ADVANCED TCP/IP TWEAKS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -518,7 +518,7 @@ function Optimize-TCPIP {
     Wait-ForUser
 }
 
-function Optimize-DNS {
+function Global:Optimize-DNS {
     Write-Host "`n[DNS OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Choose DNS provider:" -ForegroundColor $Script:Colors.Info
@@ -569,7 +569,7 @@ function Optimize-DNS {
     Wait-ForUser
 }
 
-function Optimize-NetworkAdapter {
+function Global:Optimize-NetworkAdapter {
     Write-Host "`n[NETWORK ADAPTER TWEAKS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
@@ -612,7 +612,7 @@ function Optimize-NetworkAdapter {
     Wait-ForUser
 }
 
-function Configure-QoS {
+function Global:Configure-QoS {
     Write-Host "`n[QoS CONFIGURATION]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will disable QoS packet scheduler bandwidth reservation." -ForegroundColor $Script:Colors.Info
@@ -639,7 +639,7 @@ function Configure-QoS {
     Wait-ForUser
 }
 
-function Optimize-Browsers {
+function Global:Optimize-Browsers {
     Write-Host "`n[BROWSER OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will optimize browser settings for performance." -ForegroundColor $Script:Colors.Info
@@ -666,7 +666,7 @@ function Optimize-Browsers {
     Wait-ForUser
 }
 
-function Apply-AllNetworkOptimizations {
+function Global:Apply-AllNetworkOptimizations {
     Write-Host "`n[APPLY ALL NETWORK OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
