@@ -5,7 +5,7 @@
 
 function Start-SystemHealthCheck {
     Write-Host "`n[COMPREHENSIVE SYSTEM HEALTH CHECK]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Performing comprehensive system diagnostics..." -ForegroundColor $Script:Colors.Info
     Write-Host ""
     
@@ -15,7 +15,7 @@ function Start-SystemHealthCheck {
     $totalChecks = 10
 
     # Check 1: Disk Health
-    Write-Progress -Activity "🏥 System Health Check" -Status "[1/$totalChecks] Checking disk health..." -PercentComplete 10
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[1/$totalChecks] Checking disk health..." -PercentComplete 10
     Write-Host "  [1/10] Checking disk health..." -ForegroundColor $Script:Colors.Info
     try {
         $drives = Get-Volume | Where-Object { $_.DriveLetter -and $_.DriveType -eq 'Fixed' }
@@ -30,14 +30,14 @@ function Start-SystemHealthCheck {
                 $healthScore -= 5
             }
         }
-        Write-Host "    ✓ Disk health checked" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Disk health checked" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check disk health" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check disk health" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 2: Memory Usage
-    Write-Progress -Activity "🏥 System Health Check" -Status "[2/$totalChecks] Checking memory usage..." -PercentComplete 20
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[2/$totalChecks] Checking memory usage..." -PercentComplete 20
     Write-Host "  [2/10] Checking memory usage..." -ForegroundColor $Script:Colors.Info
     try {
         $mem = Get-CimInstance Win32_OperatingSystem
@@ -50,14 +50,14 @@ function Start-SystemHealthCheck {
             $warnings += "Memory usage high: $([math]::Round($memUsed, 1))%"
             $healthScore -= 5
         }
-        Write-Host "    ✓ Memory usage: $([math]::Round($memUsed, 1))%" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Memory usage: $([math]::Round($memUsed, 1))%" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check memory" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check memory" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 3: Windows Update Status
-    Write-Progress -Activity "🏥 System Health Check" -Status "[3/$totalChecks] Checking Windows Update status..." -PercentComplete 30
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[3/$totalChecks] Checking Windows Update status..." -PercentComplete 30
     Write-Host "  [3/10] Checking Windows Update status..." -ForegroundColor $Script:Colors.Info
     try {
         $updateService = Get-Service -Name wuauserv -ErrorAction SilentlyContinue
@@ -65,14 +65,14 @@ function Start-SystemHealthCheck {
             $warnings += "Windows Update service is not running"
             $healthScore -= 3
         }
-        Write-Host "    ✓ Update service checked" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Update service checked" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check updates" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check updates" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 4: Antivirus Status
-    Write-Progress -Activity "🏥 System Health Check" -Status "[4/$totalChecks] Checking antivirus status..." -PercentComplete 40
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[4/$totalChecks] Checking antivirus status..." -PercentComplete 40
     Write-Host "  [4/10] Checking antivirus status..." -ForegroundColor $Script:Colors.Info
     try {
         $defender = Get-MpComputerStatus -ErrorAction SilentlyContinue
@@ -86,14 +86,14 @@ function Start-SystemHealthCheck {
                 $healthScore -= 5
             }
         }
-        Write-Host "    ✓ Antivirus checked" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Antivirus checked" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check antivirus" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check antivirus" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 5: System Uptime
-    Write-Progress -Activity "🏥 System Health Check" -Status "[5/$totalChecks] Checking system uptime..." -PercentComplete 50
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[5/$totalChecks] Checking system uptime..." -PercentComplete 50
     Write-Host "  [5/10] Checking system uptime..." -ForegroundColor $Script:Colors.Info
     try {
         $os = Get-CimInstance Win32_OperatingSystem
@@ -102,14 +102,14 @@ function Start-SystemHealthCheck {
             $warnings += "System hasn't been restarted in $($uptime.Days) days"
             $healthScore -= 5
         }
-        Write-Host "    ✓ Uptime: $($uptime.Days) days, $($uptime.Hours) hours" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Uptime: $($uptime.Days) days, $($uptime.Hours) hours" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check uptime" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check uptime" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 6: Event Log Errors
-    Write-Progress -Activity "🏥 System Health Check" -Status "[6/$totalChecks] Checking recent errors..." -PercentComplete 60
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[6/$totalChecks] Checking recent errors..." -PercentComplete 60
     Write-Host "  [6/10] Checking recent errors..." -ForegroundColor $Script:Colors.Info
     try {
         $recentErrors = Get-EventLog -LogName System -EntryType Error -Newest 50 -ErrorAction SilentlyContinue | Measure-Object
@@ -117,14 +117,14 @@ function Start-SystemHealthCheck {
             $warnings += "High number of system errors: $($recentErrors.Count) in last 50 events"
             $healthScore -= 5
         }
-        Write-Host "    ✓ Error log checked" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Error log checked" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check event logs" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check event logs" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 7: Startup Programs
-    Write-Progress -Activity "🏥 System Health Check" -Status "[7/$totalChecks] Checking startup programs..." -PercentComplete 70
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[7/$totalChecks] Checking startup programs..." -PercentComplete 70
     Write-Host "  [7/10] Checking startup programs..." -ForegroundColor $Script:Colors.Info
     try {
         $startupCount = 0
@@ -144,14 +144,14 @@ function Start-SystemHealthCheck {
             $warnings += "High number of startup programs: $startupCount"
             $healthScore -= 5
         }
-        Write-Host "    ✓ Startup programs: $startupCount" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Startup programs: $startupCount" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check startup programs" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check startup programs" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 8: Temporary Files
-    Write-Progress -Activity "🏥 System Health Check" -Status "[8/$totalChecks] Checking temporary files..." -PercentComplete 80
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[8/$totalChecks] Checking temporary files..." -PercentComplete 80
     Write-Host "  [8/10] Checking temporary files..." -ForegroundColor $Script:Colors.Info
     try {
         $tempSize = 0
@@ -166,14 +166,14 @@ function Start-SystemHealthCheck {
             $warnings += "Large amount of temporary files: $tempSizeGB GB"
             $healthScore -= 3
         }
-        Write-Host "    ✓ Temp files: $tempSizeGB GB" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Temp files: $tempSizeGB GB" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check temp files" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check temp files" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 9: Network Connectivity
-    Write-Progress -Activity "🏥 System Health Check" -Status "[9/$totalChecks] Checking network connectivity..." -PercentComplete 90
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[9/$totalChecks] Checking network connectivity..." -PercentComplete 90
     Write-Host "  [9/10] Checking network connectivity..." -ForegroundColor $Script:Colors.Info
     try {
         $ping = Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet -ErrorAction SilentlyContinue
@@ -181,20 +181,20 @@ function Start-SystemHealthCheck {
             $issues += "No internet connectivity detected"
             $healthScore -= 10
         }
-        Write-Host "    ✓ Network connectivity OK" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] Network connectivity OK" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "    ⚠ Could not check network" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not check network" -ForegroundColor $Script:Colors.Warning
     }
     
     # Check 10: System Files
-    Write-Progress -Activity "🏥 System Health Check" -Status "[10/$totalChecks] Checking system file integrity..." -PercentComplete 100
+    Write-Progress -Activity "[HEALTH] System Health Check" -Status "[10/$totalChecks] Checking system file integrity..." -PercentComplete 100
     Write-Host "  [10/10] Checking system file integrity..." -ForegroundColor $Script:Colors.Info
-    Write-Host "    ℹ System file check requires 'sfc /scannow' (run manually)" -ForegroundColor DarkGray
-    Write-Progress -Activity "🏥 System Health Check" -Completed
+    Write-Host "    [i] System file check requires 'sfc /scannow' (run manually)" -ForegroundColor DarkGray
+    Write-Progress -Activity "[HEALTH] System Health Check" -Completed
 
     # Display Results
-    Write-Host "`n  ════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "`n  ============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "`n  HEALTH SCORE: $healthScore/100" -ForegroundColor $(
         if ($healthScore -ge 80) { $Script:Colors.Success }
         elseif ($healthScore -ge 60) { $Script:Colors.Warning }
@@ -204,29 +204,29 @@ function Start-SystemHealthCheck {
     if ($issues.Count -gt 0) {
         Write-Host "`n  CRITICAL ISSUES:" -ForegroundColor $Script:Colors.Error
         foreach ($issue in $issues) {
-            Write-Host "    ✗ $issue" -ForegroundColor Red
+            Write-Host "    [X] $issue" -ForegroundColor Red
         }
     }
     
     if ($warnings.Count -gt 0) {
         Write-Host "`n  WARNINGS:" -ForegroundColor $Script:Colors.Warning
         foreach ($warning in $warnings) {
-            Write-Host "    ⚠ $warning" -ForegroundColor Yellow
+            Write-Host "    [!] $warning" -ForegroundColor Yellow
         }
     }
     
     if ($issues.Count -eq 0 -and $warnings.Count -eq 0) {
-        Write-Host "`n  ✓ No issues detected! System is healthy." -ForegroundColor $Script:Colors.Success
+        Write-Host "`n  [OK] No issues detected! System is healthy." -ForegroundColor $Script:Colors.Success
     }
     
     Write-Host "`n  RECOMMENDATIONS:" -ForegroundColor $Script:Colors.Info
     if ($healthScore -lt 80) {
-        Write-Host "    → Run cleanup tasks (Category 5)" -ForegroundColor Cyan
-        Write-Host "    → Apply optimization profile (Option 13)" -ForegroundColor Cyan
-        Write-Host "    → Check startup programs (Option 22)" -ForegroundColor Cyan
+        Write-Host "    -> Run cleanup tasks (Category 5)" -ForegroundColor Cyan
+        Write-Host "    -> Apply optimization profile (Option 13)" -ForegroundColor Cyan
+        Write-Host "    -> Check startup programs (Option 22)" -ForegroundColor Cyan
     }
     else {
-        Write-Host "    ✓ System is well optimized!" -ForegroundColor $Script:Colors.Success
+        Write-Host "    [OK] System is well optimized!" -ForegroundColor $Script:Colors.Success
     }
     
     Write-Log "System health check completed. Score: $healthScore/100" -Level Info -Category "Health"
@@ -240,7 +240,7 @@ function Start-SystemHealthCheck {
 
 function Optimize-Registry {
     Write-Host "`n[REGISTRY OPTIMIZER]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Optimizing Windows Registry..." -ForegroundColor $Script:Colors.Info
     Write-Host ""
     
@@ -273,9 +273,9 @@ function Optimize-Registry {
 
     $result = Invoke-TweakSequence -Title "Registry Optimizer" -Steps $steps -Category "Registry"
 
-    Write-Host "`n  ✓ Registry optimization complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n  [OK] Registry optimization complete!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Applied $($result.Succeeded)/$($result.Total) optimizations" -ForegroundColor $Script:Colors.Highlight
-    Write-Host "`n  ⚠ Restart required for changes to take effect" -ForegroundColor $Script:Colors.Warning
+    Write-Host "`n  [!] Restart required for changes to take effect" -ForegroundColor $Script:Colors.Warning
 
     Wait-ForUser
 }
@@ -286,7 +286,7 @@ function Optimize-Registry {
 
 function Optimize-ServicesIntelligent {
     Write-Host "`n[INTELLIGENT SERVICE OPTIMIZER]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Analyzing and optimizing Windows services..." -ForegroundColor $Script:Colors.Info
     Write-Host ""
     
@@ -323,7 +323,7 @@ function Optimize-ServicesIntelligent {
 
     $result = Invoke-TweakSequence -Title "Intelligent Service Optimizer" -Steps $steps -Category "Services"
 
-    Write-Host "`n  ✓ Service optimization complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n  [OK] Service optimization complete!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Optimized: $($result.Succeeded) services" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  Not present on this system: $($result.Skipped) services" -ForegroundColor DarkGray
 
@@ -336,7 +336,7 @@ function Optimize-ServicesIntelligent {
 
 function Set-WindowsUpdates {
     Write-Host "`n[WINDOWS UPDATE MANAGER]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host ""
     Write-Host "  1. Pause updates for 7 days" -ForegroundColor White
     Write-Host "  2. Pause updates for 30 days" -ForegroundColor White
@@ -357,13 +357,13 @@ function Set-WindowsUpdates {
                 $pauseUntil = $resumeDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Name "PauseUpdatesExpiryTime" -Value $pauseUntil -ErrorAction Stop
                 # Bug fix: the original code wrote `$(Get-Date).AddDays(7).ToString(...)`
-                # inside the string — only $(Get-Date) was evaluated as a subexpression,
+                # inside the string - only $(Get-Date) was evaluated as a subexpression,
                 # so ".AddDays(7).ToString('yyyy-MM-dd')" printed as LITERAL text after
                 # the timestamp instead of computing the actual resume date.
-                Write-Host "  ✓ Updates paused until $($resumeDate.ToString('yyyy-MM-dd'))" -ForegroundColor $Script:Colors.Success
+                Write-Host "  [OK] Updates paused until $($resumeDate.ToString('yyyy-MM-dd'))" -ForegroundColor $Script:Colors.Success
             }
             catch {
-                Write-Host "  ✗ Failed to pause updates" -ForegroundColor $Script:Colors.Error
+                Write-Host "  [X] Failed to pause updates" -ForegroundColor $Script:Colors.Error
             }
         }
         '2' {
@@ -372,20 +372,20 @@ function Set-WindowsUpdates {
                 $resumeDate = (Get-Date).AddDays(30)
                 $pauseUntil = $resumeDate.ToString("yyyy-MM-ddTHH:mm:ssZ")
                 Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Name "PauseUpdatesExpiryTime" -Value $pauseUntil -ErrorAction Stop
-                Write-Host "  ✓ Updates paused until $($resumeDate.ToString('yyyy-MM-dd'))" -ForegroundColor $Script:Colors.Success
+                Write-Host "  [OK] Updates paused until $($resumeDate.ToString('yyyy-MM-dd'))" -ForegroundColor $Script:Colors.Success
             }
             catch {
-                Write-Host "  ✗ Failed to pause updates" -ForegroundColor $Script:Colors.Error
+                Write-Host "  [X] Failed to pause updates" -ForegroundColor $Script:Colors.Error
             }
         }
         '3' {
             Write-Host "`n  Resuming updates..." -ForegroundColor $Script:Colors.Info
             try {
                 Remove-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings" -Name "PauseUpdatesExpiryTime" -ErrorAction Stop
-                Write-Host "  ✓ Updates resumed" -ForegroundColor $Script:Colors.Success
+                Write-Host "  [OK] Updates resumed" -ForegroundColor $Script:Colors.Success
             }
             catch {
-                Write-Host "  ✗ Failed to resume updates" -ForegroundColor $Script:Colors.Error
+                Write-Host "  [X] Failed to resume updates" -ForegroundColor $Script:Colors.Error
             }
         }
         '4' {
@@ -399,11 +399,11 @@ function Set-WindowsUpdates {
                 try {
                     Stop-Service -Name wuauserv -Force -ErrorAction Stop
                     Set-Service -Name wuauserv -StartupType Disabled -ErrorAction Stop
-                    Write-Host "  ✓ Automatic updates disabled" -ForegroundColor $Script:Colors.Success
-                    Write-Host "  ⚠ WARNING: Your system will not receive security updates!" -ForegroundColor Red
+                    Write-Host "  [OK] Automatic updates disabled" -ForegroundColor $Script:Colors.Success
+                    Write-Host "  [!] WARNING: Your system will not receive security updates!" -ForegroundColor Red
                 }
                 catch {
-                    Write-Host "  ✗ Failed to disable updates" -ForegroundColor $Script:Colors.Error
+                    Write-Host "  [X] Failed to disable updates" -ForegroundColor $Script:Colors.Error
                 }
             }
         }
@@ -412,15 +412,15 @@ function Set-WindowsUpdates {
             try {
                 Set-Service -Name wuauserv -StartupType Automatic -ErrorAction Stop
                 Start-Service -Name wuauserv -ErrorAction Stop
-                Write-Host "  ✓ Automatic updates enabled" -ForegroundColor $Script:Colors.Success
+                Write-Host "  [OK] Automatic updates enabled" -ForegroundColor $Script:Colors.Success
             }
             catch {
-                Write-Host "  ✗ Failed to enable updates" -ForegroundColor $Script:Colors.Error
+                Write-Host "  [X] Failed to enable updates" -ForegroundColor $Script:Colors.Error
             }
         }
         '0' { }
         default {
-            Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+            Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
         }
     }
 

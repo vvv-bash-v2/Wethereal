@@ -9,18 +9,18 @@ function Show-UltimateExtrasMenu {
     do {
         Show-Header "Ultimate Extras"
         Write-Host "  ULTIMATE EXTRAS" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-        Write-Host "   1. 📦 App Manager (Install apps via winget)" -ForegroundColor White
-        Write-Host "   2. 🗑️  App Manager (Uninstall apps via winget)" -ForegroundColor White
-        Write-Host "   3. ⬆️  Update All Apps (winget upgrade --all)" -ForegroundColor White
-        Write-Host "   4. 🚀 Ultimate Performance Power Plan" -ForegroundColor White
-        Write-Host "   5. 🖱️  Classic Right-Click Context Menu (Windows 11)" -ForegroundColor White
-        Write-Host "   6. 📌 Taskbar Alignment (Windows 11)" -ForegroundColor White
-        Write-Host "   7. 🚫 Hosts File Ad-Blocking" -ForegroundColor White
-        Write-Host "   8. ✅ Quick Tweak Checklist (pick & apply)" -ForegroundColor White
-        Write-Host "   9. 🔍 Compare Two Backups" -ForegroundColor White
-        Write-Host "  10. 🔐 TPM & Secure Boot Check (Windows 11 readiness)" -ForegroundColor White
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
+        Write-Host "   1. [PKG] App Manager (Install apps via winget)" -ForegroundColor White
+        Write-Host "   2. [DEL]  App Manager (Uninstall apps via winget)" -ForegroundColor White
+        Write-Host "   3. ^  Update All Apps (winget upgrade --all)" -ForegroundColor White
+        Write-Host "   4. [BOOST] Ultimate Performance Power Plan" -ForegroundColor White
+        Write-Host "   5. [MOUSE]  Classic Right-Click Context Menu (Windows 11)" -ForegroundColor White
+        Write-Host "   6. [PIN] Taskbar Alignment (Windows 11)" -ForegroundColor White
+        Write-Host "   7. [BLOCK] Hosts File Ad-Blocking" -ForegroundColor White
+        Write-Host "   8. [OK] Quick Tweak Checklist (pick & apply)" -ForegroundColor White
+        Write-Host "   9. [SCAN] Compare Two Backups" -ForegroundColor White
+        Write-Host "  10. [LOCK] TPM & Secure Boot Check (Windows 11 readiness)" -ForegroundColor White
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Read-Host "Select an option"
@@ -38,7 +38,7 @@ function Show-UltimateExtrasMenu {
             '10' { Test-TpmSecureBoot }
             '0' { return }
             default {
-                Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 1
             }
         }
@@ -52,7 +52,7 @@ function Show-UltimateExtrasMenu {
 function Test-WingetAvailable {
     $winget = Get-Command winget -ErrorAction SilentlyContinue
     if (-not $winget) {
-        Write-Host "`n✗ winget (App Installer) was not found on this system." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] winget (App Installer) was not found on this system." -ForegroundColor $Script:Colors.Error
         Write-Host "  Install 'App Installer' from the Microsoft Store, then try again." -ForegroundColor $Script:Colors.Info
         return $false
     }
@@ -60,7 +60,7 @@ function Test-WingetAvailable {
 }
 
 # Curated catalog of common, well-known apps (winget package IDs). Kept as a
-# static list — rather than trying to list every possible winget package —
+# static list - rather than trying to list every possible winget package -
 # because it's fast, predictable, and doesn't depend on winget's search index
 # formatting, which changes over time.
 $Script:AppCatalog = @(
@@ -90,11 +90,11 @@ $Script:AppCatalog = @(
 
 function Show-AppInstaller {
     Write-Host "`n[APP MANAGER - INSTALL]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Test-WingetAvailable)) { Wait-ForUser; return }
 
-    Write-Host "Select apps to install (comma-separated numbers, e.g. 1,3,7 — or 'all'):" -ForegroundColor $Script:Colors.Info
+    Write-Host "Select apps to install (comma-separated numbers, e.g. 1,3,7 - or 'all'):" -ForegroundColor $Script:Colors.Info
     Write-Host ""
     for ($i = 0; $i -lt $Script:AppCatalog.Count; $i++) {
         Write-Host ("  {0,2}. {1}" -f ($i + 1), $Script:AppCatalog[$i].Name) -ForegroundColor White
@@ -115,7 +115,7 @@ function Show-AppInstaller {
     }
 
     if (-not $indices -or $indices.Count -eq 0) {
-        Write-Host "`n✗ No valid apps selected." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] No valid apps selected." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -144,7 +144,7 @@ function Show-AppInstaller {
 
 function Show-AppUninstaller {
     Write-Host "`n[APP MANAGER - UNINSTALL]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Test-WingetAvailable)) { Wait-ForUser; return }
 
@@ -155,7 +155,7 @@ function Show-AppUninstaller {
     # header row itself is followed by a line of dashes we use as the anchor.
     $separatorIndex = ($rawList | Select-String -Pattern '^-+\s*$' | Select-Object -First 1).LineNumber
     if (-not $separatorIndex) {
-        Write-Host "`n✗ Could not parse winget's package list." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Could not parse winget's package list." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -170,7 +170,7 @@ function Show-AppUninstaller {
     }
 
     if ($installed.Count -eq 0) {
-        Write-Host "`n⚠ No packages found (or winget's output format could not be parsed)." -ForegroundColor $Script:Colors.Warning
+        Write-Host "`n[!] No packages found (or winget's output format could not be parsed)." -ForegroundColor $Script:Colors.Warning
         Wait-ForUser
         return
     }
@@ -190,13 +190,13 @@ function Show-AppUninstaller {
     } | Where-Object { $_ -ge 0 -and $_ -lt $installed.Count } | Select-Object -Unique
 
     if (-not $indices -or $indices.Count -eq 0) {
-        Write-Host "`n✗ No valid apps selected." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] No valid apps selected." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
 
     $selectedApps = $indices | ForEach-Object { $installed[$_] }
-    Write-Host "`n⚠️  Will UNINSTALL: $(($selectedApps | ForEach-Object { $_.Name }) -join ', ')" -ForegroundColor $Script:Colors.Warning
+    Write-Host "`n[!]  Will UNINSTALL: $(($selectedApps | ForEach-Object { $_.Name }) -join ', ')" -ForegroundColor $Script:Colors.Warning
 
     if (-not (Confirm-Action -Message "Proceed with uninstallation?")) { return }
 
@@ -217,7 +217,7 @@ function Show-AppUninstaller {
 
 function Invoke-WingetUpgradeAll {
     Write-Host "`n[UPDATE ALL APPS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Test-WingetAvailable)) { Wait-ForUser; return }
 
@@ -229,11 +229,11 @@ function Invoke-WingetUpgradeAll {
     winget upgrade --all --accept-source-agreements --accept-package-agreements
 
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "`n✓ All available upgrades applied!" -ForegroundColor $Script:Colors.Success
+        Write-Host "`n[OK] All available upgrades applied!" -ForegroundColor $Script:Colors.Success
         Write-Log "winget upgrade --all completed successfully" -Level Success -Category "AppManager"
     }
     else {
-        Write-Host "`n⚠ winget exited with code $LASTEXITCODE (some packages may need manual attention)." -ForegroundColor $Script:Colors.Warning
+        Write-Host "`n[!] winget exited with code $LASTEXITCODE (some packages may need manual attention)." -ForegroundColor $Script:Colors.Warning
         Write-Log "winget upgrade --all exited with code $LASTEXITCODE" -Level Warning -Category "AppManager"
     }
 
@@ -246,11 +246,11 @@ function Invoke-WingetUpgradeAll {
 
 function Enable-UltimatePerformancePlan {
     Write-Host "`n[ULTIMATE PERFORMANCE POWER PLAN]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Surfaces and activates Windows' hidden 'Ultimate Performance' power" -ForegroundColor $Script:Colors.Info
-    Write-Host "plan — more aggressive than 'High performance', disables most power" -ForegroundColor $Script:Colors.Info
+    Write-Host "plan - more aggressive than 'High performance', disables most power" -ForegroundColor $Script:Colors.Info
     Write-Host "saving/parking so hardware stays at max clocks. Uses more power/heat" -ForegroundColor $Script:Colors.Info
-    Write-Host "in exchange — best on desktops or plugged-in laptops." -ForegroundColor $Script:Colors.Info
+    Write-Host "in exchange - best on desktops or plugged-in laptops." -ForegroundColor $Script:Colors.Info
 
     if (-not (Confirm-Action -Message "Enable and activate Ultimate Performance?" -DefaultYes)) { return }
 
@@ -284,7 +284,7 @@ function Enable-UltimatePerformancePlan {
 
     Invoke-TweakSequence -Title "Ultimate Performance Power Plan" -Steps $steps -Category "Power" | Out-Null
 
-    Write-Host "`n✓ Ultimate Performance is now active!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Ultimate Performance is now active!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
@@ -294,7 +294,7 @@ function Enable-UltimatePerformancePlan {
 
 function Set-ClassicContextMenu {
     Write-Host "`n[CLASSIC RIGHT-CLICK CONTEXT MENU]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Windows 11 hides most right-click options behind 'Show more options'." -ForegroundColor $Script:Colors.Info
     Write-Host "This restores the full Windows 10-style menu directly." -ForegroundColor $Script:Colors.Info
     Write-Host ""
@@ -306,7 +306,7 @@ function Set-ClassicContextMenu {
     $choice = Read-Host "Select an option"
     if ($choice -eq '0' -or [string]::IsNullOrWhiteSpace($choice)) { return }
     if ($choice -ne '1' -and $choice -ne '2') {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Start-Sleep -Seconds 1
         return
     }
@@ -357,7 +357,7 @@ function Set-ClassicContextMenu {
 
 function Set-TaskbarAlignment {
     Write-Host "`n[TASKBAR ALIGNMENT]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "  1. Left-align taskbar icons (classic Windows 10 style)" -ForegroundColor White
     Write-Host "  2. Center-align taskbar icons (Windows 11 default)" -ForegroundColor White
     Write-Host "  0. Cancel" -ForegroundColor Yellow
@@ -366,7 +366,7 @@ function Set-TaskbarAlignment {
     $choice = Read-Host "Select an option"
     if ($choice -eq '0' -or [string]::IsNullOrWhiteSpace($choice)) { return }
     if ($choice -ne '1' -and $choice -ne '2') {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Start-Sleep -Seconds 1
         return
     }
@@ -390,7 +390,7 @@ function Set-TaskbarAlignment {
 
     Invoke-TweakSequence -Title "Taskbar Alignment" -Steps $steps -Category "Explorer" | Out-Null
 
-    Write-Host "`n✓ Taskbar set to $label alignment. Sign out or restart Explorer to see it." -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Taskbar set to $label alignment. Sign out or restart Explorer to see it." -ForegroundColor $Script:Colors.Success
     if (Confirm-Action -Message "Restart Windows Explorer now?" -DefaultYes) {
         Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
         Start-Sleep -Milliseconds 500
@@ -404,7 +404,7 @@ function Set-TaskbarAlignment {
 #region Hosts File Ad-Blocking
 
 # A deliberately small, well-known set of ad/telemetry domains, embedded
-# directly rather than downloaded from the internet at runtime — this keeps
+# directly rather than downloaded from the internet at runtime - this keeps
 # the tweak reliable offline and avoids trusting a remote list unreviewed.
 $Script:HostsBlockDomains = @(
     "ads.microsoft.com", "adnexus.net", "adsystem.com", "doubleclick.net",
@@ -416,7 +416,7 @@ $Script:HostsBlockDomains = @(
 
 function Set-HostsAdBlock {
     Write-Host "`n[HOSTS FILE AD-BLOCKING]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     $hostsPath = "$env:SystemRoot\System32\drivers\etc\hosts"
     Write-Host "  1. Enable ad/telemetry blocking ($($Script:HostsBlockDomains.Count) domains)" -ForegroundColor White
     Write-Host "  2. Restore original hosts file (undo)" -ForegroundColor White
@@ -457,12 +457,12 @@ function Set-HostsAdBlock {
         )
 
         Invoke-TweakSequence -Title "Hosts Ad-Blocking" -Steps $steps -Category "Privacy" | Out-Null
-        Write-Host "`n✓ Ad-blocking entries added to hosts file!" -ForegroundColor $Script:Colors.Success
+        Write-Host "`n[OK] Ad-blocking entries added to hosts file!" -ForegroundColor $Script:Colors.Success
     }
     elseif ($choice -eq '2') {
         $backupPath = "$PSScriptRoot\hosts_original_backup.txt"
         if (-not (Test-Path $backupPath)) {
-            Write-Host "`n⚠ No hosts backup found — nothing to restore." -ForegroundColor $Script:Colors.Warning
+            Write-Host "`n[!] No hosts backup found - nothing to restore." -ForegroundColor $Script:Colors.Warning
             Wait-ForUser
             return
         }
@@ -473,10 +473,10 @@ function Set-HostsAdBlock {
             @{ Name = "Flushing DNS cache"; Action = { ipconfig /flushdns | Out-Null } }
         )
         Invoke-TweakSequence -Title "Hosts File Restore" -Steps $steps -Category "Privacy" | Out-Null
-        Write-Host "`n✓ Original hosts file restored!" -ForegroundColor $Script:Colors.Success
+        Write-Host "`n[OK] Original hosts file restored!" -ForegroundColor $Script:Colors.Success
     }
     else {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Start-Sleep -Seconds 1
         return
     }
@@ -490,9 +490,9 @@ function Set-HostsAdBlock {
 
 function Show-TweakChecklist {
     Write-Host "`n[QUICK TWEAK CHECKLIST]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Pick any combination of quick, independent tweaks and apply them all" -ForegroundColor $Script:Colors.Info
-    Write-Host "at once, in a single progress bar — instead of hunting through menus." -ForegroundColor $Script:Colors.Info
+    Write-Host "at once, in a single progress bar - instead of hunting through menus." -ForegroundColor $Script:Colors.Info
     Write-Host ""
 
     $checklist = @(
@@ -528,7 +528,7 @@ function Show-TweakChecklist {
     }
 
     if (-not $indices -or $indices.Count -eq 0) {
-        Write-Host "`n✗ No valid tweaks selected." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] No valid tweaks selected." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -538,7 +538,7 @@ function Show-TweakChecklist {
 
     # Some checklist actions (Block-TelemetryAdvanced, Clear-TemporaryFiles,
     # Enable-UltimatePerformancePlan) are full functions with their own
-    # confirmation/pause and progress bar — suppress those so the checklist
+    # confirmation/pause and progress bar - suppress those so the checklist
     # really does apply everything in one uninterrupted pass.
     $Script:SkipConfirmations = $true
     $Script:SkipPauses = $true
@@ -559,12 +559,12 @@ function Show-TweakChecklist {
 
 function Compare-Backups {
     Write-Host "`n[COMPARE TWO BACKUPS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     $backupFiles = Get-ChildItem -Path $PSScriptRoot -Filter "WinTweaker_Backup_*.json" | Sort-Object LastWriteTime -Descending
 
     if ($backupFiles.Count -lt 2) {
-        Write-Host "`n⚠ Need at least 2 backups to compare (found $($backupFiles.Count))." -ForegroundColor $Script:Colors.Warning
+        Write-Host "`n[!] Need at least 2 backups to compare (found $($backupFiles.Count))." -ForegroundColor $Script:Colors.Warning
         Write-Host "  Use 'Backup Current Settings' (Category 8) to create more." -ForegroundColor $Script:Colors.Info
         Wait-ForUser
         return
@@ -582,7 +582,7 @@ function Compare-Backups {
     $i1 = 0; $i2 = 0
     if (-not [int]::TryParse($firstChoice, [ref]$i1) -or -not [int]::TryParse($secondChoice, [ref]$i2) -or
         $i1 -lt 1 -or $i1 -gt $backupFiles.Count -or $i2 -lt 1 -or $i2 -gt $backupFiles.Count) {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -614,7 +614,7 @@ function Compare-Backups {
     Write-Host "    Newer: $($backupFiles[$i2 - 1].Name)" -ForegroundColor DarkGray
 
     if ($addedKeys.Count -eq 0 -and $removedKeys.Count -eq 0 -and $changedKeys.Count -eq 0) {
-        Write-Host "`n  ✓ No differences — both backups captured the same tracked settings." -ForegroundColor $Script:Colors.Success
+        Write-Host "`n  [OK] No differences - both backups captured the same tracked settings." -ForegroundColor $Script:Colors.Success
     }
     else {
         if ($addedKeys.Count -gt 0) {
@@ -649,7 +649,7 @@ function Compare-Backups {
 
 function Test-TpmSecureBoot {
     Write-Host "`n[TPM & SECURE BOOT CHECK]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Checking Windows 11 hardware readiness requirements..." -ForegroundColor $Script:Colors.Info
     Write-Host ""
 
@@ -660,35 +660,35 @@ function Test-TpmSecureBoot {
         $color = if ($tpmOk) { $Script:Colors.Success } else { $Script:Colors.Warning }
         Write-Host "    Present: $($tpm.TpmPresent) | Ready: $($tpm.TpmReady) | Enabled: $($tpm.TpmEnabled)" -ForegroundColor $color
         if ($tpmOk) {
-            Write-Host "    ✓ TPM meets Windows 11 requirements" -ForegroundColor $Script:Colors.Success
+            Write-Host "    [OK] TPM meets Windows 11 requirements" -ForegroundColor $Script:Colors.Success
         }
         else {
-            Write-Host "    ⚠ TPM is missing, disabled, or not ready — check UEFI/BIOS settings" -ForegroundColor $Script:Colors.Warning
+            Write-Host "    [!] TPM is missing, disabled, or not ready - check UEFI/BIOS settings" -ForegroundColor $Script:Colors.Warning
         }
     }
     catch {
-        Write-Host "    ⚠ Could not query TPM status (Get-Tpm unavailable or no TPM present)" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not query TPM status (Get-Tpm unavailable or no TPM present)" -ForegroundColor $Script:Colors.Warning
     }
 
     Write-Host "`n  Secure Boot:" -ForegroundColor $Script:Colors.Highlight
     try {
         $secureBoot = Confirm-SecureBootUEFI -ErrorAction Stop
         if ($secureBoot) {
-            Write-Host "    ✓ Secure Boot is ENABLED" -ForegroundColor $Script:Colors.Success
+            Write-Host "    [OK] Secure Boot is ENABLED" -ForegroundColor $Script:Colors.Success
         }
         else {
-            Write-Host "    ⚠ Secure Boot is DISABLED — enable it in UEFI/BIOS for Windows 11" -ForegroundColor $Script:Colors.Warning
+            Write-Host "    [!] Secure Boot is DISABLED - enable it in UEFI/BIOS for Windows 11" -ForegroundColor $Script:Colors.Warning
         }
     }
     catch {
-        Write-Host "    ⚠ Could not determine Secure Boot status (legacy BIOS, or command unsupported)" -ForegroundColor $Script:Colors.Warning
+        Write-Host "    [!] Could not determine Secure Boot status (legacy BIOS, or command unsupported)" -ForegroundColor $Script:Colors.Warning
     }
 
     Write-Host "`n  CPU generation / core count:" -ForegroundColor $Script:Colors.Highlight
     $hw = Get-HardwareProfile
-    Write-Host "    $($hw.CPU.Name) — $($hw.CPU.Cores) cores / $($hw.CPU.Threads) threads" -ForegroundColor White
-    Write-Host "    ℹ Windows 11 requires an 8th-gen Intel Core / Zen 2 AMD Ryzen or newer;" -ForegroundColor DarkGray
-    Write-Host "      this cannot be verified automatically — check Microsoft's CPU list." -ForegroundColor DarkGray
+    Write-Host "    $($hw.CPU.Name) - $($hw.CPU.Cores) cores / $($hw.CPU.Threads) threads" -ForegroundColor White
+    Write-Host "    [i] Windows 11 requires an 8th-gen Intel Core / Zen 2 AMD Ryzen or newer;" -ForegroundColor DarkGray
+    Write-Host "      this cannot be verified automatically - check Microsoft's CPU list." -ForegroundColor DarkGray
 
     Write-Log "Ran TPM & Secure Boot readiness check" -Level Info -Category "Monitoring"
     Wait-ForUser

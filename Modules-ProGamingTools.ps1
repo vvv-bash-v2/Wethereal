@@ -8,13 +8,13 @@ function Show-ProGamingToolsMenu {
     do {
         Show-Header "Pro Gaming Tools"
         Write-Host "  PRO GAMING TOOLS" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-        Write-Host "   1. 🔥 Overclock / Undervolt Guide (informational)" -ForegroundColor White
-        Write-Host "   2. 🧭 CPU/GPU Bottleneck Detector" -ForegroundColor White
-        Write-Host "   3. 🎯 Per-Game Process Tuning" -ForegroundColor White
-        Write-Host "   4. 🧹 Clean GPU Driver Reinstall (DDU-style, best-effort)" -ForegroundColor White
-        Write-Host "   5. 📟 FPS Overlay (RTSS / MSI Afterburner)" -ForegroundColor White
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
+        Write-Host "   1. [HOT] Overclock / Undervolt Guide (informational)" -ForegroundColor White
+        Write-Host "   2. [NAV] CPU/GPU Bottleneck Detector" -ForegroundColor White
+        Write-Host "   3. [TARGET] Per-Game Process Tuning" -ForegroundColor White
+        Write-Host "   4. [CLEAN] Clean GPU Driver Reinstall (DDU-style, best-effort)" -ForegroundColor White
+        Write-Host "   5. [DEV] FPS Overlay (RTSS / MSI Afterburner)" -ForegroundColor White
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Read-Host "Select an option"
@@ -27,7 +27,7 @@ function Show-ProGamingToolsMenu {
             '5' { Enable-FpsOverlay }
             '0' { return }
             default {
-                Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 1
             }
         }
@@ -40,8 +40,8 @@ function Show-ProGamingToolsMenu {
 
 function Show-OverclockGuide {
     Write-Host "`n[OVERCLOCK / UNDERVOLT GUIDE]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
-    Write-Host "⚠️  Wethereal does NOT touch voltages, clocks or power limits directly —" -ForegroundColor $Script:Colors.Warning
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "[!]  Wethereal does NOT touch voltages, clocks or power limits directly -" -ForegroundColor $Script:Colors.Warning
     Write-Host "   that's genuinely risky to automate blind (instability, crashes, in rare" -ForegroundColor $Script:Colors.Warning
     Write-Host "   cases hardware damage). Instead, here's exactly which official tool to" -ForegroundColor $Script:Colors.Warning
     Write-Host "   use for YOUR hardware, and a safe starting point." -ForegroundColor $Script:Colors.Warning
@@ -52,21 +52,21 @@ function Show-OverclockGuide {
     Write-Host "  CPU: $($hw.CPU.Name) [$($hw.CPU.Vendor)]" -ForegroundColor $Script:Colors.Highlight
     switch ($hw.CPU.Vendor) {
         "AMD" {
-            Write-Host "    → Tool: AMD Ryzen Master (official, free)" -ForegroundColor White
-            Write-Host "    → Safe starting point: enable 'Precision Boost Overdrive' (PBO) with" -ForegroundColor DarkGray
+            Write-Host "    -> Tool: AMD Ryzen Master (official, free)" -ForegroundColor White
+            Write-Host "    -> Safe starting point: enable 'Precision Boost Overdrive' (PBO) with" -ForegroundColor DarkGray
             Write-Host "      motherboard limits, then apply a small negative 'Curve Optimizer'" -ForegroundColor DarkGray
             Write-Host "      offset (e.g. -10 all-core) and stress-test before going further." -ForegroundColor DarkGray
             $cpuUrl = "https://www.amd.com/en/technologies/ryzen-master"
         }
         "Intel" {
-            Write-Host "    → Tool: Intel Extreme Tuning Utility (XTU, official, free)" -ForegroundColor White
-            Write-Host "    → Safe starting point: use the built-in 'Adaptive Undervoltage'" -ForegroundColor DarkGray
+            Write-Host "    -> Tool: Intel Extreme Tuning Utility (XTU, official, free)" -ForegroundColor White
+            Write-Host "    -> Safe starting point: use the built-in 'Adaptive Undervoltage'" -ForegroundColor DarkGray
             Write-Host "      suggestion or a small -50mV core offset, then run the bundled" -ForegroundColor DarkGray
             Write-Host "      stress test before increasing it further." -ForegroundColor DarkGray
             $cpuUrl = "https://www.intel.com/content/www/us/en/download/17881/intel-extreme-tuning-utility-intel-xtu.html"
         }
         default {
-            Write-Host "    → CPU vendor not detected — skipping CPU-specific tool suggestion." -ForegroundColor DarkGray
+            Write-Host "    -> CPU vendor not detected - skipping CPU-specific tool suggestion." -ForegroundColor DarkGray
             $cpuUrl = $null
         }
     }
@@ -80,8 +80,8 @@ function Show-OverclockGuide {
         foreach ($gpu in $hw.GPUs) {
             Write-Host "  GPU: $($gpu.Name) [$($gpu.Vendor)]" -ForegroundColor $Script:Colors.Highlight
         }
-        Write-Host "    → Tool: MSI Afterburner (official, free, works on NVIDIA/AMD/Intel)" -ForegroundColor White
-        Write-Host "    → Safe starting point: use the Afterburner OC Scanner (NVIDIA) or a" -ForegroundColor DarkGray
+        Write-Host "    -> Tool: MSI Afterburner (official, free, works on NVIDIA/AMD/Intel)" -ForegroundColor White
+        Write-Host "    -> Safe starting point: use the Afterburner OC Scanner (NVIDIA) or a" -ForegroundColor DarkGray
         Write-Host "      small +50MHz core / +200MHz memory step (AMD/Intel), test stability" -ForegroundColor DarkGray
         Write-Host "      in a benchmark before layering on more. For undervolting, lower the" -ForegroundColor DarkGray
         Write-Host "      voltage at your current max boost clock in the curve editor." -ForegroundColor DarkGray
@@ -89,7 +89,7 @@ function Show-OverclockGuide {
     }
 
     Write-Host ""
-    Write-Host "  ⚠️  Always run a stability/stress test after any change, and revert" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  [!]  Always run a stability/stress test after any change, and revert" -ForegroundColor $Script:Colors.Warning
     Write-Host "     immediately if you see crashes, artifacts or blue screens." -ForegroundColor $Script:Colors.Warning
     Write-Host ""
 
@@ -108,7 +108,7 @@ function Show-OverclockGuide {
 
 function Test-Bottleneck {
     Write-Host "`n[CPU/GPU BOTTLENECK DETECTOR]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Runs a ~8 second synthetic CPU load while sampling CPU and GPU usage to" -ForegroundColor $Script:Colors.Info
     Write-Host "estimate which one is more likely limiting your gaming performance." -ForegroundColor $Script:Colors.Info
     Write-Host "(A rough signal, not a substitute for in-game monitoring under real load.)" -ForegroundColor DarkGray
@@ -131,7 +131,7 @@ function Test-Bottleneck {
     $gpuSamples = @()
 
     for ($i = 1; $i -le 8; $i++) {
-        Write-Progress -Activity "🧭 Bottleneck Detector" -Status "Sampling [$i/8]..." -PercentComplete ([math]::Round(($i / 8) * 100))
+        Write-Progress -Activity "[NAV] Bottleneck Detector" -Status "Sampling [$i/8]..." -PercentComplete ([math]::Round(($i / 8) * 100))
         Start-Sleep -Seconds 1
         try {
             $cpu = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction Stop).CounterSamples[0].CookedValue
@@ -140,20 +140,20 @@ function Test-Bottleneck {
         catch {}
         try {
             $gpuCounters = Get-Counter '\GPU Engine(*)\Utilization Percentage' -ErrorAction Stop
-            # Windows exposes one counter instance per (process, engine) pair — sum and
+            # Windows exposes one counter instance per (process, engine) pair - sum and
             # cap at 100 to approximate overall GPU utilization from that snapshot.
             $gpuTotal = ($gpuCounters.CounterSamples | Measure-Object -Property CookedValue -Sum).Sum
             $gpuSamples += [Math]::Min(100, $gpuTotal)
         }
         catch {}
     }
-    Write-Progress -Activity "🧭 Bottleneck Detector" -Completed
+    Write-Progress -Activity "[NAV] Bottleneck Detector" -Completed
 
     $loadJobs | Wait-Job -Timeout 12 | Out-Null
     $loadJobs | Remove-Job -Force -ErrorAction SilentlyContinue
 
     if ($cpuSamples.Count -eq 0) {
-        Write-Host "`n✗ Could not read CPU performance counters on this system." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Could not read CPU performance counters on this system." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -171,19 +171,19 @@ function Test-Bottleneck {
 
     Write-Host "`n  Verdict:" -ForegroundColor $Script:Colors.Highlight
     if ($null -eq $avgGpu) {
-        Write-Host "    ℹ CPU is at $([math]::Round($avgCpu, 1))% under synthetic load. Re-run this while" -ForegroundColor Cyan
+        Write-Host "    [i] CPU is at $([math]::Round($avgCpu, 1))% under synthetic load. Re-run this while" -ForegroundColor Cyan
         Write-Host "      actually gaming (alt-tab quickly) for a more meaningful reading." -ForegroundColor Cyan
     }
     elseif ($avgCpu -gt 85 -and $avgGpu -lt 60) {
-        Write-Host "    → Likely CPU-bound: your CPU is maxed out while the GPU has headroom." -ForegroundColor Yellow
+        Write-Host "    -> Likely CPU-bound: your CPU is maxed out while the GPU has headroom." -ForegroundColor Yellow
         Write-Host "      Consider: Category 1 CPU tweaks, closing background apps, or a CPU upgrade." -ForegroundColor White
     }
     elseif ($avgGpu -gt 85 -and $avgCpu -lt 60) {
-        Write-Host "    → Likely GPU-bound: your GPU is maxed out while the CPU has headroom." -ForegroundColor Yellow
+        Write-Host "    -> Likely GPU-bound: your GPU is maxed out while the CPU has headroom." -ForegroundColor Yellow
         Write-Host "      Consider: lowering in-game resolution/settings, or a GPU upgrade." -ForegroundColor White
     }
     else {
-        Write-Host "    → No single clear bottleneck under this synthetic test — CPU and GPU" -ForegroundColor Green
+        Write-Host "    -> No single clear bottleneck under this synthetic test - CPU and GPU" -ForegroundColor Green
         Write-Host "      loads were relatively balanced. Test again during actual gameplay." -ForegroundColor Green
     }
 
@@ -207,9 +207,9 @@ $Script:CuratedGames = @(
 
 function Show-GameProfiles {
     Write-Host "`n[PER-GAME PROCESS TUNING]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Applies Windows' own per-executable performance hooks to a specific game:" -ForegroundColor $Script:Colors.Info
-    Write-Host "Above Normal CPU priority + 'High performance' GPU preference — scoped to" -ForegroundColor $Script:Colors.Info
+    Write-Host "Above Normal CPU priority + 'High performance' GPU preference - scoped to" -ForegroundColor $Script:Colors.Info
     Write-Host "that one .exe only, so it never affects anything else on your system." -ForegroundColor $Script:Colors.Info
     Write-Host ""
 
@@ -223,7 +223,7 @@ function Show-GameProfiles {
     $idx = 0
     if ($choice -eq '0' -or [string]::IsNullOrWhiteSpace($choice)) { return }
     if (-not [int]::TryParse($choice, [ref]$idx) -or $idx -lt 1 -or $idx -gt $Script:CuratedGames.Count) {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Start-Sleep -Seconds 1
         return
     }
@@ -232,7 +232,7 @@ function Show-GameProfiles {
     $exePath = Read-Host "Full path to '$($game.Name)' executable$(if ($game.Hint) { " (usually named $($game.Hint))" })"
 
     if ([string]::IsNullOrWhiteSpace($exePath) -or -not (Test-Path $exePath)) {
-        Write-Host "`n✗ That path doesn't exist. Find the game's .exe (right-click its shortcut →" -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] That path doesn't exist. Find the game's .exe (right-click its shortcut ->" -ForegroundColor $Script:Colors.Error
         Write-Host "  Open file location) and try again." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
@@ -248,7 +248,7 @@ function Show-GameProfiles {
                 $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$exeName\PerfOptions"
                 if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
                 Backup-RegistryValue -Path $path -Name "CpuPriorityClass"
-                # 3 = Above Normal. Deliberately NOT "High" (4) — that can starve the OS
+                # 3 = Above Normal. Deliberately NOT "High" (4) - that can starve the OS
                 # and other apps on lower core-count systems.
                 Set-ItemProperty -Path $path -Name "CpuPriorityClass" -Value 3 -Type DWord
             }.GetNewClosure()
@@ -266,7 +266,7 @@ function Show-GameProfiles {
 
     Invoke-TweakSequence -Title "Per-Game Tuning: $($game.Name)" -Steps $steps -Category "Gaming" | Out-Null
 
-    Write-Host "`n✓ Tuning applied to $($game.Name)! Takes effect next time you launch it." -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Tuning applied to $($game.Name)! Takes effect next time you launch it." -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
@@ -276,16 +276,16 @@ function Show-GameProfiles {
 
 function Invoke-CleanGpuDriverReinstall {
     Write-Host "`n[CLEAN GPU DRIVER REINSTALL]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
-    Write-Host "⚠️  This is a BEST-EFFORT clean-up, not a full DDU replacement." -ForegroundColor $Script:Colors.Warning
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "[!]  This is a BEST-EFFORT clean-up, not a full DDU replacement." -ForegroundColor $Script:Colors.Warning
     Write-Host "   Real Display Driver Uninstaller does its work from Safe Mode, which this" -ForegroundColor $Script:Colors.Warning
     Write-Host "   tool cannot force. If you're chasing a stubborn driver problem, use the" -ForegroundColor $Script:Colors.Warning
-    Write-Host "   real DDU from Safe Mode instead — this option is for a routine clean swap." -ForegroundColor $Script:Colors.Warning
+    Write-Host "   real DDU from Safe Mode instead - this option is for a routine clean swap." -ForegroundColor $Script:Colors.Warning
     Write-Host "   Your screen WILL go black/flicker while the driver is removed." -ForegroundColor $Script:Colors.Warning
 
     $hw = Get-HardwareProfile
     if ($hw.GPUs.Count -eq 0) {
-        Write-Host "`n✗ No GPU detected — nothing to clean." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] No GPU detected - nothing to clean." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -356,7 +356,7 @@ function Invoke-CleanGpuDriverReinstall {
 
     Invoke-TweakSequence -Title "Clean GPU Driver Reinstall" -Steps $steps -Category "Gaming" | Out-Null
 
-    Write-Host "`n✓ Best-effort cleanup done." -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Best-effort cleanup done." -ForegroundColor $Script:Colors.Success
     Write-Host "  Next: restart your PC, then install a fresh driver from the vendor site." -ForegroundColor $Script:Colors.Warning
 
     if (Confirm-Action -Message "Open the official driver download page now?" -DefaultYes) {
@@ -378,9 +378,9 @@ function Invoke-CleanGpuDriverReinstall {
 
 function Enable-FpsOverlay {
     Write-Host "`n[FPS OVERLAY]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Wethereal can't draw its own in-game overlay (that needs a DirectX/OpenGL" -ForegroundColor $Script:Colors.Info
-    Write-Host "hook, well beyond PowerShell) — but it can set up RivaTuner Statistics" -ForegroundColor $Script:Colors.Info
+    Write-Host "hook, well beyond PowerShell) - but it can set up RivaTuner Statistics" -ForegroundColor $Script:Colors.Info
     Write-Host "Server (RTSS), the same overlay engine MSI Afterburner and most FPS" -ForegroundColor $Script:Colors.Info
     Write-Host "counters use." -ForegroundColor $Script:Colors.Info
     Write-Host ""
@@ -392,11 +392,11 @@ function Enable-FpsOverlay {
     $rtssPath = $rtssPaths | Where-Object { Test-Path $_ } | Select-Object -First 1
 
     if ($rtssPath) {
-        Write-Host "✓ RTSS is already installed." -ForegroundColor $Script:Colors.Success
+        Write-Host "[OK] RTSS is already installed." -ForegroundColor $Script:Colors.Success
         if (Confirm-Action -Message "Launch RTSS now?" -DefaultYes) {
             Start-Process $rtssPath
             Write-Host "  RTSS is running. Configure the on-screen overlay hotkey/position from" -ForegroundColor $Script:Colors.Info
-            Write-Host "  its own window — it keeps running in the background after that." -ForegroundColor $Script:Colors.Info
+            Write-Host "  its own window - it keeps running in the background after that." -ForegroundColor $Script:Colors.Info
             Write-Log "Launched RTSS for FPS overlay" -Level Success -Category "Gaming"
         }
     }
@@ -415,7 +415,7 @@ function Enable-FpsOverlay {
                 }
             )
             Invoke-TweakSequence -Title "FPS Overlay Setup" -Steps $steps -Category "Gaming" | Out-Null
-            Write-Host "`n✓ Installed. Launch 'RivaTuner Statistics Server' from the Start Menu to" -ForegroundColor $Script:Colors.Success
+            Write-Host "`n[OK] Installed. Launch 'RivaTuner Statistics Server' from the Start Menu to" -ForegroundColor $Script:Colors.Success
             Write-Host "  enable the on-screen FPS overlay (its own Setup tab has the hotkey)." -ForegroundColor $Script:Colors.Success
         }
     }

@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.4.3] - 2026-08-25 - CRITICAL HOTFIX: permanently eliminate the mojibake/parse-error bug
+
+### 🐛 Bug Fixes
+
+- The "Unexpected token", "hash literal was incomplete", and "ampersand (&)
+  character is not allowed" parse errors kept coming back even after the
+  original UTF-8 BOM fix, because the BOM is fragile: it gets silently
+  stripped by many common ways of moving a file onto a Windows machine
+  (browser "Save As" from a raw GitHub view, copy-pasting into Notepad,
+  some sync/download tools, some editors' "Save" action). Whenever that
+  happens, Windows PowerShell 5.1 falls back to reading the file with the
+  system ANSI codepage, mangles every embedded emoji into multi-byte
+  mojibake, and that mojibake occasionally contains a stray `"` or `&`
+  byte that breaks the parser before the script can even run.
+- Root-caused and fixed for good: **every `.ps1` file in the project is now
+  100% pure ASCII.** All ~200 emoji and Unicode symbols (🔒 🎮 🚀 ⚠ ✓ ✗ ═ █
+  ║ etc., plus a few stray accented characters in Spanish comments) have
+  been replaced with plain ASCII tags (`[LOCK]`, `[GAME]`, `[BOOST]`,
+  `[!]`, `[OK]`, `[X]`, `=`, `#`, `|`, ...). Box-drawing banners/borders
+  were rebuilt with `+`/`=`/`|` and re-measured so they still line up.
+  Because the source is now plain ASCII, the file parses identically
+  whether or not it carries a BOM, no matter how it was copied, cloned,
+  downloaded, or re-saved — this entire bug class is no longer possible.
+- The UTF-8 BOM itself was left in place on every file as a harmless
+  extra safety net, but it is no longer load-bearing for correctness.
+
 ## [4.4.2] - 2026-08-22 - HOTFIX: GUI window too large, opened off-screen on smaller displays
 
 ### 🐛 Bug Fixes

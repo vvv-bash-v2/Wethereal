@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.4.2
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.4.3
 .DESCRIPTION
     A comprehensive Windows optimization tool with 190+ tweaks across 12 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
@@ -10,7 +10,7 @@
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.4.2 Ultimate Edition
+    Version: 4.4.3 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 .PARAMETER Silent
@@ -24,7 +24,7 @@
     automatic variable.)
 .PARAMETER Gui
     Launches the WinForms graphical front-end instead of the console menu.
-    Needs an STA session — if launched from an MTA host, relaunch with
+    Needs an STA session - if launched from an MTA host, relaunch with
     'powershell -STA -File Win-Tweaker.ps1 -Gui'.
 .EXAMPLE
     .\Win-Tweaker.ps1 -Silent -ProfileName LowEndGaming
@@ -49,12 +49,12 @@ if ($Silent -and -not $ProfileName) {
 }
 
 # Script configuration
-$Script:Version = "4.4.2"
+$Script:Version = "4.4.3"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
 # NOTE: this MUST be an array (@()), never a hashtable (@{}). Backup-RegistryValue
-# and Backup-ServiceState append structured entries with `+=` — on a Hashtable,
+# and Backup-ServiceState append structured entries with `+=` - on a Hashtable,
 # `+=` invokes the Hashtable `+` operator (a key MERGE that throws on the very
 # next call once two entries share a key like "Type"), silently breaking every
 # backup after the first and making Restore/Undo/Export/Compare no-ops.
@@ -95,38 +95,38 @@ $Script:Config = @{
 # Optimization profiles
 $Script:Profiles = @{
     Gaming         = @{
-        Name        = "🎮 Gaming Performance"
+        Name        = "[GAME] Gaming Performance"
         Description = "Maximum performance for gaming"
         Tweaks      = @('cpu', 'gpu', 'memory', 'network-gaming', 'visual-effects', 'game-mode')
     }
     Work           = @{
-        Name        = "💼 Work & Productivity"
+        Name        = "[WORK] Work & Productivity"
         Description = "Balanced for productivity"
         Tweaks      = @('services', 'visual-effects', 'cleanup', 'privacy', 'network')
     }
     MaxPerformance = @{
-        Name        = "⚡ Maximum Performance"
+        Name        = "* Maximum Performance"
         Description = "All performance optimizations"
         Tweaks      = @('all-performance')
     }
     Privacy        = @{
-        Name        = "🔒 Privacy Focused"
+        Name        = "[LOCK] Privacy Focused"
         Description = "Maximum privacy and security"
         Tweaks      = @('telemetry', 'privacy', 'bloatware', 'tracking')
     }
     LowEndGaming   = @{
-        Name        = "🕹️ Low-End Gaming / Max FPS"
-        Description = "Aggressive FPS-focused profile for low-spec/budget PCs — strips every non-essential background process, service and visual effect to hand as much CPU/GPU/RAM headroom as possible to the foreground game"
+        Name        = "[GAME] Low-End Gaming / Max FPS"
+        Description = "Aggressive FPS-focused profile for low-spec/budget PCs - strips every non-essential background process, service and visual effect to hand as much CPU/GPU/RAM headroom as possible to the foreground game"
         Tweaks      = @('low-end-gaming')
     }
     Streaming      = @{
-        Name        = "📡 Streaming"
-        Description = "Tuned for streaming/recording with OBS — frees the GPU hardware encoder from Windows' own capture, mutes on-screen popups, and keeps upload bandwidth stable"
+        Name        = "[NET] Streaming"
+        Description = "Tuned for streaming/recording with OBS - frees the GPU hardware encoder from Windows' own capture, mutes on-screen popups, and keeps upload bandwidth stable"
         Tweaks      = @('streaming')
     }
     Presentation   = @{
-        Name        = "🔋 Presentation / Battery"
-        Description = "The inverse profile: quiet notifications, battery-friendly power plan, screen kept awake, Windows Update paused — for presenting or maximizing battery life"
+        Name        = "[BATT] Presentation / Battery"
+        Description = "The inverse profile: quiet notifications, battery-friendly power plan, screen kept awake, Windows Update paused - for presenting or maximizing battery life"
         Tweaks      = @('presentation')
     }
 }
@@ -164,27 +164,27 @@ function Show-Header {
     
     # ASCII Art Banner - WETHEREAL
     Write-Host ""
-    Write-Host "╔═══════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║                                                                           ║" -ForegroundColor Cyan
-    Write-Host "║   ██╗    ██╗███████╗████████╗██╗  ██╗███████╗██████╗ ███████╗ █████╗ ██╗║" -ForegroundColor Cyan
-    Write-Host "║   ██║    ██║██╔════╝╚══██╔══╝██║  ██║██╔════╝██╔══██╗██╔════╝██╔══██╗██║║" -ForegroundColor Cyan
-    Write-Host "║   ██║ █╗ ██║█████╗     ██║   ███████║█████╗  ██████╔╝█████╗  ███████║██║║" -ForegroundColor Cyan
-    Write-Host "║   ██║███╗██║██╔══╝     ██║   ██╔══██║██╔══╝  ██╔══██╗██╔══╝  ██╔══██║██║║" -ForegroundColor Cyan
-    Write-Host "║   ╚███╔███╔╝███████╗   ██║   ██║  ██║███████╗██║  ██║███████╗██║  ██║███████╗" -ForegroundColor Cyan
-    Write-Host "║    ╚══╝╚══╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝" -ForegroundColor Cyan
-    Write-Host "║                                                                           ║" -ForegroundColor Cyan
-    Write-Host "╠═══════════════════════════════════════════════════════════════════════════╣" -ForegroundColor Cyan
-    Write-Host "║            Windows Performance Tweaker - Ultimate Edition v$($Script:Version)           ║" -ForegroundColor White
-    Write-Host "╠═══════════════════════════════════════════════════════════════════════════╣" -ForegroundColor Cyan
-    Write-Host "║ 🚀 135+ Optimizations │ 🎮 CPU+GPU Auto-Detect │ 📊 Live Progress Bars     ║" -ForegroundColor Green
-    Write-Host "║ 💻 Intel/AMD Adaptive │ 🌐 Network Tweaks │ 🔒 Privacy & Security          ║" -ForegroundColor Green
-    Write-Host "╠═══════════════════════════════════════════════════════════════════════════╣" -ForegroundColor Cyan
+    Write-Host "+===========================================================================+" -ForegroundColor Cyan
+    Write-Host "|                                                                           |" -ForegroundColor Cyan
+    Write-Host "|   ##+    ##+#######+########+##+  ##+#######+######+ #######+ #####+ ##+|" -ForegroundColor Cyan
+    Write-Host "|   ##|    ##|##+====++==##+==+##|  ##|##+====+##+==##+##+====+##+==##+##||" -ForegroundColor Cyan
+    Write-Host "|   ##| #+ ##|#####+     ##|   #######|#####+  ######++#####+  #######|##||" -ForegroundColor Cyan
+    Write-Host "|   ##|###+##|##+==+     ##|   ##+==##|##+==+  ##+==##+##+==+  ##+==##|##||" -ForegroundColor Cyan
+    Write-Host "|   +###+###++#######+   ##|   ##|  ##|#######+##|  ##|#######+##|  ##|#######+" -ForegroundColor Cyan
+    Write-Host "|    +==++==+ +======+   +=+   +=+  +=++======++=+  +=++======++=+  +=++======+" -ForegroundColor Cyan
+    Write-Host "|                                                                           |" -ForegroundColor Cyan
+    Write-Host "+===========================================================================+" -ForegroundColor Cyan
+    Write-Host "|            Windows Performance Tweaker - Ultimate Edition v$($Script:Version)           |" -ForegroundColor White
+    Write-Host "+===========================================================================+" -ForegroundColor Cyan
+    Write-Host "| [BOOST] 135+ Tweaks | [GAME] CPU+GPU Auto-Detect | [STATS] Live Progress  |" -ForegroundColor Green
+    Write-Host "| [PC] Intel/AMD Adaptive | [NET] Network Tweaks | [LOCK] Privacy&Security  |" -ForegroundColor Green
+    Write-Host "+===========================================================================+" -ForegroundColor Cyan
     
     if ($Subtitle) {
         $paddedSubtitle = "  " + $Subtitle
         $paddedSubtitle = $paddedSubtitle.PadRight(75)
-        Write-Host "║$paddedSubtitle║" -ForegroundColor Magenta
-        Write-Host "╠═══════════════════════════════════════════════════════════════════════════╣" -ForegroundColor Cyan
+        Write-Host "|$paddedSubtitle|" -ForegroundColor Magenta
+        Write-Host "+===========================================================================+" -ForegroundColor Cyan
     }
     
     # Live System Info Bar
@@ -197,7 +197,7 @@ function Show-Header {
         if ($cpuText.Length -gt 66) { $cpuText = $cpuText.Substring(0, 63) + "..." }
         $cpuText = $cpuText.PadRight(66)
 
-        # GPU Info — shows every detected adapter on hybrid systems (e.g. Intel + AMD)
+        # GPU Info - shows every detected adapter on hybrid systems (e.g. Intel + AMD)
         if ($hw.GPUs.Count -eq 0) {
             $gpuText = "Not detected"
         }
@@ -210,61 +210,61 @@ function Show-Header {
         # RAM Info
         $ramInfo = $sysInfo.RAM
 
-        Write-Host "║ 💻 CPU: $cpuText  ║" -ForegroundColor DarkGray
-        Write-Host "║ 🎮 GPU: $gpuText  ║" -ForegroundColor DarkGray
-        Write-Host "║ 🧠 RAM: $($ramInfo.PadRight(58))      ║" -ForegroundColor DarkGray
+        Write-Host "| [PC] CPU: $cpuText  |" -ForegroundColor DarkGray
+        Write-Host "| [GAME] GPU: $gpuText  |" -ForegroundColor DarkGray
+        Write-Host "| [CPU] RAM: $($ramInfo.PadRight(58))      |" -ForegroundColor DarkGray
     }
     catch {
-        Write-Host "║ System Info: Initializing...                                              ║" -ForegroundColor DarkGray
+        Write-Host "| System Info: Initializing...                                              |" -ForegroundColor DarkGray
     }
     
-    Write-Host "╚═══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "+===========================================================================+" -ForegroundColor Cyan
     Write-Host ""
 }
 
 function Show-MainMenu {
     Show-Header
     Write-Host "  $(Get-Str 'MainMenuTitle')" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "   1. 🖥️  $(Get-Str 'Cat1')" -ForegroundColor White
-    Write-Host "   2. 🎮 $(Get-Str 'Cat2')" -ForegroundColor White
-    Write-Host "   3. 🌐 $(Get-Str 'Cat3')" -ForegroundColor White
-    Write-Host "   4. 🔒 $(Get-Str 'Cat4')" -ForegroundColor White
-    Write-Host "   5. 🗑️  $(Get-Str 'Cat5')" -ForegroundColor White
-    Write-Host "   6. ⚙️  $(Get-Str 'Cat6')" -ForegroundColor White
-    Write-Host "   7. 📊 $(Get-Str 'Cat7')" -ForegroundColor White
-    Write-Host "   8. 🛠️  $(Get-Str 'Cat8')" -ForegroundColor White
-    Write-Host "   9. 🚀 $(Get-Str 'Cat9')" -ForegroundColor White
-    Write-Host "  10. 🕹️  $(Get-Str 'Cat10')" -ForegroundColor White
-    Write-Host "  11. 🤖 $(Get-Str 'Cat11')" -ForegroundColor White
-    Write-Host "  12. 🧰 $(Get-Str 'Cat12')" -ForegroundColor White
+    Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
+    Write-Host "   1. [PC]  $(Get-Str 'Cat1')" -ForegroundColor White
+    Write-Host "   2. [GAME] $(Get-Str 'Cat2')" -ForegroundColor White
+    Write-Host "   3. [NET] $(Get-Str 'Cat3')" -ForegroundColor White
+    Write-Host "   4. [LOCK] $(Get-Str 'Cat4')" -ForegroundColor White
+    Write-Host "   5. [DEL]  $(Get-Str 'Cat5')" -ForegroundColor White
+    Write-Host "   6. [CFG]  $(Get-Str 'Cat6')" -ForegroundColor White
+    Write-Host "   7. [STATS] $(Get-Str 'Cat7')" -ForegroundColor White
+    Write-Host "   8. [TOOLS]  $(Get-Str 'Cat8')" -ForegroundColor White
+    Write-Host "   9. [BOOST] $(Get-Str 'Cat9')" -ForegroundColor White
+    Write-Host "  10. [GAME]  $(Get-Str 'Cat10')" -ForegroundColor White
+    Write-Host "  11. [AUTO] $(Get-Str 'Cat11')" -ForegroundColor White
+    Write-Host "  12. [TOOLS] $(Get-Str 'Cat12')" -ForegroundColor White
     Write-Host ""
     Write-Host "  $(Get-Str 'QuickActions')" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  13. ⚡ Apply Optimization Profile" -ForegroundColor Green
-    Write-Host "  14. 🔍 System Analysis & Recommendations" -ForegroundColor Cyan
-    Write-Host "  15. 🎮 GPU-Specific Optimizations" -ForegroundColor Magenta
-    Write-Host "  16. 🗑️  Enhanced Bloatware Removal" -ForegroundColor Yellow
-    Write-Host "  17. 📈 Generate Optimization Report" -ForegroundColor White
-    Write-Host "  18. 🔄 Restore Previous Settings" -ForegroundColor Yellow
-    Write-Host "  19. 📋 View Optimization Log" -ForegroundColor White
+    Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
+    Write-Host "  13. * Apply Optimization Profile" -ForegroundColor Green
+    Write-Host "  14. [SCAN] System Analysis & Recommendations" -ForegroundColor Cyan
+    Write-Host "  15. [GAME] GPU-Specific Optimizations" -ForegroundColor Magenta
+    Write-Host "  16. [DEL]  Enhanced Bloatware Removal" -ForegroundColor Yellow
+    Write-Host "  17. [UP] Generate Optimization Report" -ForegroundColor White
+    Write-Host "  18. [SYNC] Restore Previous Settings" -ForegroundColor Yellow
+    Write-Host "  19. [LIST] View Optimization Log" -ForegroundColor White
     Write-Host ""
     Write-Host "  ADVANCED TOOLS (NEW!)" -ForegroundColor $Script:Colors.Highlight
-    Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  20. 📊 Real-Time Performance Dashboard" -ForegroundColor Cyan
-    Write-Host "  21. 🌐 Network Speed Test" -ForegroundColor Green
-    Write-Host "  22. 🚀 Startup Impact Analyzer" -ForegroundColor Yellow
-    Write-Host "  23. 🌡️  System Temperature Monitor" -ForegroundColor Magenta
-    Write-Host "  24. 🔄 One-Click Restore" -ForegroundColor White
+    Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
+    Write-Host "  20. [STATS] Real-Time Performance Dashboard" -ForegroundColor Cyan
+    Write-Host "  21. [NET] Network Speed Test" -ForegroundColor Green
+    Write-Host "  22. [BOOST] Startup Impact Analyzer" -ForegroundColor Yellow
+    Write-Host "  23. [TEMP]  System Temperature Monitor" -ForegroundColor Magenta
+    Write-Host "  24. [SYNC] One-Click Restore" -ForegroundColor White
     Write-Host ""
     Write-Host "  PROFESSIONAL TOOLS (ULTIMATE!)" -ForegroundColor $Script:Colors.Highlight
-    Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  25. 🏥 Comprehensive System Health Check" -ForegroundColor Cyan
-    Write-Host "  26. 📝 Registry Optimizer" -ForegroundColor Green
-    Write-Host "  27. ⚙️  Intelligent Service Optimizer" -ForegroundColor Yellow
-    Write-Host "  28. 🔄 Windows Update Manager" -ForegroundColor Magenta
+    Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
+    Write-Host "  25. [HEALTH] Comprehensive System Health Check" -ForegroundColor Cyan
+    Write-Host "  26. [LOG] Registry Optimizer" -ForegroundColor Green
+    Write-Host "  27. [CFG]  Intelligent Service Optimizer" -ForegroundColor Yellow
+    Write-Host "  28. [SYNC] Windows Update Manager" -ForegroundColor Magenta
     Write-Host ""
-    Write-Host "   0. ❌ Exit" -ForegroundColor Red
+    Write-Host "   0. [X] Exit" -ForegroundColor Red
     Write-Host "     (Tip: relaunch with -Gui for the graphical quick-launch window)" -ForegroundColor DarkGray
     Write-Host ""
 }
@@ -319,7 +319,7 @@ function Add-MasterBackupEntry {
     <#
         Appends one backup entry to Wethereal_MasterBackup.json, a file that
         accumulates across EVERY run of Wethereal on this machine (never
-        truncated) — the "original value the very first time Wethereal ever
+        truncated) - the "original value the very first time Wethereal ever
         touched this setting". Invoke-FullRollback replays this whole file,
         so it's how "undo everything Wethereal has ever changed" works, as
         opposed to $Script:ConfigBackup which only covers this session.
@@ -416,15 +416,15 @@ function Backup-RegistryValue {
 
 function Invoke-BackupRestore {
     <#
-        Applies every entry captured by Backup-RegistryValue / Backup-ServiceState —
+        Applies every entry captured by Backup-RegistryValue / Backup-ServiceState -
         either the live in-memory $Script:ConfigBackup, or one deserialized from a
-        WinTweaker_Backup_*.json file on disk — back onto the system, using the
+        WinTweaker_Backup_*.json file on disk - back onto the system, using the
         same visual progress-bar sequence as every other tweak.
     #>
     param([Parameter(Mandatory = $true)][array]$Entries)
 
     if ($Entries.Count -eq 0) {
-        Write-Host "`n⚠ Nothing to restore in this backup." -ForegroundColor $Script:Colors.Warning
+        Write-Host "`n[!] Nothing to restore in this backup." -ForegroundColor $Script:Colors.Warning
         return
     }
 
@@ -491,11 +491,11 @@ function Invoke-TweakSequence {
         $current++
         $percent = [math]::Round(($current / $total) * 100)
 
-        Write-Progress -Activity "⚡ $Title" -Status "[$current/$total] $($step.Name)" -PercentComplete $percent -CurrentOperation "Applying tweak..."
+        Write-Progress -Activity "* $Title" -Status "[$current/$total] $($step.Name)" -PercentComplete $percent -CurrentOperation "Applying tweak..."
 
         # Optional per-step gate, e.g. skip a tweak when the relevant hardware isn't present
         if ($step.ContainsKey('Condition') -and -not (& $step.Condition)) {
-            Write-Host ("  [{0,2}/{1,-2}] ⏭  {2} " -f $current, $total, $step.Name) -ForegroundColor DarkGray
+            Write-Host ("  [{0,2}/{1,-2}] >>  {2} " -f $current, $total, $step.Name) -ForegroundColor DarkGray
             Write-Log "$($step.Name) - skipped (condition not met)" -Level Debug -Category $Category
             $skipped++
             continue
@@ -503,7 +503,7 @@ function Invoke-TweakSequence {
 
         try {
             & $step.Action
-            Write-Host ("  [{0,2}/{1,-2}] ✓ {2}" -f $current, $total, $step.Name) -ForegroundColor $Script:Colors.Success
+            Write-Host ("  [{0,2}/{1,-2}] [OK] {2}" -f $current, $total, $step.Name) -ForegroundColor $Script:Colors.Success
             Write-Log $step.Name -Level Success -Category $Category
             $succeeded++
             if (Get-Command -Name Add-TelemetryEvent -ErrorAction SilentlyContinue) {
@@ -511,7 +511,7 @@ function Invoke-TweakSequence {
             }
         }
         catch {
-            Write-Host ("  [{0,2}/{1,-2}] ✗ {2} — {3}" -f $current, $total, $step.Name, $_.Exception.Message) -ForegroundColor $Script:Colors.Error
+            Write-Host ("  [{0,2}/{1,-2}] [X] {2} - {3}" -f $current, $total, $step.Name, $_.Exception.Message) -ForegroundColor $Script:Colors.Error
             Write-Log "$($step.Name) failed: $($_.Exception.Message)" -Level Warning -Category $Category
             $failed++
         }
@@ -519,16 +519,16 @@ function Invoke-TweakSequence {
         Start-Sleep -Milliseconds 80
     }
 
-    Write-Progress -Activity "⚡ $Title" -Completed
+    Write-Progress -Activity "* $Title" -Completed
 
-    $bar = "█" * [math]::Floor(($succeeded / [math]::Max($total, 1)) * 30)
-    $bar = $bar.PadRight(30, '░')
+    $bar = "#" * [math]::Floor(($succeeded / [math]::Max($total, 1)) * 30)
+    $bar = $bar.PadRight(30, '.')
     Write-Host "`n  [$bar] $succeeded/$total applied" -ForegroundColor $Script:Colors.Highlight
     if ($failed -gt 0) {
-        Write-Host "  ⚠ $failed step(s) failed — see log for details." -ForegroundColor $Script:Colors.Warning
+        Write-Host "  [!] $failed step(s) failed - see log for details." -ForegroundColor $Script:Colors.Warning
     }
     if ($skipped -gt 0) {
-        Write-Host "  ⏭  $skipped step(s) skipped (not applicable to this hardware)." -ForegroundColor DarkGray
+        Write-Host "  >>  $skipped step(s) skipped (not applicable to this hardware)." -ForegroundColor DarkGray
     }
 
     return @{ Total = $total; Succeeded = $succeeded; Failed = $failed; Skipped = $skipped }
@@ -539,7 +539,7 @@ function Invoke-TweakSequence {
 #region Load Additional Modules
 
 # Load additional optimization modules
-# NOTE: Modules-HardwareDetection.ps1 must load FIRST — every other module calls
+# NOTE: Modules-HardwareDetection.ps1 must load FIRST - every other module calls
 # Get-CPUVendor / Get-GPUVendor / Get-HardwareProfile to adapt its optimizations.
 $moduleFiles = @(
     "$PSScriptRoot\Modules-HardwareDetection.ps1",
@@ -574,7 +574,7 @@ function Show-SystemPerformanceMenu {
     do {
         Show-Header "System Performance"
         Write-Host "  SYSTEM PERFORMANCE OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
         Write-Host "   1. CPU Optimizations (Core Parking, Scheduling, Power)" -ForegroundColor White
         Write-Host "   2. GPU & Graphics Optimizations" -ForegroundColor White
         Write-Host "   3. RAM & Memory Advanced Tweaks" -ForegroundColor White
@@ -583,8 +583,8 @@ function Show-SystemPerformanceMenu {
         Write-Host "   6. Visual Effects Optimization" -ForegroundColor White
         Write-Host "   7. Storage Optimization (SSD/HDD)" -ForegroundColor White
         Write-Host "   8. Windows Update Optimizations" -ForegroundColor White
-        Write-Host "   9. ⚡ Apply All System Optimizations" -ForegroundColor Green
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "   9. * Apply All System Optimizations" -ForegroundColor Green
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
         
         $choice = Read-Host "Select an option"
@@ -606,7 +606,7 @@ function Show-SystemPerformanceMenu {
 
 function Optimize-CPU {
     Write-Host "`n[CPU OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     $hw = Get-HardwareProfile
     Write-Host "Detected CPU: $($hw.CPU.Name) [$($hw.CPU.Vendor)]" -ForegroundColor $Script:Colors.Info
@@ -659,16 +659,16 @@ function Optimize-CPU {
     switch ($hw.CPU.Vendor) {
         "AMD" { Optimize-AMDCPU }
         "Intel" { Optimize-IntelCPU }
-        default { Write-Host "`n  ℹ No vendor-specific CPU profile available for '$($hw.CPU.Vendor)'." -ForegroundColor DarkGray }
+        default { Write-Host "`n  [i] No vendor-specific CPU profile available for '$($hw.CPU.Vendor)'." -ForegroundColor DarkGray }
     }
 
-    Write-Host "`n✓ CPU optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] CPU optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-GPU {
     Write-Host "`n[GPU & GRAPHICS OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     $hw = Get-HardwareProfile
     if ($hw.GPUs.Count -eq 0) {
@@ -726,14 +726,14 @@ function Optimize-GPU {
 
     Invoke-TweakSequence -Title "GPU Optimization" -Steps $steps -Category "GPU" | Out-Null
 
-    Write-Host "`n✓ GPU optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] GPU optimizations complete!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Note: Restart required for GPU scheduling changes." -ForegroundColor $Script:Colors.Warning
     Wait-ForUser
 }
 
 function Optimize-MemoryAdvanced {
     Write-Host "`n[ADVANCED MEMORY OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -790,14 +790,14 @@ function Optimize-MemoryAdvanced {
 
     Invoke-TweakSequence -Title "Memory Optimization" -Steps $steps -Category "Memory" | Out-Null
 
-    Write-Host "`n✓ Memory optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Memory optimizations complete!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Note: Restart recommended for full effect." -ForegroundColor $Script:Colors.Warning
     Wait-ForUser
 }
 
 function Optimize-DiskIO {
     Write-Host "`n[DISK I/O OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -812,13 +812,13 @@ function Optimize-DiskIO {
 
     Invoke-TweakSequence -Title "Disk I/O Optimization" -Steps $steps -Category "Disk" | Out-Null
 
-    Write-Host "`n✓ Disk I/O optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Disk I/O optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-WindowsServices {
     Write-Host "`n[WINDOWS SERVICES OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     
     if (-not (Confirm-Action)) { return }
     
@@ -867,13 +867,13 @@ function Optimize-WindowsServices {
 
     $result = Invoke-TweakSequence -Title "Windows Services Optimization" -Steps $steps -Category "Services"
 
-    Write-Host "`n✓ Disabled $($result.Succeeded) services!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Disabled $($result.Succeeded) services!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-VisualEffects {
     Write-Host "`n[VISUAL EFFECTS OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -918,13 +918,13 @@ function Optimize-VisualEffects {
 
     Invoke-TweakSequence -Title "Visual Effects Optimization" -Steps $steps -Category "Visual" | Out-Null
 
-    Write-Host "`n✓ Visual effects optimized!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Visual effects optimized!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-Storage {
     Write-Host "`n[STORAGE OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -933,7 +933,7 @@ function Optimize-Storage {
     $drives = Get-Volume | Where-Object { $_.DriveLetter -and $_.DriveType -eq 'Fixed' }
 
     if (-not $drives -or $drives.Count -eq 0) {
-        Write-Host "`n⚠ No fixed drives found to optimize." -ForegroundColor $Script:Colors.Warning
+        Write-Host "`n[!] No fixed drives found to optimize." -ForegroundColor $Script:Colors.Warning
         Wait-ForUser
         return
     }
@@ -948,13 +948,13 @@ function Optimize-Storage {
 
     Invoke-TweakSequence -Title "Storage Optimization" -Steps $steps -Category "Storage" | Out-Null
 
-    Write-Host "`n✓ Storage optimization complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Storage optimization complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-WindowsUpdate {
     Write-Host "`n[WINDOWS UPDATE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -983,13 +983,13 @@ function Optimize-WindowsUpdate {
 
     Invoke-TweakSequence -Title "Windows Update Optimization" -Steps $steps -Category "WindowsUpdate" | Out-Null
 
-    Write-Host "`n✓ Windows Update optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Windows Update optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Invoke-AllSystemOptimizations {
     Write-Host "`n[APPLY ALL SYSTEM OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will apply ALL system performance optimizations." -ForegroundColor $Script:Colors.Warning
     
     if (-not (Confirm-Action)) { return }
@@ -1003,9 +1003,9 @@ function Invoke-AllSystemOptimizations {
     Optimize-Storage
     Optimize-WindowsUpdate
     
-    Write-Host "`n╔═══════════════════════════════════════════════════════════════════════════╗" -ForegroundColor $Script:Colors.Success
-    Write-Host "║  ✓ ALL SYSTEM OPTIMIZATIONS COMPLETED!                                    ║" -ForegroundColor $Script:Colors.Success
-    Write-Host "╚═══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n+===========================================================================+" -ForegroundColor $Script:Colors.Success
+    Write-Host "|  [OK] ALL SYSTEM OPTIMIZATIONS COMPLETED!                                 |" -ForegroundColor $Script:Colors.Success
+    Write-Host "+===========================================================================+" -ForegroundColor $Script:Colors.Success
     
     Wait-ForUser
 }
@@ -1033,7 +1033,7 @@ function Main {
     Import-LanguageSetting
 
     if ($Silent) {
-        # Unattended mode: no banner, no prompts — apply the requested profile
+        # Unattended mode: no banner, no prompts - apply the requested profile
         # and exit. Intended for scripted/fleet deployment.
         $Script:SilentMode = $true
         Get-HardwareProfile -Refresh | Out-Null
@@ -1048,7 +1048,7 @@ function Main {
         Get-HardwareProfile -Refresh | Out-Null
         Write-Log "Wethereal v$($Script:Version) started in -Gui mode" -Level Info -Category "System"
         Write-Host "Wethereal v$($Script:Version) - Launching graphical quick-launch window..." -ForegroundColor Cyan
-        Write-Host "(This console window stays open — live progress for anything you run prints here.)" -ForegroundColor DarkGray
+        Write-Host "(This console window stays open - live progress for anything you run prints here.)" -ForegroundColor DarkGray
         Show-GraphicalMenu
         Write-Host "`nGUI closed. Falling back to the console menu below." -ForegroundColor Cyan
     }
@@ -1056,45 +1056,45 @@ function Main {
     # Startup Animation
     Clear-Host
     Write-Host ""
-    Write-Host "╔═══════════════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║                                                                           ║" -ForegroundColor Cyan
-    Write-Host "║   ██╗    ██╗███████╗████████╗██╗  ██╗███████╗██████╗ ███████╗ █████╗ ██╗║" -ForegroundColor Cyan
-    Write-Host "║   ██║    ██║██╔════╝╚══██╔══╝██║  ██║██╔════╝██╔══██╗██╔════╝██╔══██╗██║║" -ForegroundColor Cyan
-    Write-Host "║   ██║ █╗ ██║█████╗     ██║   ███████║█████╗  ██████╔╝█████╗  ███████║██║║" -ForegroundColor Cyan
-    Write-Host "║   ██║███╗██║██╔══╝     ██║   ██╔══██║██╔══╝  ██╔══██╗██╔══╝  ██╔══██║██║║" -ForegroundColor Cyan
-    Write-Host "║   ╚███╔███╔╝███████╗   ██║   ██║  ██║███████╗██║  ██║███████╗██║  ██║███████╗" -ForegroundColor Cyan
-    Write-Host "║    ╚══╝╚══╝ ╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚══════╝" -ForegroundColor Cyan
-    Write-Host "║                                                                           ║" -ForegroundColor Cyan
-    Write-Host "╚═══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host "+===========================================================================+" -ForegroundColor Cyan
+    Write-Host "|                                                                           |" -ForegroundColor Cyan
+    Write-Host "|   ##+    ##+#######+########+##+  ##+#######+######+ #######+ #####+ ##+|" -ForegroundColor Cyan
+    Write-Host "|   ##|    ##|##+====++==##+==+##|  ##|##+====+##+==##+##+====+##+==##+##||" -ForegroundColor Cyan
+    Write-Host "|   ##| #+ ##|#####+     ##|   #######|#####+  ######++#####+  #######|##||" -ForegroundColor Cyan
+    Write-Host "|   ##|###+##|##+==+     ##|   ##+==##|##+==+  ##+==##+##+==+  ##+==##|##||" -ForegroundColor Cyan
+    Write-Host "|   +###+###++#######+   ##|   ##|  ##|#######+##|  ##|#######+##|  ##|#######+" -ForegroundColor Cyan
+    Write-Host "|    +==++==+ +======+   +=+   +=+  +=++======++=+  +=++======++=+  +=++======+" -ForegroundColor Cyan
+    Write-Host "|                                                                           |" -ForegroundColor Cyan
+    Write-Host "+===========================================================================+" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Initializing Wethereal v$($Script:Version)..." -ForegroundColor Yellow -NoNewline
     Start-Sleep -Milliseconds 500
-    Write-Host " ✓" -ForegroundColor Green
+    Write-Host " [OK]" -ForegroundColor Green
     
     Write-Host "  Loading optimization modules..." -ForegroundColor Yellow -NoNewline
     Start-Sleep -Milliseconds 400
-    Write-Host " ✓" -ForegroundColor Green
+    Write-Host " [OK]" -ForegroundColor Green
     
     Write-Host "  Detecting CPU vendor (Intel / AMD)..." -ForegroundColor Yellow -NoNewline
     $hw = Get-HardwareProfile -Refresh
     Start-Sleep -Milliseconds 300
-    Write-Host " ✓ [$($hw.CPU.Vendor) detected]" -ForegroundColor Green
+    Write-Host " [OK] [$($hw.CPU.Vendor) detected]" -ForegroundColor Green
 
     Write-Host "  Scanning GPU vendor(s)..." -ForegroundColor Yellow -NoNewline
     Start-Sleep -Milliseconds 300
     if ($hw.IsHybridGPU) {
-        Write-Host " ✓ [Hybrid: $($hw.GPUVendors -join ' + ') detected]" -ForegroundColor Green
+        Write-Host " [OK] [Hybrid: $($hw.GPUVendors -join ' + ') detected]" -ForegroundColor Green
     }
     else {
-        Write-Host " ✓ [$($hw.GPUVendors -join ', ') detected]" -ForegroundColor Green
+        Write-Host " [OK] [$($hw.GPUVendors -join ', ') detected]" -ForegroundColor Green
     }
 
     Write-Host ""
-    Write-Host "  🎯 Platform profile: $(Show-HardwarePlatformSummary)" -ForegroundColor Magenta
+    Write-Host "  [TARGET] Platform profile: $(Show-HardwarePlatformSummary)" -ForegroundColor Magenta
     Write-Host "     Optimizations below will automatically adapt to this hardware." -ForegroundColor DarkGray
 
     Write-Host ""
-    Write-Host "  🚀 Ready! Press any key to continue..." -ForegroundColor Cyan
+    Write-Host "  [BOOST] Ready! Press any key to continue..." -ForegroundColor Cyan
     $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
     Write-Log "Wethereal Ultimate Edition v$($Script:Version) started - Platform: $(Show-HardwarePlatformSummary)" -Level Info -Category "System"
@@ -1138,7 +1138,7 @@ function Main {
                 exit
             }
             default {
-                Write-Host "`n✗ Invalid option. Please try again." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option. Please try again." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 2
             }
         }

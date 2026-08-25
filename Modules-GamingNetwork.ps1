@@ -8,16 +8,16 @@ function Show-GamingMenu {
     do {
         Show-Header "Gaming & Graphics"
         Write-Host "  GAMING & GRAPHICS OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
         Write-Host "   1. Enable Gaming Mode & Optimizations" -ForegroundColor White
         Write-Host "   2. Reduce Input Lag (Mouse/Keyboard)" -ForegroundColor White
         Write-Host "   3. Optimize Network for Gaming" -ForegroundColor White
         Write-Host "   4. Disable Fullscreen Optimizations" -ForegroundColor White
         Write-Host "   5. Audio Optimizations for Gaming" -ForegroundColor White
         Write-Host "   6. Frame Rate Optimizations" -ForegroundColor White
-        Write-Host "   7. ⚡ Apply All Gaming Optimizations" -ForegroundColor Green
-        Write-Host "   8. 🕹️  Low-End Gaming / Max FPS Mode (budget PCs)" -ForegroundColor Magenta
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "   7. * Apply All Gaming Optimizations" -ForegroundColor Green
+        Write-Host "   8. [GAME]  Low-End Gaming / Max FPS Mode (budget PCs)" -ForegroundColor Magenta
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Read-Host "Select an option"
@@ -33,7 +33,7 @@ function Show-GamingMenu {
             '8' { Optimize-LowEndGaming }
             '0' { return }
             default {
-                Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 1
             }
         }
@@ -42,7 +42,7 @@ function Show-GamingMenu {
 
 function Enable-GamingMode {
     Write-Host "`n[GAMING MODE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -77,13 +77,13 @@ function Enable-GamingMode {
 
     Invoke-TweakSequence -Title "Gaming Mode" -Steps $steps -Category "Gaming" | Out-Null
 
-    Write-Host "`n✓ Gaming mode optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Gaming mode optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Reduce-InputLag {
     Write-Host "`n[INPUT LAG REDUCTION]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -124,13 +124,13 @@ function Reduce-InputLag {
 
     Invoke-TweakSequence -Title "Input Lag Reduction" -Steps $steps -Category "Gaming" | Out-Null
 
-    Write-Host "`n✓ Input lag reduction complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Input lag reduction complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-NetworkGaming {
     Write-Host "`n[NETWORK GAMING OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -163,13 +163,13 @@ function Optimize-NetworkGaming {
 
     Invoke-TweakSequence -Title "Network Gaming Optimization" -Steps $steps -Category "Gaming" | Out-Null
 
-    Write-Host "`n✓ Network gaming optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Network gaming optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Disable-FullscreenOptimizations {
     Write-Host "`n[DISABLE FULLSCREEN OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This disables Windows fullscreen optimizations for better gaming performance." -ForegroundColor $Script:Colors.Info
 
     if (-not (Confirm-Action)) { return }
@@ -192,13 +192,13 @@ function Disable-FullscreenOptimizations {
 
     Invoke-TweakSequence -Title "Fullscreen Optimizations" -Steps $steps -Category "Gaming" | Out-Null
 
-    Write-Host "`n✓ Fullscreen optimizations disabled!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Fullscreen optimizations disabled!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-AudioGaming {
     Write-Host "`n[AUDIO OPTIMIZATIONS FOR GAMING]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -218,13 +218,13 @@ function Optimize-AudioGaming {
 
     Invoke-TweakSequence -Title "Audio Optimization for Gaming" -Steps $steps -Category "Gaming" | Out-Null
 
-    Write-Host "`n✓ Audio optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Audio optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-FrameRate {
     Write-Host "`n[FRAME RATE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -243,13 +243,13 @@ function Optimize-FrameRate {
     Invoke-TweakSequence -Title "Frame Rate Optimization" -Steps $steps -Category "Gaming" | Out-Null
 
     Write-Host "  Note: Some tweaks may affect desktop visual quality." -ForegroundColor $Script:Colors.Warning
-    Write-Host "`n✓ Frame rate optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Frame rate optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Apply-AllGamingOptimizations {
     Write-Host "`n[APPLY ALL GAMING OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -268,19 +268,19 @@ function Apply-AllGamingOptimizations {
         $Script:SkipPauses = $false
     }
 
-    Write-Host "`n✓ ALL GAMING OPTIMIZATIONS COMPLETED!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] ALL GAMING OPTIMIZATIONS COMPLETED!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-LowEndGaming {
     Write-Host "`n[LOW-END GAMING / MAX FPS MODE]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Aggressive profile for budget/low-spec PCs: strips every non-essential" -ForegroundColor $Script:Colors.Info
     Write-Host "background process, visual effect and service to free up CPU/GPU/RAM" -ForegroundColor $Script:Colors.Info
     Write-Host "headroom for the foreground game. Typical gains reported by users on" -ForegroundColor $Script:Colors.Info
     Write-Host "low-end hardware: roughly +30-70% FPS depending on how loaded the" -ForegroundColor $Script:Colors.Info
     Write-Host "system was before (e.g. ~100 -> 150-200 FPS in lighter esports titles)." -ForegroundColor $Script:Colors.Info
-    Write-Host "⚠️  This disables Widgets, Chat, background apps and several services." -ForegroundColor $Script:Colors.Warning
+    Write-Host "[!]  This disables Widgets, Chat, background apps and several services." -ForegroundColor $Script:Colors.Warning
 
     if (-not (Confirm-Action -Message "Apply Low-End Gaming / Max FPS mode?" -DefaultYes)) { return }
 
@@ -289,7 +289,7 @@ function Optimize-LowEndGaming {
     $Script:SkipConfirmations = $true
     $Script:SkipPauses = $true
     try {
-        # Reuse the existing, already-progress-barred tweak functions first —
+        # Reuse the existing, already-progress-barred tweak functions first -
         # this keeps one implementation of each tweak instead of duplicating logic.
         Optimize-CPU
         Optimize-GPU
@@ -360,7 +360,7 @@ function Optimize-LowEndGaming {
         $Script:SkipPauses = $false
     }
 
-    Write-Host "`n✓ Low-End Gaming / Max FPS mode applied!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Low-End Gaming / Max FPS mode applied!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Restart your PC, then set your game's Windows power plan to" -ForegroundColor $Script:Colors.Info
     Write-Host "  'Ultimate Performance' (Extras menu) for the largest remaining gain." -ForegroundColor $Script:Colors.Info
     Wait-ForUser
@@ -368,7 +368,7 @@ function Optimize-LowEndGaming {
 
 function Optimize-Streaming {
     Write-Host "`n[STREAMING MODE]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Tuned for streaming/recording (OBS + a game at once): frees the GPU's" -ForegroundColor $Script:Colors.Info
     Write-Host "hardware encoder from Windows' own capture, quiets popups that would show" -ForegroundColor $Script:Colors.Info
     Write-Host "on stream, and keeps network upload stable." -ForegroundColor $Script:Colors.Info
@@ -430,9 +430,9 @@ function Optimize-Streaming {
 
     Invoke-TweakSequence -Title "Streaming Mode" -Steps $steps -Category "Gaming" | Out-Null
 
-    Write-Host "`n✓ Streaming mode applied!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Streaming mode applied!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Tip: use your GPU's hardware encoder in OBS (NVENC/AMF/QuickSync) instead" -ForegroundColor $Script:Colors.Info
-    Write-Host "  of x264 — it costs almost no CPU/GPU headroom compared to software encoding." -ForegroundColor $Script:Colors.Info
+    Write-Host "  of x264 - it costs almost no CPU/GPU headroom compared to software encoding." -ForegroundColor $Script:Colors.Info
     Wait-ForUser
 }
 
@@ -444,14 +444,14 @@ function Show-NetworkMenu {
     do {
         Show-Header "Network & Internet"
         Write-Host "  NETWORK & INTERNET OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
         Write-Host "   1. Advanced TCP/IP Tweaks" -ForegroundColor White
         Write-Host "   2. DNS Optimizations" -ForegroundColor White
         Write-Host "   3. Network Adapter Tweaks" -ForegroundColor White
         Write-Host "   4. QoS Configuration" -ForegroundColor White
         Write-Host "   5. Browser Optimizations" -ForegroundColor White
-        Write-Host "   6. ⚡ Apply All Network Optimizations" -ForegroundColor Green
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "   6. * Apply All Network Optimizations" -ForegroundColor Green
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Read-Host "Select an option"
@@ -465,7 +465,7 @@ function Show-NetworkMenu {
             '6' { Apply-AllNetworkOptimizations }
             '0' { return }
             default {
-                Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 1
             }
         }
@@ -474,7 +474,7 @@ function Show-NetworkMenu {
 
 function Optimize-TCPIP {
     Write-Host "`n[ADVANCED TCP/IP TWEAKS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -514,13 +514,13 @@ function Optimize-TCPIP {
 
     Invoke-TweakSequence -Title "TCP/IP Optimization" -Steps $steps -Category "Network" | Out-Null
 
-    Write-Host "`n✓ TCP/IP optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] TCP/IP optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-DNS {
     Write-Host "`n[DNS OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Choose DNS provider:" -ForegroundColor $Script:Colors.Info
     Write-Host "  1. Google DNS (8.8.8.8, 8.8.4.4)" -ForegroundColor White
     Write-Host "  2. Cloudflare DNS (1.1.1.1, 1.0.0.1)" -ForegroundColor White
@@ -539,7 +539,7 @@ function Optimize-DNS {
         '4' { $dnsServers = $null }
         '0' { return }
         default {
-            Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+            Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
             Start-Sleep -Seconds 1
             return
         }
@@ -565,13 +565,13 @@ function Optimize-DNS {
 
     Invoke-TweakSequence -Title "DNS Optimization" -Steps $steps -Category "Network" | Out-Null
 
-    Write-Host "`n✓ DNS optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] DNS optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-NetworkAdapter {
     Write-Host "`n[NETWORK ADAPTER TWEAKS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -580,7 +580,7 @@ function Optimize-NetworkAdapter {
     $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' }
 
     if (-not $adapters -or $adapters.Count -eq 0) {
-        Write-Host "`n⚠ No active network adapters found." -ForegroundColor $Script:Colors.Warning
+        Write-Host "`n[!] No active network adapters found." -ForegroundColor $Script:Colors.Warning
         Wait-ForUser
         return
     }
@@ -608,13 +608,13 @@ function Optimize-NetworkAdapter {
 
     Invoke-TweakSequence -Title "Network Adapter Optimization" -Steps $steps -Category "Network" | Out-Null
 
-    Write-Host "`n✓ Network adapter optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Network adapter optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Configure-QoS {
     Write-Host "`n[QoS CONFIGURATION]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will disable QoS packet scheduler bandwidth reservation." -ForegroundColor $Script:Colors.Info
 
     if (-not (Confirm-Action)) { return }
@@ -635,13 +635,13 @@ function Configure-QoS {
 
     Invoke-TweakSequence -Title "QoS Configuration" -Steps $steps -Category "Network" | Out-Null
 
-    Write-Host "`n✓ QoS configuration complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] QoS configuration complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-Browsers {
     Write-Host "`n[BROWSER OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will optimize browser settings for performance." -ForegroundColor $Script:Colors.Info
 
     if (-not (Confirm-Action)) { return }
@@ -662,13 +662,13 @@ function Optimize-Browsers {
 
     Invoke-TweakSequence -Title "Browser Optimization" -Steps $steps -Category "Network" | Out-Null
 
-    Write-Host "`n✓ Browser optimizations complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Browser optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Apply-AllNetworkOptimizations {
     Write-Host "`n[APPLY ALL NETWORK OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -685,7 +685,7 @@ function Apply-AllNetworkOptimizations {
         $Script:SkipPauses = $false
     }
 
-    Write-Host "`n✓ ALL NETWORK OPTIMIZATIONS COMPLETED!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] ALL NETWORK OPTIMIZATIONS COMPLETED!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 

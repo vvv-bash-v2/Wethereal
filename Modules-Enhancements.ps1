@@ -8,7 +8,7 @@
 
 function Optimize-GPUSpecific {
     Write-Host "`n[GPU-SPECIFIC OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     $hw = Get-HardwareProfile
 
@@ -19,8 +19,8 @@ function Optimize-GPUSpecific {
     }
 
     if ($hw.IsHybridGPU) {
-        Write-Host "`nHybrid GPU system detected — optimizations for EACH adapter will be applied:" -ForegroundColor $Script:Colors.Info
-        foreach ($gpu in $hw.GPUs) { Write-Host "  • $($gpu.Name) [$($gpu.Vendor)]" -ForegroundColor White }
+        Write-Host "`nHybrid GPU system detected - optimizations for EACH adapter will be applied:" -ForegroundColor $Script:Colors.Info
+        foreach ($gpu in $hw.GPUs) { Write-Host "  - $($gpu.Name) [$($gpu.Vendor)]" -ForegroundColor White }
     }
     else {
         Write-Host "`nDetected GPU: $($hw.PrimaryGPU.Name) [$($hw.PrimaryGPU.Vendor)]" -ForegroundColor $Script:Colors.Info
@@ -141,7 +141,7 @@ function Optimize-AMD {
                     $service = Get-Service -Name $svc -ErrorAction SilentlyContinue
                     if ($service -and $service.Status -eq 'Running') {
                         Backup-ServiceState -ServiceName $svc
-                        # Left running (many Radeon driver features depend on it) — only
+                        # Left running (many Radeon driver features depend on it) - only
                         # its startup type is left untouched; this step intentionally logs
                         # detection only, since forcibly disabling it can break Adrenalin.
                     }
@@ -239,8 +239,8 @@ function Optimize-AMDCPU {
     )
 
     Invoke-TweakSequence -Title "AMD Ryzen CPU Optimization" -Steps $steps -Category "CPU" | Out-Null
-    Write-Host "  ℹ For full performance, keep the AMD chipset driver up to date via" -ForegroundColor DarkGray
-    Write-Host "    Windows Update or amd.com — it installs Ryzen-specific power plans." -ForegroundColor DarkGray
+    Write-Host "  [i] For full performance, keep the AMD chipset driver up to date via" -ForegroundColor DarkGray
+    Write-Host "    Windows Update or amd.com - it installs Ryzen-specific power plans." -ForegroundColor DarkGray
 }
 
 function Optimize-IntelCPU {
@@ -306,7 +306,7 @@ function Invoke-OptimizationProfile {
     )
     
     Write-Host "`n[APPLYING PROFILE: $ProfileName]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     
     $profile = $Script:Profiles[$ProfileName]
     Write-Host "`n$($profile.Name)" -ForegroundColor $Script:Colors.Highlight
@@ -323,14 +323,14 @@ function Invoke-OptimizationProfile {
         Enable-ComputerRestore -Drive "$env:SystemDrive\" -ErrorAction SilentlyContinue
         $description = "WinTweaker Profile: $ProfileName - $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
         Checkpoint-Computer -Description $description -RestorePointType "MODIFY_SETTINGS" -ErrorAction Stop
-        Write-Host "  ✓ Restore point created" -ForegroundColor $Script:Colors.Success
+        Write-Host "  [OK] Restore point created" -ForegroundColor $Script:Colors.Success
     }
     catch {
-        Write-Host "  ⚠ Could not create restore point" -ForegroundColor $Script:Colors.Warning
+        Write-Host "  [!] Could not create restore point" -ForegroundColor $Script:Colors.Warning
     }
     
     # Apply profile-specific optimizations. Sub-tweaks skip their own y/N prompt and
-    # "press enter" pause here — the user already confirmed the whole profile above,
+    # "press enter" pause here - the user already confirmed the whole profile above,
     # and the progress bars inside each step give all the visibility they need.
     $Script:SkipConfirmations = $true
     $Script:SkipPauses = $true
@@ -346,7 +346,7 @@ function Invoke-OptimizationProfile {
                 Reduce-InputLag
                 Optimize-NetworkGaming
                 Optimize-FrameRate
-                Write-Host "`n  ✓ Gaming profile applied!" -ForegroundColor $Script:Colors.Success
+                Write-Host "`n  [OK] Gaming profile applied!" -ForegroundColor $Script:Colors.Success
             }
 
             "Work" {
@@ -357,7 +357,7 @@ function Invoke-OptimizationProfile {
                 Optimize-TCPIP
                 Block-TelemetryAdvanced
                 Tweak-FileExplorer
-                Write-Host "`n  ✓ Work profile applied!" -ForegroundColor $Script:Colors.Success
+                Write-Host "`n  [OK] Work profile applied!" -ForegroundColor $Script:Colors.Success
             }
 
             "MaxPerformance" {
@@ -386,7 +386,7 @@ function Invoke-OptimizationProfile {
                 Optimize-BootShutdown
                 Apply-RegistryTweaks
 
-                Write-Host "`n  ✓ Maximum performance profile applied!" -ForegroundColor $Script:Colors.Success
+                Write-Host "`n  [OK] Maximum performance profile applied!" -ForegroundColor $Script:Colors.Success
             }
 
             "Privacy" {
@@ -398,25 +398,25 @@ function Invoke-OptimizationProfile {
                 Set-CameraMicrophonePrivacy
                 Set-NetworkPrivacy
                 Enable-SecurityHardening
-                Write-Host "`n  ✓ Privacy profile applied!" -ForegroundColor $Script:Colors.Success
+                Write-Host "`n  [OK] Privacy profile applied!" -ForegroundColor $Script:Colors.Success
             }
 
             "LowEndGaming" {
                 Write-Host "`n  Applying Low-End Gaming / Max FPS optimizations..." -ForegroundColor $Script:Colors.Info
                 Optimize-LowEndGaming
-                Write-Host "`n  ✓ Low-End Gaming / Max FPS profile applied!" -ForegroundColor $Script:Colors.Success
+                Write-Host "`n  [OK] Low-End Gaming / Max FPS profile applied!" -ForegroundColor $Script:Colors.Success
             }
 
             "Streaming" {
                 Write-Host "`n  Applying Streaming optimizations..." -ForegroundColor $Script:Colors.Info
                 Optimize-Streaming
-                Write-Host "`n  ✓ Streaming profile applied!" -ForegroundColor $Script:Colors.Success
+                Write-Host "`n  [OK] Streaming profile applied!" -ForegroundColor $Script:Colors.Success
             }
 
             "Presentation" {
                 Write-Host "`n  Applying Presentation / Battery optimizations..." -ForegroundColor $Script:Colors.Info
                 Optimize-Presentation
-                Write-Host "`n  ✓ Presentation / Battery profile applied!" -ForegroundColor $Script:Colors.Success
+                Write-Host "`n  [OK] Presentation / Battery profile applied!" -ForegroundColor $Script:Colors.Success
             }
         }
     }
@@ -427,13 +427,13 @@ function Invoke-OptimizationProfile {
 
     Write-Log "Profile $ProfileName applied successfully" -Level Success -Category "Profile"
     
-    Write-Host "`n╔═══════════════════════════════════════════════════════════════════════════╗" -ForegroundColor $Script:Colors.Success
-    Write-Host "║  ✓ PROFILE APPLIED SUCCESSFULLY!                                          ║" -ForegroundColor $Script:Colors.Success
-    Write-Host "╚═══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $Script:Colors.Success
-    Write-Host "`n  ⚠️  RESTART REQUIRED for all changes to take effect." -ForegroundColor $Script:Colors.Warning
+    Write-Host "`n+===========================================================================+" -ForegroundColor $Script:Colors.Success
+    Write-Host "|  [OK] PROFILE APPLIED SUCCESSFULLY!                                       |" -ForegroundColor $Script:Colors.Success
+    Write-Host "+===========================================================================+" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n  [!]  RESTART REQUIRED for all changes to take effect." -ForegroundColor $Script:Colors.Warning
 
     if ($Script:SilentMode -or $Script:SkipPauses) {
-        Write-Host "  (Not prompting to restart right now — restart manually when ready.)" -ForegroundColor DarkGray
+        Write-Host "  (Not prompting to restart right now - restart manually when ready.)" -ForegroundColor DarkGray
         return
     }
 
@@ -446,37 +446,37 @@ function Invoke-OptimizationProfile {
 
 function Show-ProfilesMenuEnhanced {
     Write-Host "`n[OPTIMIZATION PROFILES]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Select a profile to apply:" -ForegroundColor $Script:Colors.Info
     Write-Host ""
-    Write-Host "  1. 🎮 $($Script:Profiles.Gaming.Name)" -ForegroundColor Green
+    Write-Host "  1. [GAME] $($Script:Profiles.Gaming.Name)" -ForegroundColor Green
     Write-Host "     $($Script:Profiles.Gaming.Description)" -ForegroundColor White
     Write-Host "     Optimizations: CPU, GPU, Memory, Gaming Mode, Input Lag, Network" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "  2. 💼 $($Script:Profiles.Work.Name)" -ForegroundColor Cyan
+    Write-Host "  2. [WORK] $($Script:Profiles.Work.Name)" -ForegroundColor Cyan
     Write-Host "     $($Script:Profiles.Work.Description)" -ForegroundColor White
     Write-Host "     Optimizations: Services, Visual Effects, Cleanup, Privacy, Network" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "  3. ⚡ $($Script:Profiles.MaxPerformance.Name)" -ForegroundColor Yellow
+    Write-Host "  3. * $($Script:Profiles.MaxPerformance.Name)" -ForegroundColor Yellow
     Write-Host "     $($Script:Profiles.MaxPerformance.Description)" -ForegroundColor White
     Write-Host "     Optimizations: ALL available optimizations (15+ categories)" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "  4. 🔒 $($Script:Profiles.Privacy.Name)" -ForegroundColor Magenta
+    Write-Host "  4. [LOCK] $($Script:Profiles.Privacy.Name)" -ForegroundColor Magenta
     Write-Host "     $($Script:Profiles.Privacy.Description)" -ForegroundColor White
     Write-Host "     Optimizations: Telemetry, Tracking, Bloatware, Privacy Controls" -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "  5. 🕹️  $($Script:Profiles.LowEndGaming.Name)" -ForegroundColor Red
+    Write-Host "  5. [GAME]  $($Script:Profiles.LowEndGaming.Name)" -ForegroundColor Red
     Write-Host "     $($Script:Profiles.LowEndGaming.Description)" -ForegroundColor White
     Write-Host "     For: budget/older PCs where every FPS counts. Not recommended on" -ForegroundColor DarkGray
-    Write-Host "     work PCs — disables Widgets, Chat, background apps and more." -ForegroundColor DarkGray
+    Write-Host "     work PCs - disables Widgets, Chat, background apps and more." -ForegroundColor DarkGray
     Write-Host ""
-    Write-Host "  6. 📡 $($Script:Profiles.Streaming.Name)" -ForegroundColor Blue
+    Write-Host "  6. [NET] $($Script:Profiles.Streaming.Name)" -ForegroundColor Blue
     Write-Host "     $($Script:Profiles.Streaming.Description)" -ForegroundColor White
     Write-Host ""
-    Write-Host "  7. 🔋 $($Script:Profiles.Presentation.Name)" -ForegroundColor DarkGreen
+    Write-Host "  7. [BATT] $($Script:Profiles.Presentation.Name)" -ForegroundColor DarkGreen
     Write-Host "     $($Script:Profiles.Presentation.Description)" -ForegroundColor White
     Write-Host ""
-    Write-Host "  0. ← Cancel" -ForegroundColor Red
+    Write-Host "  0. <- Cancel" -ForegroundColor Red
     Write-Host ""
 
     $choice = Read-Host "Select profile (1-7)"
@@ -491,7 +491,7 @@ function Show-ProfilesMenuEnhanced {
         '7' { Invoke-OptimizationProfile -ProfileName "Presentation" }
         '0' { return }
         default {
-            Write-Host "`n✗ Invalid selection" -ForegroundColor $Script:Colors.Error
+            Write-Host "`n[X] Invalid selection" -ForegroundColor $Script:Colors.Error
             Start-Sleep -Seconds 2
         }
     }
@@ -503,7 +503,7 @@ function Show-ProfilesMenuEnhanced {
 
 function Start-SystemAnalysis {
     Write-Host "`n[SYSTEM ANALYSIS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Analyzing your system for optimization opportunities..." -ForegroundColor $Script:Colors.Info
     Write-Host ""
     
@@ -566,9 +566,9 @@ function Start-SystemAnalysis {
     $analysis.Score = [math]::Max(0, 100 - ($analysis.Issues.Count * 20))
     
     # Display results
-    Write-Host "`n╔═══════════════════════════════════════════════════════════════════════════╗" -ForegroundColor $Script:Colors.Title
-    Write-Host "║  SYSTEM ANALYSIS RESULTS                                                  ║" -ForegroundColor $Script:Colors.Title
-    Write-Host "╚═══════════════════════════════════════════════════════════════════════════╝" -ForegroundColor $Script:Colors.Title
+    Write-Host "`n+===========================================================================+" -ForegroundColor $Script:Colors.Title
+    Write-Host "|  SYSTEM ANALYSIS RESULTS                                                  |" -ForegroundColor $Script:Colors.Title
+    Write-Host "+===========================================================================+" -ForegroundColor $Script:Colors.Title
     Write-Host ""
     
     # Score display
@@ -582,12 +582,12 @@ function Start-SystemAnalysis {
     if ($analysis.Issues.Count -gt 0) {
         Write-Host "  ISSUES FOUND:" -ForegroundColor $Script:Colors.Warning
         foreach ($issue in $analysis.Issues) {
-            Write-Host "    ⚠ $issue" -ForegroundColor Yellow
+            Write-Host "    [!] $issue" -ForegroundColor Yellow
         }
         Write-Host ""
     }
     else {
-        Write-Host "  ✓ No issues found! Your system is well optimized." -ForegroundColor $Script:Colors.Success
+        Write-Host "  [OK] No issues found! Your system is well optimized." -ForegroundColor $Script:Colors.Success
         Write-Host ""
     }
     
@@ -595,7 +595,7 @@ function Start-SystemAnalysis {
     if ($analysis.Recommendations.Count -gt 0) {
         Write-Host "  RECOMMENDATIONS:" -ForegroundColor $Script:Colors.Info
         foreach ($rec in $analysis.Recommendations) {
-            Write-Host "    → $rec" -ForegroundColor Cyan
+            Write-Host "    -> $rec" -ForegroundColor Cyan
         }
         Write-Host ""
     }
@@ -611,13 +611,13 @@ function Start-SystemAnalysis {
 
 function New-OptimizationReport {
     Write-Host "`n[GENERATE OPTIMIZATION REPORT]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     $reportPath = "$PSScriptRoot\OptimizationReport_$(Get-Date -Format 'yyyyMMdd_HHmmss').html"
 
     Write-Host "`nGenerating comprehensive report..." -ForegroundColor $Script:Colors.Info
 
-    # Each step below does its real share of the work (not a decorative delay) —
+    # Each step below does its real share of the work (not a decorative delay) -
     # the report data is gathered inside the step closures so the progress bar
     # reflects what is actually happening at that moment.
     $data = @{
@@ -722,53 +722,53 @@ function New-OptimizationReport {
 </head>
 <body>
     <div class="container">
-        <h1>🚀 Wethereal - Optimization Report</h1>
+        <h1>[BOOST] Wethereal - Optimization Report</h1>
         <p><strong>Generated:</strong> $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')</p>
         <p><strong>Wethereal Version:</strong> $($Script:Version) Ultimate Edition</p>
 
-        <h2>🎯 Optimization Score</h2>
+        <h2>[TARGET] Optimization Score</h2>
         <p class="score $scoreClass">$healthScore/100</p>
 $(
         if ($issues.Count -gt 0) {
-            "<p><strong>Open items:</strong></p><ul>" + (($issues | ForEach-Object { "<li class='warning'>⚠ $_</li>" }) -join "`n") + "</ul>"
+            "<p><strong>Open items:</strong></p><ul>" + (($issues | ForEach-Object { "<li class='warning'>[!] $_</li>" }) -join "`n") + "</ul>"
         }
         else {
-            "<p class='success'>✓ No open optimization issues detected.</p>"
+            "<p class='success'>[OK] No open optimization issues detected.</p>"
         }
 )
 
-        <h2>📊 System Information</h2>
+        <h2>[STATS] System Information</h2>
         <div class="info-grid">
             <div class="info-box">
-                <div class="info-label">💻 CPU</div>
+                <div class="info-label">[PC] CPU</div>
                 <div class="info-value">$($sysInfo.CPU) <span class="badge $($hw.CPU.Vendor.ToLower())">$($hw.CPU.Vendor)</span></div>
             </div>
             <div class="info-box">
-                <div class="info-label">🧠 RAM</div>
+                <div class="info-label">[CPU] RAM</div>
                 <div class="info-value">$($sysInfo.RAM)</div>
             </div>
             <div class="info-box">
-                <div class="info-label">🎮 GPU(s)</div>
+                <div class="info-label">[GAME] GPU(s)</div>
                 <div class="info-value">$(
         if ($hw.GPUs.Count -eq 0) { "Not detected" }
         else { ($hw.GPUs | ForEach-Object { "$($_.Name) <span class='badge $($_.Vendor.ToLower())'>$($_.Vendor)</span>" }) -join "<br>" }
 )</div>
             </div>
             <div class="info-box">
-                <div class="info-label">🪟 Operating System</div>
+                <div class="info-label">[WIN] Operating System</div>
                 <div class="info-value">$($sysInfo.OS)</div>
             </div>
             <div class="info-box">
-                <div class="info-label">⏱️ Uptime</div>
+                <div class="info-label">[TIME] Uptime</div>
                 <div class="info-value">$($sysInfo.Uptime.Days)d $($sysInfo.Uptime.Hours)h $($sysInfo.Uptime.Minutes)m</div>
             </div>
             <div class="info-box">
-                <div class="info-label">🏗️ Platform Profile</div>
+                <div class="info-label">[BUILD] Platform Profile</div>
                 <div class="info-value">$(if ($hw.IsHybridGPU) { "Hybrid GPU ($($hw.GPUVendors -join ' + '))" } else { "Single-vendor $($hw.GPUVendors -join ', ')" })</div>
             </div>
         </div>
 
-        <h2>💾 Disk Information</h2>
+        <h2>[DISK] Disk Information</h2>
         <table>
             <tr><th>Drive</th><th>Free</th><th>Total</th><th>Used</th><th></th></tr>
 $(
@@ -781,7 +781,7 @@ $(
 )
         </table>
 
-        <h2>🛠️ Settings Changed This Session</h2>
+        <h2>[TOOLS] Settings Changed This Session</h2>
         <p>$($changedRegistry.Count) registry value(s) and $($changedServices.Count) service(s) modified by Wethereal since it started (originals were backed up before each change):</p>
         <table>
             <tr><th>Type</th><th>Target</th><th>Original Value</th></tr>
@@ -798,7 +798,7 @@ $(
 )
         </table>
 
-        <h2>📋 Optimization Log</h2>
+        <h2>[LIST] Optimization Log</h2>
         <p>Most recent activity (last 50 entries):</p>
         <table>
             <tr>
@@ -851,7 +851,7 @@ $(
     $html += @"
         </table>
 
-        <h2>✅ Recommendations</h2>
+        <h2>[OK] Recommendations</h2>
         <ul>
 $(($recommendations | ForEach-Object { "            <li>$_</li>" }) -join "`n")
         </ul>
@@ -868,7 +868,7 @@ $(($recommendations | ForEach-Object { "            <li>$_</li>" }) -join "`n")
     # Save report
     $html | Out-File -FilePath $reportPath -Encoding UTF8
 
-    Write-Host "`n✓ Report generated successfully!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Report generated successfully!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Location: $reportPath" -ForegroundColor $Script:Colors.Info
     Write-Log "Generated optimization report: $reportPath" -Level Success -Category "Report"
 
@@ -884,7 +884,7 @@ $(($recommendations | ForEach-Object { "            <li>$_</li>" }) -join "`n")
 
 function Get-EnhancedBloatwareList {
     Write-Host "`n[ENHANCED BLOATWARE DETECTION]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Scanning for bloatware and unnecessary apps..." -ForegroundColor $Script:Colors.Info
     Write-Host ""
     
@@ -894,7 +894,7 @@ function Get-EnhancedBloatwareList {
     
     # NOTE: patterns are deliberately specific full (or near-full) package-family
     # names, NOT bare generic words. Earlier revisions matched on single words like
-    # "Netflix", "Facebook", "Farm", "Candy" or "Bubble" — those are wildcard-matched
+    # "Netflix", "Facebook", "Farm", "Candy" or "Bubble" - those are wildcard-matched
     # with -like "*word*" against every installed AppX package name, which risks
     # catching an app the user actually installed and wants to keep (or an unrelated
     # package that merely contains that substring). Every entry below is scoped to
@@ -937,7 +937,7 @@ function Get-EnhancedBloatwareList {
     }
     
     if ($detectedBloatware.Count -eq 0) {
-        Write-Host "  ✓ No bloatware detected!" -ForegroundColor $Script:Colors.Success
+        Write-Host "  [OK] No bloatware detected!" -ForegroundColor $Script:Colors.Success
         Wait-ForUser
         return
     }

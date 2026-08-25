@@ -8,7 +8,7 @@ function Show-PrivacyMenu {
     do {
         Show-Header "Privacy & Security"
         Write-Host "  PRIVACY & SECURITY OPTIMIZATIONS" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
         Write-Host "   1. Advanced Telemetry Blocking" -ForegroundColor White
         Write-Host "   2. Disable Tracking & Ads" -ForegroundColor White
         Write-Host "   3. Remove Bloatware & Pre-installed Apps" -ForegroundColor White
@@ -16,8 +16,8 @@ function Show-PrivacyMenu {
         Write-Host "   5. Camera & Microphone Privacy" -ForegroundColor White
         Write-Host "   6. Network Privacy Settings" -ForegroundColor White
         Write-Host "   7. Security Hardening" -ForegroundColor White
-        Write-Host "   8. ⚡ Apply All Privacy Optimizations" -ForegroundColor Green
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "   8. * Apply All Privacy Optimizations" -ForegroundColor Green
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Read-Host "Select an option"
@@ -33,7 +33,7 @@ function Show-PrivacyMenu {
             '8' { Invoke-AllPrivacyOptimizations }
             '0' { return }
             default {
-                Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 1
             }
         }
@@ -42,7 +42,7 @@ function Show-PrivacyMenu {
 
 function Block-TelemetryAdvanced {
     Write-Host "`n[ADVANCED TELEMETRY BLOCKING]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -95,13 +95,13 @@ function Block-TelemetryAdvanced {
 
     Invoke-TweakSequence -Title "Telemetry Blocking" -Steps $steps -Category "Privacy" | Out-Null
 
-    Write-Host "`n✓ Telemetry blocked!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Telemetry blocked!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Disable-TrackingAds {
     Write-Host "`n[DISABLE TRACKING & ADS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -144,14 +144,14 @@ function Disable-TrackingAds {
 
     Invoke-TweakSequence -Title "Tracking & Ads Blocking" -Steps $steps -Category "Privacy" | Out-Null
 
-    Write-Host "`n✓ Tracking and ads disabled!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Tracking and ads disabled!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Remove-Bloatware {
     Write-Host "`n[REMOVE BLOATWARE & PRE-INSTALLED APPS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
-    Write-Host "⚠️  WARNING: This will remove pre-installed Windows apps." -ForegroundColor $Script:Colors.Warning
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "[!]  WARNING: This will remove pre-installed Windows apps." -ForegroundColor $Script:Colors.Warning
     Write-Host "Some apps cannot be easily reinstalled." -ForegroundColor $Script:Colors.Warning
 
     if (-not (Confirm-Action)) { return }
@@ -211,7 +211,7 @@ function Remove-Bloatware {
 
 function Set-WindowsFeaturesPrivacy {
     Write-Host "`n[WINDOWS FEATURES PRIVACY]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -250,13 +250,13 @@ function Set-WindowsFeaturesPrivacy {
 
     Invoke-TweakSequence -Title "Windows Features Privacy" -Steps $steps -Category "Privacy" | Out-Null
 
-    Write-Host "`n✓ Windows features privacy configured!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Windows features privacy configured!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Set-CameraMicrophonePrivacy {
     Write-Host "`n[CAMERA & MICROPHONE PRIVACY]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -287,14 +287,14 @@ function Set-CameraMicrophonePrivacy {
 
     Invoke-TweakSequence -Title "Camera & Microphone Privacy" -Steps $steps -Category "Privacy" | Out-Null
 
-    Write-Host "`n✓ Camera and microphone privacy configured!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Camera and microphone privacy configured!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Note: You can grant access to specific apps in Windows Settings." -ForegroundColor $Script:Colors.Info
     Wait-ForUser
 }
 
 function Set-NetworkPrivacy {
     Write-Host "`n[NETWORK PRIVACY SETTINGS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -315,13 +315,13 @@ function Set-NetworkPrivacy {
 
     Invoke-TweakSequence -Title "Network Privacy" -Steps $steps -Category "Privacy" | Out-Null
 
-    Write-Host "`n✓ Network privacy configured!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Network privacy configured!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Enable-SecurityHardening {
     Write-Host "`n[SECURITY HARDENING]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -334,14 +334,14 @@ function Enable-SecurityHardening {
 
     Invoke-TweakSequence -Title "Security Hardening" -Steps $steps -Category "Security" | Out-Null
 
-    Write-Host "`n✓ Security hardening complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Security hardening complete!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Note: Restart required for changes to take effect." -ForegroundColor $Script:Colors.Warning
     Wait-ForUser
 }
 
 function Invoke-AllPrivacyOptimizations {
     Write-Host "`n[APPLY ALL PRIVACY OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -359,7 +359,7 @@ function Invoke-AllPrivacyOptimizations {
         $Script:SkipPauses = $false
     }
 
-    Write-Host "`n✓ ALL PRIVACY OPTIMIZATIONS COMPLETED!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] ALL PRIVACY OPTIMIZATIONS COMPLETED!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
@@ -371,7 +371,7 @@ function Show-CleanupMenu {
     do {
         Show-Header "Cleanup & Maintenance"
         Write-Host "  CLEANUP & MAINTENANCE" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
         Write-Host "   1. Advanced Disk Cleanup" -ForegroundColor White
         Write-Host "   2. Clean Temporary Files" -ForegroundColor White
         Write-Host "   3. Event Log Management" -ForegroundColor White
@@ -379,8 +379,8 @@ function Show-CleanupMenu {
         Write-Host "   5. Context Menu Cleanup" -ForegroundColor White
         Write-Host "   6. Search Indexing Optimization" -ForegroundColor White
         Write-Host "   7. System Maintenance Tasks" -ForegroundColor White
-        Write-Host "   8. ⚡ Run All Cleanup Tasks" -ForegroundColor Green
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "   8. * Run All Cleanup Tasks" -ForegroundColor Green
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Read-Host "Select an option"
@@ -396,7 +396,7 @@ function Show-CleanupMenu {
             '8' { Start-AllCleanupTasks }
             '0' { return }
             default {
-                Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 1
             }
         }
@@ -405,7 +405,7 @@ function Show-CleanupMenu {
 
 function Start-AdvancedDiskCleanup {
     Write-Host "`n[ADVANCED DISK CLEANUP]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -424,13 +424,13 @@ function Start-AdvancedDiskCleanup {
 
     Invoke-TweakSequence -Title "Advanced Disk Cleanup" -Steps $steps -Category "Cleanup" | Out-Null
 
-    Write-Host "`n✓ Advanced disk cleanup complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Advanced disk cleanup complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Clear-TemporaryFiles {
     Write-Host "`n[CLEAN TEMPORARY FILES]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -460,13 +460,13 @@ function Clear-TemporaryFiles {
 
     Invoke-TweakSequence -Title "Temporary File Cleanup" -Steps $steps -Category "Cleanup" | Out-Null
 
-    Write-Host "`n✓ Freed approximately $('{0:N2}' -f ($Script:LastTempCleanupFreedBytes / 1GB)) GB!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Freed approximately $('{0:N2}' -f ($Script:LastTempCleanupFreedBytes / 1GB)) GB!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Update-EventLogs {
     Write-Host "`n[EVENT LOG MANAGEMENT]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will clear all event logs." -ForegroundColor $Script:Colors.Warning
 
     if (-not (Confirm-Action)) { return }
@@ -484,13 +484,13 @@ function Update-EventLogs {
 
     Invoke-TweakSequence -Title "Event Log Cleanup" -Steps $steps -Category "Cleanup" | Out-Null
 
-    Write-Host "`n✓ Event logs cleared!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Event logs cleared!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-ScheduledTasks {
     Write-Host "`n[SCHEDULED TASKS OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -520,7 +520,7 @@ function Optimize-ScheduledTasks {
 
 function Clear-ContextMenu {
     Write-Host "`n[CONTEXT MENU CLEANUP]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "This will remove unnecessary context menu items." -ForegroundColor $Script:Colors.Info
 
     if (-not (Confirm-Action)) { return }
@@ -540,13 +540,13 @@ function Clear-ContextMenu {
 
     Invoke-TweakSequence -Title "Context Menu Cleanup" -Steps $steps -Category "Cleanup" | Out-Null
 
-    Write-Host "`n✓ Context menu cleaned!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Context menu cleaned!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Optimize-SearchIndexing {
     Write-Host "`n[SEARCH INDEXING OPTIMIZATION]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Choose an option:" -ForegroundColor $Script:Colors.Info
     Write-Host "  1. Optimize indexing (keep enabled)" -ForegroundColor White
     Write-Host "  2. Disable indexing completely" -ForegroundColor White
@@ -557,7 +557,7 @@ function Optimize-SearchIndexing {
 
     if ($choice -eq '0') { return }
     if ($choice -ne '1' -and $choice -ne '2') {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Start-Sleep -Seconds 1
         return
     }
@@ -582,16 +582,16 @@ function Optimize-SearchIndexing {
         Invoke-TweakSequence -Title "Search Indexing" -Steps $steps -Category "Cleanup" | Out-Null
     }
     else {
-        Write-Host "`n  ℹ Indexing left enabled — no changes made." -ForegroundColor $Script:Colors.Info
+        Write-Host "`n  [i] Indexing left enabled - no changes made." -ForegroundColor $Script:Colors.Info
     }
 
-    Write-Host "`n✓ Search indexing optimized!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Search indexing optimized!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Start-SystemMaintenance {
     Write-Host "`n[SYSTEM MAINTENANCE TASKS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -610,13 +610,13 @@ function Start-SystemMaintenance {
 
     Invoke-TweakSequence -Title "System Maintenance" -Steps $steps -Category "Maintenance" | Out-Null
 
-    Write-Host "`n✓ System maintenance complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] System maintenance complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 
 function Start-AllCleanupTasks {
     Write-Host "`n[RUN ALL CLEANUP TASKS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     if (-not (Confirm-Action)) { return }
 
@@ -633,7 +633,7 @@ function Start-AllCleanupTasks {
         $Script:SkipPauses = $false
     }
 
-    Write-Host "`n✓ ALL CLEANUP TASKS COMPLETED!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] ALL CLEANUP TASKS COMPLETED!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 

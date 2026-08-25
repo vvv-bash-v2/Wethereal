@@ -3,7 +3,7 @@
 # sidebar of tabs (Install / Tweaks / Profiles / Updates / Info), a
 # checkbox-driven, searchable tweak list, and a live log + progress bar
 # right inside the window. Tweak actions here are self-contained (no
-# Read-Host), so — unlike opening a console category menu — nothing in
+# Read-Host), so - unlike opening a console category menu - nothing in
 # this window ever needs you to alt-tab to the console.
 
 #region Graphical Interface
@@ -20,40 +20,40 @@ function New-GuiBrush([string]$Hex) {
 # the console tweaks.
 function Get-GuiTweakCatalog {
     return [ordered]@{
-        "🚀 Performance" = @(
+        "[BOOST] Performance" = @(
             @{ Name = "Disable Xbox Game Bar auto-launch"; Desc = "Stops Game Bar popping up when you launch a game"; Action = { $p = "HKCU:\Software\Microsoft\GameBar"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "AllowAutoGameMode"; Set-ItemProperty -Path $p -Name "AllowAutoGameMode" -Value 0 -Type DWord } }
             @{ Name = "Visual effects: Best Performance"; Desc = "Turns off Windows' UI animations for a snappier feel"; Action = { $p = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\VisualEffects"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "VisualFXSetting"; Set-ItemProperty -Path $p -Name "VisualFXSetting" -Value 2 -Type DWord } }
             @{ Name = "Disable transparency effects"; Desc = "Removes the frosted-glass blur (small GPU/CPU saving)"; Action = { $p = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "EnableTransparency"; Set-ItemProperty -Path $p -Name "EnableTransparency" -Value 0 -Type DWord } }
-            @{ Name = "Disable SysMain / Superfetch"; Desc = "Frees background disk I/O — best on SSDs"; Action = { $svc = Get-Service -Name "SysMain" -ErrorAction SilentlyContinue; if ($svc) { Backup-ServiceState -ServiceName "SysMain"; Stop-Service -Name "SysMain" -Force -ErrorAction SilentlyContinue; Set-Service -Name "SysMain" -StartupType Disabled } } }
+            @{ Name = "Disable SysMain / Superfetch"; Desc = "Frees background disk I/O - best on SSDs"; Action = { $svc = Get-Service -Name "SysMain" -ErrorAction SilentlyContinue; if ($svc) { Backup-ServiceState -ServiceName "SysMain"; Stop-Service -Name "SysMain" -Force -ErrorAction SilentlyContinue; Set-Service -Name "SysMain" -StartupType Disabled } } }
             @{ Name = "Enable Hardware-Accelerated GPU Scheduling"; Desc = "Lets the GPU manage its own memory queue (Win10 2004+)"; Action = { $p = "HKLM:\SYSTEM\CurrentControlSet\Control\GraphicsDrivers"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "HwSchMode"; Set-ItemProperty -Path $p -Name "HwSchMode" -Value 2 -Type DWord } }
             @{ Name = "Reduce menu show delay to 0ms"; Desc = "Instant context/Start menu response"; Action = { $p = "HKCU:\Control Panel\Desktop"; Backup-RegistryValue -Path $p -Name "MenuShowDelay"; Set-ItemProperty -Path $p -Name "MenuShowDelay" -Value 0 -Type String } }
         )
-        "🔒 Privacy"     = @(
+        "[LOCK] Privacy"     = @(
             @{ Name = "Disable telemetry (AllowTelemetry=0)"; Desc = "Sets the diagnostic data policy to Security/Off"; Action = { $p = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\DataCollection"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "AllowTelemetry"; Set-ItemProperty -Path $p -Name "AllowTelemetry" -Value 0 -Type DWord } }
             @{ Name = "Disable DiagTrack service"; Desc = "Connected User Experiences and Telemetry"; Action = { $svc = Get-Service -Name "DiagTrack" -ErrorAction SilentlyContinue; if ($svc) { Backup-ServiceState -ServiceName "DiagTrack"; Stop-Service -Name "DiagTrack" -Force -ErrorAction SilentlyContinue; Set-Service -Name "DiagTrack" -StartupType Disabled } } }
             @{ Name = "Disable advertising ID"; Desc = "Stops apps from using your ad ID for personalized ads"; Action = { $p = "HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "Enabled"; Set-ItemProperty -Path $p -Name "Enabled" -Value 0 -Type DWord } }
             @{ Name = "Disable Cortana"; Desc = "Removes Cortana from search"; Action = { $p = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Windows Search"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "AllowCortana"; Set-ItemProperty -Path $p -Name "AllowCortana" -Value 0 -Type DWord } }
             @{ Name = "Disable activity history / Timeline"; Desc = "Stops Windows recording your app/activity history"; Action = { $p = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\System"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "EnableActivityFeed"; Set-ItemProperty -Path $p -Name "EnableActivityFeed" -Value 0 -Type DWord } }
         )
-        "🎮 Gaming"      = @(
+        "[GAME] Gaming"      = @(
             @{ Name = "Disable Game DVR / background recording"; Desc = "Frees GPU resources Windows reserves for its own capture"; Action = { $p = "HKCU:\System\GameConfigStore"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "GameDVR_Enabled"; Set-ItemProperty -Path $p -Name "GameDVR_Enabled" -Value 0 -Type DWord } }
             @{ Name = "Bypass fullscreen optimizations globally"; Desc = "Forces true exclusive fullscreen for better FPS"; Action = { $p = "HKCU:\System\GameConfigStore"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "GameDVR_FSEBehavior"; Set-ItemProperty -Path $p -Name "GameDVR_FSEBehavior" -Value 2 -Type DWord } }
             @{ Name = "Disable mouse acceleration"; Desc = "Flat 1:1 mouse response, no 'enhance pointer precision'"; Action = { $p = "HKCU:\Control Panel\Mouse"; Backup-RegistryValue -Path $p -Name "MouseSpeed"; Set-ItemProperty -Path $p -Name "MouseSpeed" -Value 0 -Type String; Backup-RegistryValue -Path $p -Name "MouseThreshold1"; Set-ItemProperty -Path $p -Name "MouseThreshold1" -Value 0 -Type String; Backup-RegistryValue -Path $p -Name "MouseThreshold2"; Set-ItemProperty -Path $p -Name "MouseThreshold2" -Value 0 -Type String } }
             @{ Name = "Remove network throttling for multimedia"; Desc = "Uncaps NetworkThrottlingIndex"; Action = { $p = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Multimedia\SystemProfile"; Backup-RegistryValue -Path $p -Name "NetworkThrottlingIndex"; Set-ItemProperty -Path $p -Name "NetworkThrottlingIndex" -Value 0xffffffff -Type DWord } }
         )
-        "🖥️ Windows 11 UI" = @(
+        "[PC] Windows 11 UI" = @(
             @{ Name = "Hide the Widgets icon"; Desc = "Removes the Widgets button from the taskbar"; Action = { $p = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; Backup-RegistryValue -Path $p -Name "TaskbarDa"; Set-ItemProperty -Path $p -Name "TaskbarDa" -Value 0 -Type DWord } }
             @{ Name = "Hide the Chat/Teams icon"; Desc = "Removes the Chat button from the taskbar"; Action = { $p = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; Backup-RegistryValue -Path $p -Name "TaskbarMn"; Set-ItemProperty -Path $p -Name "TaskbarMn" -Value 0 -Type DWord } }
             @{ Name = "Left-align the taskbar"; Desc = "Classic Windows 10-style left icons instead of centered"; Action = { $p = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"; Backup-RegistryValue -Path $p -Name "TaskbarAl"; Set-ItemProperty -Path $p -Name "TaskbarAl" -Value 0 -Type DWord } }
             @{ Name = "Enable Dark Mode"; Desc = "Apps + system dark theme"; Action = { $p = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Backup-RegistryValue -Path $p -Name "AppsUseLightTheme"; Set-ItemProperty -Path $p -Name "AppsUseLightTheme" -Value 0 -Type DWord; Backup-RegistryValue -Path $p -Name "SystemUsesLightTheme"; Set-ItemProperty -Path $p -Name "SystemUsesLightTheme" -Value 0 -Type DWord } }
             @{ Name = "Restore classic right-click menu"; Desc = "Full Windows 10-style context menu, no 'Show more options'"; Action = { $p = "HKCU:\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32"; if (-not (Test-Path $p)) { New-Item -Path $p -Force | Out-Null }; Set-ItemProperty -Path $p -Name "(Default)" -Value "" -Type String } }
         )
-        "🧹 Cleanup"     = @(
+        "[CLEAN] Cleanup"     = @(
             @{ Name = "Clean temporary files"; Desc = "Empties %TEMP%, Windows Temp, and browser caches"; Action = { foreach ($p in @("$env:TEMP\*", "$env:WINDIR\Temp\*", "$env:LOCALAPPDATA\Temp\*")) { Remove-Item -Path $p -Recurse -Force -ErrorAction SilentlyContinue } } }
             @{ Name = "Flush DNS cache"; Desc = "Clears stale DNS resolver entries"; Action = { ipconfig /flushdns | Out-Null } }
             @{ Name = "Disable Windows Search indexing"; Desc = "Frees CPU/disk on machines that don't need instant file search"; Action = { $svc = Get-Service -Name "WSearch" -ErrorAction SilentlyContinue; if ($svc) { Backup-ServiceState -ServiceName "WSearch"; Stop-Service -Name "WSearch" -Force -ErrorAction SilentlyContinue; Set-Service -Name "WSearch" -StartupType Disabled } } }
         )
-        "⚙️ Power"        = @(
+        "[CFG] Power"        = @(
             @{ Name = "Enable Ultimate Performance power plan"; Desc = "Surfaces and activates Windows' hidden max-performance scheme"; Action = { $existing = powercfg -l | Select-String "Ultimate Performance"; if (-not $existing) { powercfg -duplicatescheme e9a42b02-d5df-448d-aa00-03f14749eb61 | Out-Null }; $scheme = powercfg -l | Select-String "Ultimate Performance" | Select-Object -First 1; if ($scheme -and $scheme -match '([0-9a-fA-F-]{36})') { powercfg -setactive $matches[1] | Out-Null } } }
         )
     }
@@ -62,11 +62,11 @@ function Get-GuiTweakCatalog {
 function Invoke-GuiStepBatch {
     <#
         Runs a list of {Name, Action} steps one at a time, updating the
-        GUI's log box and progress bar after each — instead of blocking
+        GUI's log box and progress bar after each - instead of blocking
         silently, this pumps the WPF dispatcher between steps so the window
         stays visually responsive (each individual action still runs
         synchronously; a slow one, like a winget install, will pause the
-        window for its own duration — the log line for it appears first so
+        window for its own duration - the log line for it appears first so
         you can see what it's waiting on).
     #>
     param($Window, $LogBox, $ProgressBar, $StatusText, [array]$Steps)
@@ -104,9 +104,9 @@ function Show-GraphicalMenu {
     Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Xaml
 
     if ([System.Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
-        Write-Host "⚠ The GUI needs a Single-Threaded Apartment session. Relaunch with:" -ForegroundColor $Script:Colors.Warning
+        Write-Host "[!] The GUI needs a Single-Threaded Apartment session. Relaunch with:" -ForegroundColor $Script:Colors.Warning
         Write-Host "    powershell -STA -File `"$PSCommandPath`" -Gui" -ForegroundColor White
-        Write-Host "  Attempting to continue anyway — some dialogs may misbehave.`n" -ForegroundColor DarkGray
+        Write-Host "  Attempting to continue anyway - some dialogs may misbehave.`n" -ForegroundColor DarkGray
     }
 
     $hw = Get-HardwareProfile
@@ -223,7 +223,7 @@ function Show-GraphicalMenu {
           <ColumnDefinition Width="Auto"/>
         </Grid.ColumnDefinitions>
         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="14,0,0,0" VerticalAlignment="Center">
-          <TextBlock Text="⚡" FontSize="13" Foreground="#5391FE" VerticalAlignment="Center"/>
+          <TextBlock Text="*" FontSize="13" Foreground="#5391FE" VerticalAlignment="Center"/>
           <TextBlock Text="Wethereal" FontSize="12" FontWeight="SemiBold" Foreground="#8C99BC" FontFamily="Consolas" Margin="8,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
         <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -253,46 +253,46 @@ function Show-GraphicalMenu {
     </Border>
 
     <TabControl x:Name="MainTabs" TabStripPlacement="Left" Background="#080B14" BorderThickness="0" Padding="0">
-      <TabItem Header="📦  Install">
+      <TabItem Header="[PKG]  Install">
         <DockPanel Margin="24,20,24,20">
-          <TextBlock DockPanel.Dock="Top" Text="Install common apps via winget — check what you want, then Install Selected." Foreground="#8C99BC" Margin="0,0,0,12" TextWrapping="Wrap"/>
+          <TextBlock DockPanel.Dock="Top" Text="Install common apps via winget - check what you want, then Install Selected." Foreground="#8C99BC" Margin="0,0,0,12" TextWrapping="Wrap"/>
           <TextBox x:Name="InstallSearchBox" DockPanel.Dock="Top" Style="{StaticResource SearchBox}" Margin="0,0,0,12" Tag="Search apps..."/>
-          <Button x:Name="InstallSelectedButton" DockPanel.Dock="Bottom" Content="📦  Install Selected" Style="{StaticResource ActionButton}" Margin="0,14,0,0" HorizontalAlignment="Left"/>
+          <Button x:Name="InstallSelectedButton" DockPanel.Dock="Bottom" Content="[PKG]  Install Selected" Style="{StaticResource ActionButton}" Margin="0,14,0,0" HorizontalAlignment="Left"/>
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel x:Name="InstallPanel"/>
           </ScrollViewer>
         </DockPanel>
       </TabItem>
 
-      <TabItem Header="✅  Tweaks">
+      <TabItem Header="[OK]  Tweaks">
         <DockPanel Margin="24,20,24,20">
           <TextBlock DockPanel.Dock="Top" Text="Pick any combination of tweaks and apply them all in one pass." Foreground="#8C99BC" Margin="0,0,0,12" TextWrapping="Wrap"/>
           <TextBox x:Name="TweakSearchBox" DockPanel.Dock="Top" Style="{StaticResource SearchBox}" Margin="0,0,0,12" Tag="Search tweaks..."/>
-          <Button x:Name="ApplySelectedButton" DockPanel.Dock="Bottom" Content="⚡  Apply Selected Tweaks" Style="{StaticResource ActionButton}" Margin="0,14,0,0" HorizontalAlignment="Left"/>
+          <Button x:Name="ApplySelectedButton" DockPanel.Dock="Bottom" Content="*  Apply Selected Tweaks" Style="{StaticResource ActionButton}" Margin="0,14,0,0" HorizontalAlignment="Left"/>
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel x:Name="TweaksPanel"/>
           </ScrollViewer>
         </DockPanel>
       </TabItem>
 
-      <TabItem Header="⚡  Profiles">
+      <TabItem Header="*  Profiles">
         <DockPanel Margin="24,20,24,20">
-          <TextBlock DockPanel.Dock="Top" Text="One-click full profiles — each applies a whole curated set of tweaks." Foreground="#8C99BC" Margin="0,0,0,16" TextWrapping="Wrap"/>
+          <TextBlock DockPanel.Dock="Top" Text="One-click full profiles - each applies a whole curated set of tweaks." Foreground="#8C99BC" Margin="0,0,0,16" TextWrapping="Wrap"/>
           <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel x:Name="ProfilesPanel"/>
           </ScrollViewer>
         </DockPanel>
       </TabItem>
 
-      <TabItem Header="⬆  Updates">
+      <TabItem Header="^  Updates">
         <StackPanel Margin="24,20,24,20">
           <TextBlock Text="Keep Wethereal and your apps up to date." Foreground="#8C99BC" Margin="0,0,0,16" TextWrapping="Wrap"/>
-          <Button x:Name="CheckWetherealUpdateButton" Content="⬆️  Check for Wethereal Updates" Style="{StaticResource ProfileButton}" Margin="0,0,0,10" HorizontalAlignment="Stretch"/>
-          <Button x:Name="WingetUpgradeAllButton" Content="📦  Update All Apps (winget upgrade --all)" Style="{StaticResource ProfileButton}" Margin="0,0,0,10" HorizontalAlignment="Stretch"/>
+          <Button x:Name="CheckWetherealUpdateButton" Content="^  Check for Wethereal Updates" Style="{StaticResource ProfileButton}" Margin="0,0,0,10" HorizontalAlignment="Stretch"/>
+          <Button x:Name="WingetUpgradeAllButton" Content="[PKG]  Update All Apps (winget upgrade --all)" Style="{StaticResource ProfileButton}" Margin="0,0,0,10" HorizontalAlignment="Stretch"/>
         </StackPanel>
       </TabItem>
 
-      <TabItem Header="ℹ  Info">
+      <TabItem Header="[i]  Info">
         <StackPanel Margin="24,20,24,20" x:Name="InfoPanel">
           <TextBlock Text="About Wethereal" FontSize="18" FontWeight="Bold" Foreground="#E8ECF4" Margin="0,0,0,12"/>
         </StackPanel>
@@ -305,7 +305,7 @@ function Show-GraphicalMenu {
     $reader = New-Object System.Xml.XmlNodeReader $xaml
     $window = [Windows.Markup.XamlReader]::Load($reader)
 
-    # ---- Fit the window to the actual screen — the XAML size is just a
+    # ---- Fit the window to the actual screen - the XAML size is just a
     # ---- default for typical 1080p+ displays; on smaller/scaled screens
     # ---- (laptops, 1366x768, high DPI scaling) shrink to fit the visible
     # ---- work area (excludes the taskbar) so it never opens off-screen.
@@ -424,7 +424,7 @@ function Show-GraphicalMenu {
         "",
         "This window covers Install / Tweaks / Profiles / Updates. Everything else",
         "(Pro Gaming Tools, Pro Suite, per-category menus, per-game tuning, etc.) is",
-        "still available from the console menu — close this window to return to it."
+        "still available from the console menu - close this window to return to it."
     )
     foreach ($line in $infoLines) {
         $tb = New-Object System.Windows.Controls.TextBlock
@@ -479,7 +479,7 @@ function Show-GraphicalMenu {
                 [System.Windows.MessageBox]::Show("winget (App Installer) was not found. Install it from the Microsoft Store first.", "winget missing", "OK", "Error") | Out-Null
                 return
             }
-            $confirmResult = [System.Windows.MessageBox]::Show("Install $($selected.Count) app(s)? Each install runs in the background — the window may pause briefly during each download.", "Confirm", "YesNo", "Question")
+            $confirmResult = [System.Windows.MessageBox]::Show("Install $($selected.Count) app(s)? Each install runs in the background - the window may pause briefly during each download.", "Confirm", "YesNo", "Question")
             if ($confirmResult -ne "Yes") { return }
             $steps = $selected | ForEach-Object {
                 $app = $_.Tag
@@ -500,7 +500,7 @@ function Show-GraphicalMenu {
             $logBox.AppendText("`r`nChecking for Wethereal updates...`r`n")
             $window.Cursor = [System.Windows.Input.Cursors]::Wait
             try { Update-Wethereal } finally { $window.Cursor = [System.Windows.Input.Cursors]::Arrow }
-            $logBox.AppendText("Update check done — see console/log for detail.`r`n")
+            $logBox.AppendText("Update check done - see console/log for detail.`r`n")
             $logBox.ScrollToEnd()
         }.GetNewClosure())
 

@@ -11,12 +11,12 @@ function Show-AutomationMenu {
     do {
         Show-Header "Automation & Updates"
         Write-Host "  AUTOMATION & UPDATES" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-        Write-Host "   1. ⬆️  Check for Wethereal Updates" -ForegroundColor White
-        Write-Host "   2. 📈 Before/After Benchmark (apply a profile, measure the gain)" -ForegroundColor White
-        Write-Host "   3. 💾 Virtual Memory / Pagefile Manager" -ForegroundColor White
-        Write-Host "   4. ⏰ Schedule Automatic Profile Re-Apply" -ForegroundColor White
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
+        Write-Host "   1. ^  Check for Wethereal Updates" -ForegroundColor White
+        Write-Host "   2. [UP] Before/After Benchmark (apply a profile, measure the gain)" -ForegroundColor White
+        Write-Host "   3. [DISK] Virtual Memory / Pagefile Manager" -ForegroundColor White
+        Write-Host "   4. [TIMER] Schedule Automatic Profile Re-Apply" -ForegroundColor White
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Read-Host "Select an option"
@@ -28,7 +28,7 @@ function Show-AutomationMenu {
             '4' { Set-ScheduledProfileReapply }
             '0' { return }
             default {
-                Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 1
             }
         }
@@ -41,7 +41,7 @@ function Show-AutomationMenu {
 
 function Update-Wethereal {
     Write-Host "`n[CHECK FOR WETHEREAL UPDATES]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Checking $Script:UpdateRepoOwner/$Script:UpdateRepoName on GitHub..." -ForegroundColor $Script:Colors.Info
 
     try {
@@ -49,14 +49,14 @@ function Update-Wethereal {
         $remoteContent = (Invoke-WebRequest -Uri $rawUrl -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop).Content
     }
     catch {
-        Write-Host "`n✗ Could not reach GitHub: $($_.Exception.Message)" -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Could not reach GitHub: $($_.Exception.Message)" -ForegroundColor $Script:Colors.Error
         Write-Log "Update check failed: $($_.Exception.Message)" -Level Warning -Category "Update"
         Wait-ForUser
         return
     }
 
     if ($remoteContent -notmatch '\$Script:Version\s*=\s*"([\d.]+)"') {
-        Write-Host "`n✗ Could not determine the remote version." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Could not determine the remote version." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -66,12 +66,12 @@ function Update-Wethereal {
     Write-Host "  Latest on GitHub:  $remoteVersion" -ForegroundColor White
 
     if ([version]$remoteVersion -le [version]$Script:Version) {
-        Write-Host "`n✓ You're already on the latest version!" -ForegroundColor $Script:Colors.Success
+        Write-Host "`n[OK] You're already on the latest version!" -ForegroundColor $Script:Colors.Success
         Wait-ForUser
         return
     }
 
-    Write-Host "`n  🎉 A newer version is available: v$remoteVersion" -ForegroundColor $Script:Colors.Highlight
+    Write-Host "`n  [DONE] A newer version is available: v$remoteVersion" -ForegroundColor $Script:Colors.Highlight
     if (-not (Confirm-Action -Message "Download and install it now? (current files are backed up first)")) { return }
 
     Write-Log "Updating Wethereal from v$($Script:Version) to v$remoteVersion" -Level Info -Category "Update"
@@ -111,7 +111,7 @@ function Update-Wethereal {
 
     Invoke-TweakSequence -Title "Wethereal Self-Update" -Steps $steps -Category "Update" | Out-Null
 
-    Write-Host "`n✓ Updated to v$remoteVersion!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Updated to v$remoteVersion!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Backup of the previous version: $Script:_updateBackupDir" -ForegroundColor $Script:Colors.Info
     Write-Host "  Restart Wethereal to run the new version." -ForegroundColor $Script:Colors.Warning
     Write-Log "Wethereal updated to v$remoteVersion" -Level Success -Category "Update"
@@ -129,9 +129,9 @@ function Update-Wethereal {
 
 function Invoke-BeforeAfterBenchmark {
     Write-Host "`n[BEFORE/AFTER BENCHMARK]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Runs a quick benchmark, applies a profile of your choice, then benchmarks" -ForegroundColor $Script:Colors.Info
-    Write-Host "again — so you see the real before/after difference, not just a promise." -ForegroundColor $Script:Colors.Info
+    Write-Host "again - so you see the real before/after difference, not just a promise." -ForegroundColor $Script:Colors.Info
     Write-Host ""
 
     $profileNames = @($Script:Profiles.Keys)
@@ -145,7 +145,7 @@ function Invoke-BeforeAfterBenchmark {
     $idx = 0
     if ($choice -eq '0' -or [string]::IsNullOrWhiteSpace($choice)) { return }
     if (-not [int]::TryParse($choice, [ref]$idx) -or $idx -lt 1 -or $idx -gt $profileNames.Count) {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Start-Sleep -Seconds 1
         return
     }
@@ -168,9 +168,9 @@ function Invoke-BeforeAfterBenchmark {
 
     Write-Host "`n  Running BEFORE benchmark..." -ForegroundColor $Script:Colors.Info
     $before = Measure-QuickBenchmark
-    Write-Host "  ✓ CPU: $([math]::Round($before.CpuMs,1)) ms | Free RAM: $($before.MemFreeMB) MB" -ForegroundColor $Script:Colors.Success
+    Write-Host "  [OK] CPU: $([math]::Round($before.CpuMs,1)) ms | Free RAM: $($before.MemFreeMB) MB" -ForegroundColor $Script:Colors.Success
 
-    # Suppress the profile's own confirmation/pauses/restart-prompt — we already
+    # Suppress the profile's own confirmation/pauses/restart-prompt - we already
     # confirmed once above, and a mid-flow restart prompt would abort this benchmark.
     $Script:SkipConfirmations = $true
     $Script:SkipPauses = $true
@@ -184,17 +184,17 @@ function Invoke-BeforeAfterBenchmark {
 
     Write-Host "`n  Running AFTER benchmark..." -ForegroundColor $Script:Colors.Info
     $after = Measure-QuickBenchmark
-    Write-Host "  ✓ CPU: $([math]::Round($after.CpuMs,1)) ms | Free RAM: $($after.MemFreeMB) MB" -ForegroundColor $Script:Colors.Success
+    Write-Host "  [OK] CPU: $([math]::Round($after.CpuMs,1)) ms | Free RAM: $($after.MemFreeMB) MB" -ForegroundColor $Script:Colors.Success
 
     $cpuChangePct = if ($before.CpuMs -gt 0) { (($before.CpuMs - $after.CpuMs) / $before.CpuMs) * 100 } else { 0 }
     $memChangeMB = $after.MemFreeMB - $before.MemFreeMB
 
-    Write-Host "`n  ════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "`n  ====================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "  RESULTS" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  CPU synthetic-load time: $(if ($cpuChangePct -ge 0) { '-' } else { '+' })$([math]::Abs([math]::Round($cpuChangePct, 1)))% $(if ($cpuChangePct -ge 0) { '(faster)' } else { '(slower)' })" -ForegroundColor $(if ($cpuChangePct -ge 0) { $Script:Colors.Success } else { $Script:Colors.Warning })
     Write-Host "  Free RAM: $(if ($memChangeMB -ge 0) { '+' })$memChangeMB MB" -ForegroundColor $(if ($memChangeMB -ge 0) { $Script:Colors.Success } else { $Script:Colors.Warning })
-    Write-Host "  ════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
-    Write-Host "  Note: this is a rough CPU/RAM signal, not an FPS benchmark — most of what" -ForegroundColor DarkGray
+    Write-Host "  ====================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "  Note: this is a rough CPU/RAM signal, not an FPS benchmark - most of what" -ForegroundColor DarkGray
     Write-Host "  a profile changes (services, network, visual effects) won't show up in a" -ForegroundColor DarkGray
     Write-Host "  30-second synthetic test. Real games are the real measure." -ForegroundColor DarkGray
 
@@ -208,7 +208,7 @@ function Invoke-BeforeAfterBenchmark {
 
 function Optimize-PageFile {
     Write-Host "`n[VIRTUAL MEMORY / PAGEFILE MANAGER]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
     $cs = Get-CimInstance Win32_ComputerSystem
     $ramGB = [math]::Round($cs.TotalPhysicalMemory / 1GB, 1)
@@ -218,19 +218,19 @@ function Optimize-PageFile {
     Write-Host "  Currently: $(if ($autoManaged) { 'System-managed' } else { 'Manually configured' })" -ForegroundColor White
 
     $recommendation = if ($ramGB -ge 16) {
-        "System-managed is fine — you have plenty of RAM, the pagefile is rarely touched."
+        "System-managed is fine - you have plenty of RAM, the pagefile is rarely touched."
     }
     elseif ($ramGB -ge 8) {
         "System-managed is fine, or a fixed size around $([math]::Round($ramGB * 1.5, 0)) GB for consistency."
     }
     else {
-        "A fixed pagefile around $([math]::Round($ramGB * 1.5, 0))-$([math]::Round($ramGB * 2, 0)) GB is recommended — low RAM systems lean on the pagefile more."
+        "A fixed pagefile around $([math]::Round($ramGB * 1.5, 0))-$([math]::Round($ramGB * 2, 0)) GB is recommended - low RAM systems lean on the pagefile more."
     }
     Write-Host "  Recommendation: $recommendation" -ForegroundColor $Script:Colors.Info
     Write-Host ""
     Write-Host "  1. Set to System-managed (recommended default)" -ForegroundColor White
     Write-Host "  2. Set a custom fixed size" -ForegroundColor White
-    Write-Host "  3. Disable pagefile entirely (advanced — NOT recommended)" -ForegroundColor Yellow
+    Write-Host "  3. Disable pagefile entirely (advanced - NOT recommended)" -ForegroundColor Yellow
     Write-Host "  0. Cancel" -ForegroundColor Yellow
     Write-Host ""
 
@@ -255,7 +255,7 @@ function Optimize-PageFile {
             $sizeInput = Read-Host "Fixed pagefile size in MB (e.g. $([math]::Round($ramGB * 1.5 * 1024, 0)) for ~$([math]::Round($ramGB * 1.5,1))GB)"
             $sizeMB = 0
             if (-not [int]::TryParse($sizeInput, [ref]$sizeMB) -or $sizeMB -lt 512) {
-                Write-Host "`n✗ Invalid size (minimum 512 MB)." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid size (minimum 512 MB)." -ForegroundColor $Script:Colors.Error
                 Wait-ForUser
                 return
             }
@@ -285,7 +285,7 @@ function Optimize-PageFile {
             Invoke-TweakSequence -Title "Pagefile Manager" -Steps $steps -Category "Memory" | Out-Null
         }
         '3' {
-            Write-Host "`n⚠️  Disabling the pagefile can cause crashes in memory-heavy games/apps" -ForegroundColor $Script:Colors.Warning
+            Write-Host "`n[!]  Disabling the pagefile can cause crashes in memory-heavy games/apps" -ForegroundColor $Script:Colors.Warning
             Write-Host "   and prevents Windows from creating crash dumps. Only do this with a lot" -ForegroundColor $Script:Colors.Warning
             Write-Host "   of RAM (32GB+) and a good reason." -ForegroundColor $Script:Colors.Warning
             if (-not (Confirm-Action -Message "Are you SURE you want to disable the pagefile?")) { return }
@@ -306,13 +306,13 @@ function Optimize-PageFile {
             Invoke-TweakSequence -Title "Pagefile Manager" -Steps $steps -Category "Memory" | Out-Null
         }
         default {
-            Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+            Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
             Start-Sleep -Seconds 1
             return
         }
     }
 
-    Write-Host "`n✓ Pagefile settings updated!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Pagefile settings updated!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Restart required for changes to take effect." -ForegroundColor $Script:Colors.Warning
     Wait-ForUser
 }
@@ -323,8 +323,8 @@ function Optimize-PageFile {
 
 function Set-ScheduledProfileReapply {
     Write-Host "`n[SCHEDULE AUTOMATIC PROFILE RE-APPLY]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
-    Write-Host "Creates a Windows scheduled task that silently re-runs a profile — useful" -ForegroundColor $Script:Colors.Info
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Creates a Windows scheduled task that silently re-runs a profile - useful" -ForegroundColor $Script:Colors.Info
     Write-Host "because Windows Update sometimes resets services, telemetry or scheduled" -ForegroundColor $Script:Colors.Info
     Write-Host "tasks Wethereal disabled." -ForegroundColor $Script:Colors.Info
     Write-Host ""
@@ -342,20 +342,20 @@ function Set-ScheduledProfileReapply {
 
     if ($choice -eq '4') {
         if (-not (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue)) {
-            Write-Host "`n⚠ No scheduled re-apply task found." -ForegroundColor $Script:Colors.Warning
+            Write-Host "`n[!] No scheduled re-apply task found." -ForegroundColor $Script:Colors.Warning
             Wait-ForUser
             return
         }
         if (-not (Confirm-Action -Message "Remove the scheduled re-apply task?")) { return }
         Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
-        Write-Host "`n✓ Scheduled task removed." -ForegroundColor $Script:Colors.Success
+        Write-Host "`n[OK] Scheduled task removed." -ForegroundColor $Script:Colors.Success
         Write-Log "Removed scheduled profile re-apply task" -Level Success -Category "Automation"
         Wait-ForUser
         return
     }
 
     if ($choice -notin @('1', '2', '3')) {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Start-Sleep -Seconds 1
         return
     }
@@ -367,7 +367,7 @@ function Set-ScheduledProfileReapply {
     $profChoice = Read-Host "Which profile should it re-apply?"
     $pIdx = 0
     if (-not [int]::TryParse($profChoice, [ref]$pIdx) -or $pIdx -lt 1 -or $pIdx -gt $profileNames.Count) {
-        Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -406,13 +406,13 @@ function Set-ScheduledProfileReapply {
             }
         }
 
-        Write-Host "`n✓ Scheduled task '$taskName' created!" -ForegroundColor $Script:Colors.Success
+        Write-Host "`n[OK] Scheduled task '$taskName' created!" -ForegroundColor $Script:Colors.Success
         Write-Log "Created scheduled profile re-apply task ($choice) for $selectedProfile" -Level Success -Category "Automation"
     }
     catch {
-        Write-Host "`n✗ Failed to create scheduled task: $($_.Exception.Message)" -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] Failed to create scheduled task: $($_.Exception.Message)" -ForegroundColor $Script:Colors.Error
         if ($choice -eq '3') {
-            Write-Host "  Event-triggered tasks can be finicky depending on Windows edition/policy —" -ForegroundColor DarkGray
+            Write-Host "  Event-triggered tasks can be finicky depending on Windows edition/policy -" -ForegroundColor DarkGray
             Write-Host "  try option 2 (weekly) instead if this keeps failing." -ForegroundColor DarkGray
         }
         Write-Log "Failed to create scheduled task: $($_.Exception.Message)" -Level Error -Category "Automation"

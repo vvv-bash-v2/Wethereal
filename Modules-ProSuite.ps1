@@ -14,14 +14,14 @@ function Show-ProSuiteMenu {
     do {
         Show-Header "Pro Suite"
         Write-Host "  PRO SUITE" -ForegroundColor $Script:Colors.Menu
-        Write-Host "  ═══════════════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Menu
-        Write-Host "   1. ⏮️  Full Rollback (undo EVERYTHING Wethereal has ever changed)" -ForegroundColor White
-        Write-Host "   2. 🕵️  Third-Party Adware / Bloatware Scanner" -ForegroundColor White
-        Write-Host "   3. 💽 SSD/Disk Health Check (S.M.A.R.T.)" -ForegroundColor White
-        Write-Host "   4. 📊 Anonymous Usage Telemetry (opt-in, local)" -ForegroundColor White
-        Write-Host "   5. 🔏 Code-Sign Wethereal Scripts" -ForegroundColor White
-        Write-Host "   6. 🌐 Language / Idioma (EN/ES)" -ForegroundColor White
-        Write-Host "   0. ← Back to Main Menu" -ForegroundColor Yellow
+        Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
+        Write-Host "   1. <<  Full Rollback (undo EVERYTHING Wethereal has ever changed)" -ForegroundColor White
+        Write-Host "   2. [SCAN]  Third-Party Adware / Bloatware Scanner" -ForegroundColor White
+        Write-Host "   3. [DISK] SSD/Disk Health Check (S.M.A.R.T.)" -ForegroundColor White
+        Write-Host "   4. [STATS] Anonymous Usage Telemetry (opt-in, local)" -ForegroundColor White
+        Write-Host "   5. [SIGN] Code-Sign Wethereal Scripts" -ForegroundColor White
+        Write-Host "   6. [NET] Language / Idioma (EN/ES)" -ForegroundColor White
+        Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Read-Host "Select an option"
@@ -35,7 +35,7 @@ function Show-ProSuiteMenu {
             '6' { Set-WetherealLanguage }
             '0' { return }
             default {
-                Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
                 Start-Sleep -Seconds 1
             }
         }
@@ -48,13 +48,13 @@ function Show-ProSuiteMenu {
 
 function Invoke-FullRollback {
     Write-Host "`n[FULL ROLLBACK]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Reverts EVERY registry value and service Wethereal has EVER changed on" -ForegroundColor $Script:Colors.Info
-    Write-Host "this machine — across every session, not just this one — back to the" -ForegroundColor $Script:Colors.Info
+    Write-Host "this machine - across every session, not just this one - back to the" -ForegroundColor $Script:Colors.Info
     Write-Host "first value it ever recorded for each." -ForegroundColor $Script:Colors.Info
 
     if (-not (Test-Path $Script:MasterBackupFile)) {
-        Write-Host "`n⚠ No lifetime backup file found yet — nothing has been recorded to roll" -ForegroundColor $Script:Colors.Warning
+        Write-Host "`n[!] No lifetime backup file found yet - nothing has been recorded to roll" -ForegroundColor $Script:Colors.Warning
         Write-Host "  back (or it was deleted). Nothing to do." -ForegroundColor $Script:Colors.Warning
         Wait-ForUser
         return
@@ -62,22 +62,22 @@ function Invoke-FullRollback {
 
     $entries = @(Get-Content -Path $Script:MasterBackupFile -Raw | ConvertFrom-Json)
     if ($entries.Count -eq 0) {
-        Write-Host "`n⚠ The lifetime backup file is empty — nothing to roll back." -ForegroundColor $Script:Colors.Warning
+        Write-Host "`n[!] The lifetime backup file is empty - nothing to roll back." -ForegroundColor $Script:Colors.Warning
         Wait-ForUser
         return
     }
 
     Write-Host "`n  Found $($entries.Count) recorded change(s) to revert." -ForegroundColor $Script:Colors.Highlight
-    Write-Host "  ⚠️  This is a big hammer — it undoes months of tweaks in one go." -ForegroundColor $Script:Colors.Warning
+    Write-Host "  [!]  This is a big hammer - it undoes months of tweaks in one go." -ForegroundColor $Script:Colors.Warning
 
     if (-not (Confirm-Action -Message "Roll back ALL $($entries.Count) changes now?")) { return }
 
     Write-Log "Starting full rollback of $($entries.Count) lifetime-tracked changes" -Level Info -Category "Rollback"
     Invoke-BackupRestore -Entries $entries
 
-    Write-Host "`n✓ Full rollback complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Full rollback complete!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Note: services/settings changed OUTSIDE Wethereal (by you, by Windows" -ForegroundColor $Script:Colors.Info
-    Write-Host "  Update, by another tool) since the original recording are not reverted —" -ForegroundColor $Script:Colors.Info
+    Write-Host "  Update, by another tool) since the original recording are not reverted -" -ForegroundColor $Script:Colors.Info
     Write-Host "  only the specific values Wethereal itself changed." -ForegroundColor $Script:Colors.Info
     Write-Host "  Restart recommended." -ForegroundColor $Script:Colors.Warning
     Write-Log "Full rollback completed" -Level Success -Category "Rollback"
@@ -103,9 +103,9 @@ $Script:AdwarePatterns = @(
 
 function Find-ThirdPartyAdware {
     Write-Host "`n[THIRD-PARTY ADWARE / BLOATWARE SCANNER]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Scans installed-program entries (beyond just Microsoft Store apps) for" -ForegroundColor $Script:Colors.Info
-    Write-Host "known adware/PUP name patterns — toolbars, fake optimizers, search" -ForegroundColor $Script:Colors.Info
+    Write-Host "known adware/PUP name patterns - toolbars, fake optimizers, search" -ForegroundColor $Script:Colors.Info
     Write-Host "hijackers, driver-update scams." -ForegroundColor $Script:Colors.Info
     Write-Host ""
 
@@ -134,13 +134,13 @@ function Find-ThirdPartyAdware {
     }
 
     if ($found.Count -eq 0) {
-        Write-Host "  ✓ No known adware/bloatware patterns found in installed programs!" -ForegroundColor $Script:Colors.Success
+        Write-Host "  [OK] No known adware/bloatware patterns found in installed programs!" -ForegroundColor $Script:Colors.Success
         Write-Log "Adware scan: 0 matches" -Level Info -Category "Privacy"
         Wait-ForUser
         return
     }
 
-    Write-Host "  ⚠ Found $($found.Count) suspicious program(s):" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  [!] Found $($found.Count) suspicious program(s):" -ForegroundColor $Script:Colors.Warning
     for ($i = 0; $i -lt $found.Count; $i++) {
         Write-Host ("  {0}. {1}" -f ($i + 1), $found[$i].Name) -ForegroundColor White
     }
@@ -160,7 +160,7 @@ function Find-ThirdPartyAdware {
     }
 
     if (-not $indices -or $indices.Count -eq 0) {
-        Write-Host "`n✗ No valid selection." -ForegroundColor $Script:Colors.Error
+        Write-Host "`n[X] No valid selection." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
@@ -202,27 +202,27 @@ function Find-ThirdPartyAdware {
 
 function Test-DiskHealth {
     Write-Host "`n[SSD/DISK HEALTH CHECK]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Reading S.M.A.R.T. reliability counters for every physical disk..." -ForegroundColor $Script:Colors.Info
     Write-Host ""
 
     $disks = Get-PhysicalDisk -ErrorAction SilentlyContinue
     if (-not $disks) {
-        Write-Host "✗ Could not enumerate physical disks on this system." -ForegroundColor $Script:Colors.Error
+        Write-Host "[X] Could not enumerate physical disks on this system." -ForegroundColor $Script:Colors.Error
         Wait-ForUser
         return
     }
 
     foreach ($disk in $disks) {
         $healthColor = if ($disk.HealthStatus -eq 'Healthy') { $Script:Colors.Success } else { $Script:Colors.Error }
-        Write-Host "  💽 $($disk.FriendlyName) [$($disk.MediaType), $([math]::Round($disk.Size/1GB,0)) GB]" -ForegroundColor $Script:Colors.Highlight
+        Write-Host "  [DISK] $($disk.FriendlyName) [$($disk.MediaType), $([math]::Round($disk.Size/1GB,0)) GB]" -ForegroundColor $Script:Colors.Highlight
         Write-Host "     Health: $($disk.HealthStatus)  |  Operational: $($disk.OperationalStatus)" -ForegroundColor $healthColor
 
         try {
             $reliability = Get-StorageReliabilityCounter -PhysicalDisk $disk -ErrorAction Stop
             if ($null -ne $reliability.Temperature -and $reliability.Temperature -gt 0) {
                 $tempColor = if ($reliability.Temperature -gt 60) { $Script:Colors.Error } elseif ($reliability.Temperature -gt 50) { $Script:Colors.Warning } else { $Script:Colors.Success }
-                Write-Host "     Temperature: $($reliability.Temperature)°C" -ForegroundColor $tempColor
+                Write-Host "     Temperature: $($reliability.Temperature) degC" -ForegroundColor $tempColor
             }
             if ($null -ne $reliability.Wear) {
                 $wearColor = if ($reliability.Wear -gt 80) { $Script:Colors.Error } elseif ($reliability.Wear -gt 50) { $Script:Colors.Warning } else { $Script:Colors.Success }
@@ -237,7 +237,7 @@ function Test-DiskHealth {
             }
         }
         catch {
-            Write-Host "     ⚠ S.M.A.R.T. reliability counters unavailable for this disk (common on USB/RAID controllers)" -ForegroundColor DarkGray
+            Write-Host "     [!] S.M.A.R.T. reliability counters unavailable for this disk (common on USB/RAID controllers)" -ForegroundColor DarkGray
         }
         Write-Host ""
     }
@@ -269,7 +269,7 @@ function Save-TelemetrySettings {
 function Add-TelemetryEvent {
     <#
         Called by Invoke-TweakSequence (Win-Tweaker.ps1) after each step, when
-        telemetry is opted in. 100% local — counts which tweak names get
+        telemetry is opted in. 100% local - counts which tweak names get
         applied most, no PII, nothing sent anywhere UNLESS the user has
         explicitly configured their OWN webhook URL to receive it.
     #>
@@ -305,12 +305,12 @@ function Add-TelemetryEvent {
 
 function Show-TelemetryMenu {
     Write-Host "`n[ANONYMOUS USAGE TELEMETRY]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
-    Write-Host "⚠️  Honest disclosure: Wethereal has no analytics backend of its own." -ForegroundColor $Script:Colors.Warning
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "[!]  Honest disclosure: Wethereal has no analytics backend of its own." -ForegroundColor $Script:Colors.Warning
     Write-Host "   This ONLY counts, locally on this machine, which tweaks you apply most" -ForegroundColor $Script:Colors.Warning
     Write-Host "   (no personal data, no machine identifiers). If you run your own webhook" -ForegroundColor $Script:Colors.Warning
     Write-Host "   endpoint (e.g. across a fleet of machines you manage), you can point it" -ForegroundColor $Script:Colors.Warning
-    Write-Host "   there — otherwise nothing leaves this PC." -ForegroundColor $Script:Colors.Warning
+    Write-Host "   there - otherwise nothing leaves this PC." -ForegroundColor $Script:Colors.Warning
     Write-Host ""
     Write-Host "  Currently: $(if ($Script:TelemetryEnabled) { 'ENABLED' } else { 'DISABLED' })" -ForegroundColor $(if ($Script:TelemetryEnabled) { $Script:Colors.Success } else { $Script:Colors.Warning })
     if ($Script:TelemetryWebhookUrl) { Write-Host "  Webhook: $Script:TelemetryWebhookUrl" -ForegroundColor White }
@@ -327,7 +327,7 @@ function Show-TelemetryMenu {
         '1' {
             $Script:TelemetryEnabled = $true
             Save-TelemetrySettings
-            Write-Host "`n✓ Local telemetry enabled." -ForegroundColor $Script:Colors.Success
+            Write-Host "`n[OK] Local telemetry enabled." -ForegroundColor $Script:Colors.Success
             Write-Log "Telemetry enabled (local only)" -Level Info -Category "Telemetry"
         }
         '2' {
@@ -336,18 +336,18 @@ function Show-TelemetryMenu {
                 $Script:TelemetryEnabled = $true
                 $Script:TelemetryWebhookUrl = $url
                 Save-TelemetrySettings
-                Write-Host "`n✓ Telemetry enabled with webhook." -ForegroundColor $Script:Colors.Success
+                Write-Host "`n[OK] Telemetry enabled with webhook." -ForegroundColor $Script:Colors.Success
                 Write-Log "Telemetry enabled with webhook $url" -Level Info -Category "Telemetry"
             }
             else {
-                Write-Host "`n✗ Must be an https:// URL." -ForegroundColor $Script:Colors.Error
+                Write-Host "`n[X] Must be an https:// URL." -ForegroundColor $Script:Colors.Error
             }
         }
         '3' {
             $Script:TelemetryEnabled = $false
             $Script:TelemetryWebhookUrl = $null
             Save-TelemetrySettings
-            Write-Host "`n✓ Telemetry disabled." -ForegroundColor $Script:Colors.Success
+            Write-Host "`n[OK] Telemetry disabled." -ForegroundColor $Script:Colors.Success
             Write-Log "Telemetry disabled" -Level Info -Category "Telemetry"
         }
         '4' {
@@ -368,7 +368,7 @@ function Show-TelemetryMenu {
             }
         }
         '0' { return }
-        default { Write-Host "`n✗ Invalid option." -ForegroundColor $Script:Colors.Error }
+        default { Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error }
     }
 
     Wait-ForUser
@@ -380,14 +380,14 @@ function Show-TelemetryMenu {
 
 function Set-WetherealCodeSignature {
     Write-Host "`n[CODE-SIGN WETHEREAL SCRIPTS]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Creates a self-signed code-signing certificate and signs every .ps1 file" -ForegroundColor $Script:Colors.Info
-    Write-Host "in this folder — this stops PowerShell's execution policy from blocking" -ForegroundColor $Script:Colors.Info
+    Write-Host "in this folder - this stops PowerShell's execution policy from blocking" -ForegroundColor $Script:Colors.Info
     Write-Host "the scripts on THIS machine (or others you distribute the certificate to" -ForegroundColor $Script:Colors.Info
     Write-Host "and mark as trusted)." -ForegroundColor $Script:Colors.Info
     Write-Host ""
-    Write-Host "⚠️  A self-signed cert does NOT stop SmartScreen warnings for other people" -ForegroundColor $Script:Colors.Warning
-    Write-Host "   downloading Wethereal from the internet — that needs a certificate from" -ForegroundColor $Script:Colors.Warning
+    Write-Host "[!]  A self-signed cert does NOT stop SmartScreen warnings for other people" -ForegroundColor $Script:Colors.Warning
+    Write-Host "   downloading Wethereal from the internet - that needs a certificate from" -ForegroundColor $Script:Colors.Warning
     Write-Host "   a public Certificate Authority (a paid code-signing cert)." -ForegroundColor $Script:Colors.Warning
 
     if (-not (Confirm-Action -Message "Create/reuse a local code-signing certificate and sign all scripts?" -DefaultYes)) { return }
@@ -440,7 +440,7 @@ function Set-WetherealCodeSignature {
 
     Invoke-TweakSequence -Title "Code Signing" -Steps $steps -Category "Security" | Out-Null
 
-    Write-Host "`n✓ Scripts signed!" -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Scripts signed!" -ForegroundColor $Script:Colors.Success
     Write-Host "  Set your execution policy to AllSigned or RemoteSigned to require/allow" -ForegroundColor $Script:Colors.Info
     Write-Host "  this: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser" -ForegroundColor White
     Wait-ForUser
@@ -475,25 +475,25 @@ $Script:Strings = @{
         Warning          = "Warning"
     }
     ES = @{
-        MainMenuTitle    = "SELECCIONA UNA CATEGORÍA"
-        QuickActions     = "ACCIONES RÁPIDAS"
+        MainMenuTitle    = "SELECCIONA UNA CATEGORIA"
+        QuickActions     = "ACCIONES RAPIDAS"
         Cat1             = "Rendimiento del Sistema (CPU, GPU, RAM, Disco)"
-        Cat2             = "Optimización de Juegos y Gráficos"
+        Cat2             = "Optimizacion de Juegos y Graficos"
         Cat3             = "Ajustes de Red e Internet"
         Cat4             = "Privacidad y Seguridad"
         Cat5             = "Limpieza y Mantenimiento"
         Cat6             = "Ajustes Avanzados del Sistema"
-        Cat7             = "Monitorización e Información del Sistema"
+        Cat7             = "Monitorizacion e Informacion del Sistema"
         Cat8             = "Herramientas y Utilidades"
-        Cat9             = "Extras y Gestor de Apps (winget, Rendimiento Extremo, más)"
-        Cat10            = "Herramientas Pro de Gaming (guía OC, cuellos de botella, ajuste por juego)"
-        Cat11            = "Automatización y Actualizaciones (autoactualización, benchmark, programación)"
-        Cat12            = "Suite Pro (rollback, escáner de adware, salud de disco, más)"
+        Cat9             = "Extras y Gestor de Apps (winget, Rendimiento Extremo, mas)"
+        Cat10            = "Herramientas Pro de Gaming (guia OC, cuellos de botella, ajuste por juego)"
+        Cat11            = "Automatizacion y Actualizaciones (autoactualizacion, benchmark, programacion)"
+        Cat12            = "Suite Pro (rollback, escaner de adware, salud de disco, mas)"
         Exit             = "Salir"
         PressEnter       = "Pulsa Enter para continuar"
-        Yes              = "Sí"
+        Yes              = "Si"
         No               = "No"
-        Success          = "Éxito"
+        Success          = "Exito"
         Error            = "Error"
         Warning          = "Aviso"
     }
@@ -518,15 +518,15 @@ function Import-LanguageSetting {
 
 function Set-WetherealLanguage {
     Write-Host "`n[LANGUAGE / IDIOMA]" -ForegroundColor $Script:Colors.Title
-    Write-Host "════════════════════════════════════════════════════════════" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
     Write-Host "Currently: $Script:Language" -ForegroundColor White
     Write-Host ""
-    Write-Host "  ℹ Translates the main menu, categories and common prompts. Individual" -ForegroundColor DarkGray
-    Write-Host "    tweak descriptions deep inside each category are still English-only —" -ForegroundColor DarkGray
+    Write-Host "  [i] Translates the main menu, categories and common prompts. Individual" -ForegroundColor DarkGray
+    Write-Host "    tweak descriptions deep inside each category are still English-only -" -ForegroundColor DarkGray
     Write-Host "    full line-by-line translation of 170+ tweaks is a bigger future project." -ForegroundColor DarkGray
     Write-Host ""
     Write-Host "  1. English" -ForegroundColor White
-    Write-Host "  2. Español" -ForegroundColor White
+    Write-Host "  2. Espanol" -ForegroundColor White
     Write-Host "  0. Cancel" -ForegroundColor Yellow
     Write-Host ""
 
@@ -536,14 +536,14 @@ function Set-WetherealLanguage {
         '2' { $Script:Language = 'ES' }
         '0' { return }
         default {
-            Write-Host "`n✗ Invalid selection." -ForegroundColor $Script:Colors.Error
+            Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
             Wait-ForUser
             return
         }
     }
 
     @{ Language = $Script:Language } | ConvertTo-Json | Out-File -FilePath $Script:LanguageFile -Encoding UTF8
-    Write-Host "`n✓ Language set to $Script:Language. The main menu will use it from now on." -ForegroundColor $Script:Colors.Success
+    Write-Host "`n[OK] Language set to $Script:Language. The main menu will use it from now on." -ForegroundColor $Script:Colors.Success
     Write-Log "Language set to $Script:Language" -Level Info -Category "Settings"
     Wait-ForUser
 }
