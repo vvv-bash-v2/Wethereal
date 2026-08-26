@@ -349,6 +349,7 @@ function Global:Invoke-OptimizationProfile {
                 Disable-GameBarOverlayPopup
                 Add-DefenderGameExclusions
                 Enable-MSIModeInterrupts
+                Register-AllInstalledGames
                 Write-Host "`n  [OK] Gaming profile applied!" -ForegroundColor $Script:Colors.Success
             }
 
@@ -383,6 +384,7 @@ function Global:Invoke-OptimizationProfile {
                 Disable-GameBarOverlayPopup
                 Add-DefenderGameExclusions
                 Enable-MSIModeInterrupts
+                Register-AllInstalledGames
 
                 # Network
                 Optimize-TCPIP
@@ -627,12 +629,17 @@ function Global:New-OptimizationReport {
     # the report data is gathered inside the step closures so the progress bar
     # reflects what is actually happening at that moment.
     $data = @{
-        SysInfo         = $null
-        HW              = $null
-        Drives          = @()
-        Issues          = @()
-        ChangedRegistry = @()
-        ChangedServices = @()
+        SysInfo                  = $null
+        HW                       = $null
+        Drives                   = @()
+        Issues                   = @()
+        ChangedRegistry          = @()
+        ChangedServices          = @()
+        ChangedDefenderExclusion = @()
+        Thermal                  = $null
+        MemSpeed                 = $null
+        PmtuBlackHoleDetect      = $false
+        DetectedGameLibraries    = 0
     }
 
     $reportSteps = @(
@@ -677,6 +684,25 @@ function Global:New-OptimizationReport {
             Action = {
                 $data.ChangedRegistry = @($Script:ConfigBackup | Where-Object { $_.Type -eq 'Registry' })
                 $data.ChangedServices = @($Script:ConfigBackup | Where-Object { $_.Type -eq 'Service' })
+                $data.ChangedDefenderExclusion = @($Script:ConfigBackup | Where-Object { $_.Type -eq 'DefenderExclusion' })
+            }.GetNewClosure()
+        }
+        @{
+            Name   = "Checking thermal throttling and memory speed"
+            Action = {
+                $data.Thermal = Get-ThermalThrottleStatus
+                $data.MemSpeed = Get-MemorySpeedStatus
+                if ($data.Thermal.Detected) { $data.Issues += "Possible CPU thermal throttling detected" }
+                if ($data.MemSpeed.Detected) { $data.Issues += "RAM running below its rated speed (XMP/DOCP not enabled)" }
+            }.GetNewClosure()
+        }
+        @{
+            Name   = "Checking network health (Path MTU Black Hole Detection)"
+            Action = {
+                $pmtu = Get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name "EnablePMTUBHDetect" -ErrorAction SilentlyContinue
+                $data.PmtuBlackHoleDetect = [bool]($pmtu -and $pmtu.EnablePMTUBHDetect -eq 1)
+                if (-not $data.PmtuBlackHoleDetect) { $data.Issues += "Path MTU Black Hole Detection is not enabled" }
+                $data.DetectedGameLibraries = @(Get-DetectedGameFolders).Count
             }.GetNewClosure()
         }
     )
@@ -689,6 +715,11 @@ function Global:New-OptimizationReport {
     $issues = $data.Issues
     $changedRegistry = $data.ChangedRegistry
     $changedServices = $data.ChangedServices
+    $changedDefenderExclusions = $data.ChangedDefenderExclusion
+    $thermal = $data.Thermal
+    $memSpeed = $data.MemSpeed
+    $pmtuOk = $data.PmtuBlackHoleDetect
+    $detectedGameLibraries = $data.DetectedGameLibraries
 
     $healthScore = [math]::Max(0, 100 - ($issues.Count * 15))
     $scoreClass = if ($healthScore -ge 80) { 'success' } elseif ($healthScore -ge 60) { 'warning' } else { 'error' }
@@ -787,18 +818,39 @@ $(
 )
         </table>
 
+        <h2>[HOT] Hardware Health &amp; Gaming Readiness</h2>
+        <div class="info-grid">
+            <div class="info-box">
+                <div class="info-label">[HOT] Thermal Throttling</div>
+                <div class="info-value $(if ($thermal.Detected) { 'warning' } else { 'success' })">$($thermal.Detail)</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">[CPU] Memory Speed</div>
+                <div class="info-value $(if ($memSpeed.Detected) { 'warning' } else { 'success' })">$($memSpeed.Detail)</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">[NET] Path MTU Black Hole Detection</div>
+                <div class="info-value $(if ($pmtuOk) { 'success' } else { 'warning' })">$(if ($pmtuOk) { "[OK] Enabled" } else { "[!] Not enabled - run TCP/IP Optimization" })</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">[GAME] Detected Game Libraries</div>
+                <div class="info-value">$detectedGameLibraries folder(s) (Steam/Epic/Battle.net/Riot/GOG/Ubisoft)</div>
+            </div>
+        </div>
+
         <h2>[TOOLS] Settings Changed This Session</h2>
-        <p>$($changedRegistry.Count) registry value(s) and $($changedServices.Count) service(s) modified by Wethereal since it started (originals were backed up before each change):</p>
+        <p>$($changedRegistry.Count) registry value(s), $($changedServices.Count) service(s) and $($changedDefenderExclusions.Count) Defender exclusion(s) modified by Wethereal since it started (originals were backed up before each change):</p>
         <table>
             <tr><th>Type</th><th>Target</th><th>Original Value</th></tr>
 $(
-        if ($changedRegistry.Count -eq 0 -and $changedServices.Count -eq 0) {
+        if ($changedRegistry.Count -eq 0 -and $changedServices.Count -eq 0 -and $changedDefenderExclusions.Count -eq 0) {
             "<tr><td colspan='3' class='empty'>No changes recorded in this session yet.</td></tr>"
         }
         else {
             $rows = @()
             $rows += $changedRegistry | ForEach-Object { "<tr><td>Registry</td><td>$($_.Path)\$($_.Name)</td><td>$($_.Value)</td></tr>" }
             $rows += $changedServices | ForEach-Object { "<tr><td>Service</td><td>$($_.Name)</td><td>Status=$($_.Status), StartType=$($_.StartType)</td></tr>" }
+            $rows += $changedDefenderExclusions | ForEach-Object { "<tr><td>Defender Exclusion</td><td>$($_.Path)</td><td>-</td></tr>" }
             $rows -join "`n"
         }
 )

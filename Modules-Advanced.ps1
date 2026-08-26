@@ -382,7 +382,139 @@ function Global:Show-SystemTemperature {
         $cpuColor = if ($cpuValue -gt 80) { $Script:Colors.Error } elseif ($cpuValue -gt 50) { $Script:Colors.Warning } else { $Script:Colors.Success }
         Write-Host "    - Current CPU Usage: $cpuValue%" -ForegroundColor $cpuColor
     }
-    
+
+    Wait-ForUser
+}
+
+function Global:Get-ThermalThrottleStatus {
+    <#
+        Fast, no-console-output heuristic for "is the CPU throttling right now" -
+        used both by the interactive Test-ThermalThrottling menu item and by the
+        HTML optimization report, so the report doesn't pay for a slow scan every
+        time it's generated. Compares the CPU's currently reported clock speed
+        against its rated maximum while it's under meaningful load; a large gap
+        under load is the classic thermal-throttling signature. WMI's reported
+        clock speed is a known-imperfect signal on modern turbo-boosting CPUs, so
+        this is a heads-up, not a certified diagnosis - Test-ThermalThrottling
+        offers the definitive powercfg /energy scan for that.
+    #>
+    try {
+        $cpu = Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop | Select-Object -First 1
+        $load = (Get-Counter '\Processor(_Total)\% Processor Time' -ErrorAction SilentlyContinue).CounterSamples[0].CookedValue
+        $ratio = if ($cpu.MaxClockSpeed -gt 0) { $cpu.CurrentClockSpeed / $cpu.MaxClockSpeed } else { 1 }
+        $likelyThrottling = ($load -gt 50 -and $ratio -lt 0.7)
+        return @{
+            Detected    = $likelyThrottling
+            CurrentMHz  = $cpu.CurrentClockSpeed
+            MaxMHz      = $cpu.MaxClockSpeed
+            LoadPercent = [math]::Round($load, 1)
+            Detail      = if ($likelyThrottling) {
+                "Running at $($cpu.CurrentClockSpeed) MHz ($([math]::Round($ratio * 100))% of rated $($cpu.MaxClockSpeed) MHz) under $([math]::Round($load,0))% load - possible thermal throttling."
+            }
+            else {
+                "Clock speed tracking normally relative to rated $($cpu.MaxClockSpeed) MHz."
+            }
+        }
+    }
+    catch {
+        return @{ Detected = $false; Detail = "Could not read CPU clock/load counters." }
+    }
+}
+
+function Global:Test-ThermalThrottling {
+    Write-Host "`n[THERMAL THROTTLING DETECTOR]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Quick check first, using live CPU clock speed vs its rated maximum." -ForegroundColor $Script:Colors.Info
+
+    $status = Get-ThermalThrottleStatus
+    $color = if ($status.Detected) { $Script:Colors.Warning } else { $Script:Colors.Success }
+    Write-Host "`n  $($status.Detail)" -ForegroundColor $color
+
+    $runDeep = Read-Host "`nRun a definitive 20-second powercfg thermal/energy scan? (y/N)"
+    if ($runDeep -eq 'Y' -or $runDeep -eq 'y') {
+        Write-Host "`nScanning for 20 seconds - let the system idle or run your game now..." -ForegroundColor $Script:Colors.Info
+        $reportPath = "$PSScriptRoot\ThermalEnergyReport_$(Get-Date -Format 'yyyyMMdd_HHmmss').html"
+        try {
+            powercfg /energy /output $reportPath /duration 20 2>&1 | Out-Null
+            if (Test-Path $reportPath) {
+                $reportContent = Get-Content -Path $reportPath -Raw -ErrorAction SilentlyContinue
+                $thermalHits = [regex]::Matches($reportContent, '(?i)(thermal|throttl)[^<]{0,120}')
+                if ($thermalHits.Count -gt 0) {
+                    Write-Host "`n  [!] Thermal-related entries found in the energy report:" -ForegroundColor $Script:Colors.Warning
+                    $thermalHits | Select-Object -First 5 -Unique | ForEach-Object { Write-Host "    - $($_.Value.Trim())" -ForegroundColor $Script:Colors.Warning }
+                }
+                else {
+                    Write-Host "`n  [OK] No thermal throttling entries found in the energy report." -ForegroundColor $Script:Colors.Success
+                }
+                Write-Host "  Full report: $reportPath" -ForegroundColor DarkGray
+                Write-Log "Thermal energy scan completed: $reportPath" -Level Info -Category "Monitoring"
+            }
+        }
+        catch {
+            Write-Host "`n  [!] powercfg /energy scan failed or requires elevation." -ForegroundColor $Script:Colors.Warning
+        }
+    }
+
+    Wait-ForUser
+}
+
+function Global:Get-MemorySpeedStatus {
+    <#
+        Compares each RAM module's actual running speed (ConfiguredClockSpeed)
+        against its rated/max supported speed (Speed, from SPD) to catch RAM
+        quietly running at JEDEC default instead of its rated XMP/DOCP speed -
+        a common, invisible performance loss (e.g. 2133 MT/s instead of a rated
+        3200 MT/s) that most people never notice because nothing looks "wrong".
+        ConfiguredClockSpeed isn't available on very old Windows builds; falls
+        back to reporting Speed alone in that case.
+    #>
+    try {
+        $modules = @(Get-CimInstance -ClassName Win32_PhysicalMemory -ErrorAction Stop)
+        if ($modules.Count -eq 0) { return @{ Detected = $false; Detail = "No memory module data available." } }
+
+        $underclocked = $modules | Where-Object {
+            $_.ConfiguredClockSpeed -and $_.Speed -and $_.ConfiguredClockSpeed -lt ($_.Speed * 0.9)
+        }
+        $ratedSpeed = ($modules | Measure-Object -Property Speed -Maximum).Maximum
+        $runningSpeed = if ($modules[0].ConfiguredClockSpeed) { ($modules | Measure-Object -Property ConfiguredClockSpeed -Maximum).Maximum } else { $ratedSpeed }
+
+        return @{
+            Detected     = [bool]($underclocked.Count -gt 0)
+            RatedMHz     = $ratedSpeed
+            RunningMHz   = $runningSpeed
+            ModuleCount  = $modules.Count
+            Detail       = if ($underclocked.Count -gt 0) {
+                "RAM running at $runningSpeed MT/s but rated for $ratedSpeed MT/s - enable XMP/DOCP/EXPO in the BIOS to reach full speed."
+            }
+            else {
+                "RAM running at its rated speed ($runningSpeed MT/s across $($modules.Count) module(s))."
+            }
+        }
+    }
+    catch {
+        return @{ Detected = $false; Detail = "Could not read memory module speed data." }
+    }
+}
+
+function Global:Test-MemorySpeed {
+    Write-Host "`n[MEMORY SPEED CHECK]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+
+    $status = Get-MemorySpeedStatus
+    $color = if ($status.Detected) { $Script:Colors.Warning } else { $Script:Colors.Success }
+    Write-Host "`n  $($status.Detail)" -ForegroundColor $color
+    if ($status.Detected) {
+        Write-Host "  Note: this requires a BIOS/UEFI setting change (XMP/DOCP/EXPO profile) -" -ForegroundColor DarkGray
+        Write-Host "  Wethereal cannot change BIOS settings from within Windows." -ForegroundColor DarkGray
+    }
+
+    $runDiag = Read-Host "`nSchedule a Windows Memory Diagnostic (restarts to test RAM for errors)? (y/N)"
+    if ($runDiag -eq 'Y' -or $runDiag -eq 'y') {
+        Write-Log "Scheduling Windows Memory Diagnostic" -Level Info -Category "Monitoring"
+        Start-Process "mdsched.exe"
+        Write-Host "`n  Memory Diagnostic scheduler launched - follow its prompts to restart and test." -ForegroundColor $Script:Colors.Success
+    }
+
     Wait-ForUser
 }
 

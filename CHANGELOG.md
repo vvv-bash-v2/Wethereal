@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.7.0] - 2026-08-26 - Thermal/RAM diagnostics, bulk game tuning, game-aware Update pause, expanded report
+
+### Added
+
+- **Thermal throttling detector** (`Get-ThermalThrottleStatus` / `Test-ThermalThrottling`,
+  Monitoring > 6): fast heuristic compares live CPU clock speed against its
+  rated max under load; offers a definitive 20-second `powercfg /energy`
+  scan on request. The fast check also feeds the HTML report.
+- **Memory speed check** (`Get-MemorySpeedStatus` / `Test-MemorySpeed`,
+  Monitoring > 7): flags RAM running below its rated speed (XMP/DOCP/EXPO
+  not enabled in BIOS) and offers to launch Windows Memory Diagnostic.
+- **Path MTU Black Hole Detection**: `Optimize-TCPIP` now enables
+  `EnablePMTUBHDetect`/`EnablePMTUDiscovery` so a router silently dropping
+  fragmentation-needed ICMP no longer causes random connection stalls.
+- **Bulk per-game tuning** (`Register-AllInstalledGames`, Pro Gaming Tools > 8):
+  applies the existing Above-Normal-CPU-priority + High-performance-GPU
+  tuning to every detected installed game's main .exe in one pass, instead
+  of pasting one path at a time via Per-Game Process Tuning. Shares game
+  detection with the Defender-exclusions tweak via a new `Get-
+  DetectedGameFolders` helper (was duplicated, now one implementation).
+  Wired into Apply All Gaming Optimizations, Low-End Gaming, Gaming and
+  Maximum Performance.
+- **Windows Update auto-pause while gaming** (`Set-GameAwareUpdatePause`,
+  Automation > 5): writes a small watcher script and a 5-minute scheduled
+  task that pauses `wuauserv` the moment a detected game process starts and
+  resumes it once no monitored game is running - smarter than the
+  Presentation profile's fixed 7-day pause. Manual opt-in only, like the
+  other scheduled-task features.
+- **Explorer/taskbar cleanup**: `Tweak-FileExplorer`/Taskbar tweaks now also
+  disable Windows Ink Workspace, the News and Interests/Widgets background
+  service, and recently/frequently used items in File Explorer.
+- **Browser performance**: `Optimize-Browsers` now forces hardware
+  acceleration via policy for Edge and Chrome, and prints an informational
+  audit of each browser's largest installed extensions by disk footprint
+  (extensions are never removed automatically - this is a "go check these"
+  pointer, not a destructive step).
+
+### Changed - Optimization Report
+
+- Added a **Hardware Health & Gaming Readiness** section: thermal
+  throttling status, memory speed status, Path MTU Black Hole Detection
+  state, and a count of detected game library folders.
+- The **Settings Changed This Session** table now also lists Defender
+  exclusions added this session, not just registry values and services.
+- Thermal throttling and underclocked RAM now count toward the
+  Optimization Score's open-issues list, same as the existing checks.
+
 ## [4.6.0] - 2026-08-26 - 10 new optimizations: latency, safety, Windows 11 privacy, smarter GUI
 
 ### Added

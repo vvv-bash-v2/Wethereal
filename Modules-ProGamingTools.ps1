@@ -16,6 +16,7 @@ function Global:Show-ProGamingToolsMenu {
         Write-Host "   5. [DEV] FPS Overlay (RTSS / MSI Afterburner)" -ForegroundColor White
         Write-Host "   6. [BOOST] Enable MSI Mode for GPU/NVMe interrupts (advanced)" -ForegroundColor White
         Write-Host "   7. [!] Disable Core Isolation / Memory Integrity (VBS, advanced)" -ForegroundColor White
+        Write-Host "   8. [TARGET] Bulk Per-Game Tuning - Tune ALL Detected Games" -ForegroundColor White
         Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
@@ -29,6 +30,7 @@ function Global:Show-ProGamingToolsMenu {
             '5' { Enable-FpsOverlay }
             '6' { Enable-MSIModeInterrupts }
             '7' { Disable-CoreIsolation }
+            '8' { Register-AllInstalledGames }
             '0' { return }
             default {
                 Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
@@ -271,6 +273,81 @@ function Global:Show-GameProfiles {
     Invoke-TweakSequence -Title "Per-Game Tuning: $($game.Name)" -Steps $steps -Category "Gaming" | Out-Null
 
     Write-Host "`n[OK] Tuning applied to $($game.Name)! Takes effect next time you launch it." -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Register-AllInstalledGames {
+    <#
+        Bulk version of the per-game tuning above: instead of pasting one .exe
+        path at a time, this walks every detected game library (Get-
+        DetectedGameFolders - Steam/Epic/Battle.net/Riot/GOG/Ubisoft) and, for
+        each installed game's own subfolder, tunes the single largest .exe in it
+        (the reliable heuristic for "that's the real game binary, not a launcher
+        or redistributable installer"). Same two tweaks as the single-game flow:
+        Above Normal CPU priority + High-performance GPU preference, scoped to
+        each .exe individually.
+    #>
+    Write-Host "`n[BULK PER-GAME TUNING - ALL DETECTED GAMES]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Scans every detected game library and applies Above Normal CPU priority +" -ForegroundColor $Script:Colors.Info
+    Write-Host "High-performance GPU preference to each installed game's main .exe in one" -ForegroundColor $Script:Colors.Info
+    Write-Host "pass, instead of doing it one game at a time." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Bulk-registering all detected games for Game Mode / priority tuning" -Level Info -Category "Gaming"
+
+    $libraryRoots = Get-DetectedGameFolders
+    if (-not $libraryRoots -or $libraryRoots.Count -eq 0) {
+        Write-Host "`n[!] No known game library folders were found on this system." -ForegroundColor $Script:Colors.Warning
+        Wait-ForUser
+        return
+    }
+
+    # Utility/installer binaries that are never the actual game - skip them even
+    # if they happen to be the largest .exe found in a folder.
+    $excludePattern = 'unins|setup|redist|vcredist|dotnet|dxsetup|directx|crashreporter|crashpad|battleye|easyanticheat|vc_redist'
+
+    $gameExes = [System.Collections.Generic.List[string]]::new()
+    foreach ($root in $libraryRoots) {
+        $gameDirs = Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue
+        foreach ($gameDir in $gameDirs) {
+            $candidateExe = Get-ChildItem -Path $gameDir.FullName -Filter "*.exe" -Recurse -Depth 3 -ErrorAction SilentlyContinue |
+                Where-Object { $_.Name -notmatch $excludePattern } |
+                Sort-Object Length -Descending |
+                Select-Object -First 1
+            if ($candidateExe) { $gameExes.Add($candidateExe.FullName) }
+        }
+    }
+
+    if ($gameExes.Count -eq 0) {
+        Write-Host "`n[!] No game executables could be identified in the detected libraries." -ForegroundColor $Script:Colors.Warning
+        Wait-ForUser
+        return
+    }
+
+    $steps = $gameExes | ForEach-Object {
+        $exePath = $_
+        @{
+            Name   = "Tuning: $(Split-Path $exePath -Leaf)"
+            Action = {
+                $exeName = Split-Path $exePath -Leaf
+                $path = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\$exeName\PerfOptions"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "CpuPriorityClass"
+                Set-ItemProperty -Path $path -Name "CpuPriorityClass" -Value 3 -Type DWord
+
+                $gpuPath = "HKCU:\Software\Microsoft\DirectX\UserGpuPreferences"
+                if (-not (Test-Path $gpuPath)) { New-Item -Path $gpuPath -Force | Out-Null }
+                Backup-RegistryValue -Path $gpuPath -Name $exePath
+                Set-ItemProperty -Path $gpuPath -Name $exePath -Value "GpuPreference=2;" -Type String
+            }.GetNewClosure()
+        }
+    }
+
+    Invoke-TweakSequence -Title "Bulk Per-Game Tuning" -Steps $steps -Category "Gaming" | Out-Null
+
+    Write-Host "`n[OK] Tuned $($gameExes.Count) detected game(s)!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
 }
 

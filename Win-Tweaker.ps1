@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.6.0
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.7.0
 .DESCRIPTION
     A comprehensive Windows optimization tool with 190+ tweaks across 12 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
@@ -10,7 +10,7 @@
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.6.0 Ultimate Edition
+    Version: 4.7.0 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 .PARAMETER Silent
@@ -49,7 +49,7 @@ if ($Silent -and -not $ProfileName) {
 }
 
 # Script configuration
-$Script:Version = "4.6.0"
+$Script:Version = "4.7.0"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"

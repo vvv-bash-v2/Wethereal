@@ -139,6 +139,41 @@ function Global:Tweak-TaskbarStartMenu {
                 Set-ItemProperty -Path $path -Name "SystemPaneSuggestionsEnabled" -Value 0 -Type DWord
             }
         }
+        @{
+            Name   = "Disabling Windows Ink Workspace"
+            Action = {
+                $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "PenWorkspaceButtonDesiredVisibility"
+                Set-ItemProperty -Path $path -Name "PenWorkspaceButtonDesiredVisibility" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Disabling News and Interests / Widgets background service"
+            Action = {
+                $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Feeds"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "ShellFeedsTaskbarViewMode"
+                Set-ItemProperty -Path $path -Name "ShellFeedsTaskbarViewMode" -Value 2 -Type DWord
+                $policyPath = "HKLM:\SOFTWARE\Policies\Microsoft\Dsh"
+                if (-not (Test-Path $policyPath)) { New-Item -Path $policyPath -Force | Out-Null }
+                Backup-RegistryValue -Path $policyPath -Name "AllowNewsAndInterests"
+                Set-ItemProperty -Path $policyPath -Name "AllowNewsAndInterests" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Hiding recently/frequently used items in File Explorer"
+            Action = {
+                $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+                Backup-RegistryValue -Path $path -Name "Start_TrackDocs"
+                Set-ItemProperty -Path $path -Name "Start_TrackDocs" -Value 0 -Type DWord
+                $explorerPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer"
+                Backup-RegistryValue -Path $explorerPath -Name "ShowRecent"
+                Set-ItemProperty -Path $explorerPath -Name "ShowRecent" -Value 0 -Type DWord
+                Backup-RegistryValue -Path $explorerPath -Name "ShowFrequent"
+                Set-ItemProperty -Path $explorerPath -Name "ShowFrequent" -Value 0 -Type DWord
+            }
+        }
     )
 
     Invoke-TweakSequence -Title "Taskbar & Start Menu Tweaks" -Steps $steps -Category "Advanced" | Out-Null
@@ -375,6 +410,8 @@ function Global:Show-MonitoringMenu {
         Write-Host "   3. Resource Monitor (Real-time)" -ForegroundColor White
         Write-Host "   4. Optimization History" -ForegroundColor White
         Write-Host "   5. System Health Check" -ForegroundColor White
+        Write-Host "   6. [HOT] Thermal Throttling Detector" -ForegroundColor White
+        Write-Host "   7. [CPU] Memory Speed Check (XMP/DOCP)" -ForegroundColor White
         Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
@@ -386,6 +423,8 @@ function Global:Show-MonitoringMenu {
             '3' { Show-ResourceMonitor }
             '4' { Show-OptimizationHistory }
             '5' { Run-SystemHealthCheck }
+            '6' { Test-ThermalThrottling }
+            '7' { Test-MemorySpeed }
             '0' { return }
             default {
                 Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error

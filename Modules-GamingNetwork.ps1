@@ -259,30 +259,16 @@ function Global:Disable-GameBarOverlayPopup {
     Invoke-TweakSequence -Title "Game Bar Overlay Popup" -Steps $steps -Category "Gaming" | Out-Null
 }
 
-function Global:Add-DefenderGameExclusions {
+function Global:Get-DetectedGameFolders {
     <#
-        Auto-detects installed game library folders (Steam, including every
-        library listed in libraryfolders.vdf - not just the default install
-        path - plus Epic Games, Battle.net, Riot Games, GOG Galaxy, Ubisoft
-        Connect) and adds them as Windows Defender real-time scan exclusions.
-        Defender re-scanning every asset a game streams from disk is a common,
-        very real source of stutter; excluding known-safe game library folders
-        removes that overhead without turning off real-time protection.
+        Shared game-library detector used by both the Defender exclusions tweak
+        and the bulk per-game tuning feature - one implementation instead of two
+        copies of the same Steam/Epic/Battle.net/Riot/GOG/Ubisoft detection logic.
+        Steam libraries are read from libraryfolders.vdf so every library drive
+        is covered, not just the default install path.
     #>
-    Write-Host "`n[DEFENDER EXCLUSIONS FOR INSTALLED GAMES]" -ForegroundColor $Script:Colors.Title
-    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
-    Write-Host "Adds your detected game library folders as Windows Defender real-time" -ForegroundColor $Script:Colors.Info
-    Write-Host "scan exclusions, removing scan overhead while games stream assets from" -ForegroundColor $Script:Colors.Info
-    Write-Host "disk. Real-time protection itself stays fully enabled." -ForegroundColor $Script:Colors.Info
-
-    if (-not (Confirm-Action)) { return }
-
-    Write-Log "Adding Defender exclusions for detected game libraries" -Level Info -Category "Gaming"
-
     $candidatePaths = [System.Collections.Generic.List[string]]::new()
 
-    # Steam: read the actual library folders from libraryfolders.vdf instead of
-    # assuming everything lives under the default install path.
     $steamPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam" -ErrorAction SilentlyContinue).InstallPath
     if (-not $steamPath) { $steamPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Valve\Steam" -ErrorAction SilentlyContinue).InstallPath }
     if ($steamPath -and (Test-Path $steamPath)) {
@@ -307,7 +293,30 @@ function Global:Add-DefenderGameExclusions {
     $candidatePaths.Add("${env:ProgramFiles(x86)}\GOG Galaxy\Games")
     $candidatePaths.Add("${env:ProgramFiles}\Ubisoft\Ubisoft Game Launcher\games")
 
-    $foundPaths = $candidatePaths | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
+    return @($candidatePaths | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique)
+}
+
+function Global:Add-DefenderGameExclusions {
+    <#
+        Auto-detects installed game library folders (Steam, including every
+        library listed in libraryfolders.vdf - not just the default install
+        path - plus Epic Games, Battle.net, Riot Games, GOG Galaxy, Ubisoft
+        Connect) and adds them as Windows Defender real-time scan exclusions.
+        Defender re-scanning every asset a game streams from disk is a common,
+        very real source of stutter; excluding known-safe game library folders
+        removes that overhead without turning off real-time protection.
+    #>
+    Write-Host "`n[DEFENDER EXCLUSIONS FOR INSTALLED GAMES]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Adds your detected game library folders as Windows Defender real-time" -ForegroundColor $Script:Colors.Info
+    Write-Host "scan exclusions, removing scan overhead while games stream assets from" -ForegroundColor $Script:Colors.Info
+    Write-Host "disk. Real-time protection itself stays fully enabled." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Adding Defender exclusions for detected game libraries" -Level Info -Category "Gaming"
+
+    $foundPaths = Get-DetectedGameFolders
 
     if (-not $foundPaths -or $foundPaths.Count -eq 0) {
         Write-Host "`n[!] No known game library folders were found on this system." -ForegroundColor $Script:Colors.Warning
@@ -419,6 +428,7 @@ function Global:Apply-AllGamingOptimizations {
         Disable-GameBarOverlayPopup
         Add-DefenderGameExclusions
         Enable-MSIModeInterrupts
+        Register-AllInstalledGames
         Optimize-AudioGaming
         Optimize-FrameRate
     }
@@ -463,6 +473,7 @@ function Global:Optimize-LowEndGaming {
         Disable-GameBarOverlayPopup
         Add-DefenderGameExclusions
         Enable-MSIModeInterrupts
+        Register-AllInstalledGames
         Optimize-FrameRate
 
         # FPS-specific tweaks not covered by any of the above.
@@ -659,6 +670,22 @@ function Global:Optimize-TCPIP {
             }
         }
         @{
+            Name   = "Enabling Path MTU Black Hole Detection"
+            Action = {
+                # A "PMTU black hole" is a router/firewall on the path silently dropping
+                # ICMP fragmentation-needed packets instead of forwarding them, which
+                # makes normal Path MTU Discovery hang instead of failing cleanly -
+                # showing up as random stalls/timeouts on some connections but not
+                # others. This tells Windows to detect that condition and probe down
+                # to a working MTU itself instead of getting stuck.
+                $path = "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters"
+                Backup-RegistryValue -Path $path -Name "EnablePMTUBHDetect"
+                Set-ItemProperty -Path $path -Name "EnablePMTUBHDetect" -Value 1 -Type DWord
+                Backup-RegistryValue -Path $path -Name "EnablePMTUDiscovery"
+                Set-ItemProperty -Path $path -Name "EnablePMTUDiscovery" -Value 1 -Type DWord
+            }
+        }
+        @{
             Name   = "Disabling bandwidth reservation (20% QoS reserve)"
             Action = {
                 $path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Psched"
@@ -815,9 +842,53 @@ function Global:Optimize-Browsers {
                 Set-ItemProperty -Path $path -Name "BackgroundModeEnabled" -Value 0 -Type DWord
             }
         }
+        @{
+            Name   = "Forcing hardware acceleration for Microsoft Edge"
+            Action = {
+                $path = "HKCU:\Software\Policies\Microsoft\Edge"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "HardwareAccelerationModeEnabled"
+                Set-ItemProperty -Path $path -Name "HardwareAccelerationModeEnabled" -Value 1 -Type DWord
+            }
+        }
+        @{
+            Name      = "Forcing hardware acceleration for Google Chrome"
+            Condition = { Test-Path "HKLM:\SOFTWARE\WOW6432Node\Google\Chrome" -ErrorAction SilentlyContinue }
+            Action    = {
+                $path = "HKLM:\SOFTWARE\Policies\Google\Chrome"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "HardwareAccelerationModeEnabled"
+                Set-ItemProperty -Path $path -Name "HardwareAccelerationModeEnabled" -Value 1 -Type DWord
+            }
+        }
     )
 
     Invoke-TweakSequence -Title "Browser Optimization" -Steps $steps -Category "Network" | Out-Null
+
+    # Informational-only extension size audit - Wethereal never uninstalls a
+    # browser extension automatically (that's the user's call), but folder size
+    # is a reasonable proxy for "this one is doing a lot of work in the
+    # background" and is worth surfacing.
+    Write-Host "`n  Auditing installed extensions by disk footprint (informational only)..." -ForegroundColor $Script:Colors.Info
+    $extensionRoots = @{
+        "Chrome" = "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Extensions"
+        "Edge"   = "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Extensions"
+    }
+    foreach ($browserName in $extensionRoots.Keys) {
+        $root = $extensionRoots[$browserName]
+        if (-not (Test-Path $root)) { continue }
+        $heavyExtensions = Get-ChildItem -Path $root -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            $sizeBytes = (Get-ChildItem -Path $_.FullName -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
+            [PSCustomObject]@{ Id = $_.Name; SizeMB = [math]::Round(($sizeBytes / 1MB), 1) }
+        } | Sort-Object SizeMB -Descending | Select-Object -First 5
+        if ($heavyExtensions) {
+            Write-Host "  $browserName - largest extensions by disk size:" -ForegroundColor $Script:Colors.Highlight
+            foreach ($ext in $heavyExtensions) {
+                Write-Host "    - $($ext.Id): $($ext.SizeMB) MB" -ForegroundColor White
+            }
+        }
+    }
+    Write-Host "  (Review these in chrome://extensions or edge://extensions and remove any you don't use.)" -ForegroundColor DarkGray
 
     Write-Host "`n[OK] Browser optimizations complete!" -ForegroundColor $Script:Colors.Success
     Wait-ForUser
