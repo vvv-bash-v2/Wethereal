@@ -196,6 +196,67 @@ function Global:Disable-FullscreenOptimizations {
     Wait-ForUser
 }
 
+function Global:Disable-GameBarOverlayPopup {
+    <#
+        Kills the "Do you want to open Xbox Game Bar?" / ms-gamingoverlay: prompt that
+        Windows shows the first time a fullscreen game (or GameDVR trying to broadcast)
+        tries to invoke the Game Bar overlay. Removing the Xbox Game Bar app alone isn't
+        enough - Windows still tries to fire the ms-gamingoverlay: protocol and, with no
+        handler registered, falls back to the "How do you want to open this?" chooser.
+        The HKLM policy key is the real kill switch: it stops Windows from ever trying
+        to broadcast/launch the overlay in the first place, so the prompt can't fire
+        regardless of whether the Xbox Game Bar app is installed or removed.
+    #>
+    Write-Log "Disabling Xbox Game Bar overlay popup (ms-gamingoverlay)" -Level Info -Category "Gaming"
+
+    $steps = @(
+        @{
+            Name   = "Disabling the Game Bar startup/first-run tip popup"
+            Action = {
+                $path = "HKCU:\Software\Microsoft\GameBar"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "ShowStartupPanel"
+                Set-ItemProperty -Path $path -Name "ShowStartupPanel" -Value 0 -Type DWord
+                Backup-RegistryValue -Path $path -Name "GamePanelStartupTipIndex"
+                Set-ItemProperty -Path $path -Name "GamePanelStartupTipIndex" -Value 3 -Type DWord
+                Backup-RegistryValue -Path $path -Name "UseNexusForGameBarEnabled"
+                Set-ItemProperty -Path $path -Name "UseNexusForGameBarEnabled" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Disabling Game DVR background capture"
+            Action = {
+                $path = "HKCU:\System\GameConfigStore"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "GameDVR_Enabled"
+                Set-ItemProperty -Path $path -Name "GameDVR_Enabled" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Disabling app capture / historical capture (GameDVR)"
+            Action = {
+                $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "AppCaptureEnabled"
+                Set-ItemProperty -Path $path -Name "AppCaptureEnabled" -Value 0 -Type DWord
+                Backup-RegistryValue -Path $path -Name "HistoricalCaptureEnabled"
+                Set-ItemProperty -Path $path -Name "HistoricalCaptureEnabled" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Applying system-wide policy to fully disable Game DVR"
+            Action = {
+                $path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "AllowGameDVR"
+                Set-ItemProperty -Path $path -Name "AllowGameDVR" -Value 0 -Type DWord
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Game Bar Overlay Popup" -Steps $steps -Category "Gaming" | Out-Null
+}
+
 function Global:Optimize-AudioGaming {
     Write-Host "`n[AUDIO OPTIMIZATIONS FOR GAMING]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
@@ -260,6 +321,7 @@ function Global:Apply-AllGamingOptimizations {
         Reduce-InputLag
         Optimize-NetworkGaming
         Disable-FullscreenOptimizations
+        Disable-GameBarOverlayPopup
         Optimize-AudioGaming
         Optimize-FrameRate
     }
@@ -301,6 +363,7 @@ function Global:Optimize-LowEndGaming {
         Reduce-InputLag
         Optimize-NetworkGaming
         Disable-FullscreenOptimizations
+        Disable-GameBarOverlayPopup
         Optimize-FrameRate
 
         # FPS-specific tweaks not covered by any of the above.
@@ -377,16 +440,11 @@ function Global:Optimize-Streaming {
 
     Write-Log "Applying Streaming profile" -Level Info -Category "Gaming"
 
+    # Frees the GPU's hardware encoder for OBS and, as a side effect, permanently
+    # kills the "Do you want to open Xbox Game Bar?" popup while streaming/recording.
+    Disable-GameBarOverlayPopup
+
     $steps = @(
-        @{
-            Name   = "Disabling Xbox Game DVR (frees the hardware encoder for OBS)"
-            Action = {
-                $path = "HKCU:\System\GameConfigStore"
-                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
-                Backup-RegistryValue -Path $path -Name "GameDVR_Enabled"
-                Set-ItemProperty -Path $path -Name "GameDVR_Enabled" -Value 0 -Type DWord
-            }
-        }
         @{
             Name   = "Muting toast notifications (keeps popups off your stream)"
             Action = {

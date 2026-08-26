@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.5.0] - 2026-08-26 - Automatically suppress the Xbox Game Bar overlay popup
+
+### Added
+
+- New `Disable-GameBarOverlayPopup` tweak (Modules-GamingNetwork.ps1) that
+  permanently kills the "Do you want to open Xbox Game Bar?" / ms-gamingoverlay
+  popup that Windows shows the first time a fullscreen game (or Game DVR
+  trying to broadcast) tries to invoke the Game Bar overlay. Just removing
+  the Xbox Game Bar app isn't enough - Windows still tries to fire the
+  ms-gamingoverlay: protocol, and with no handler registered it falls back
+  to the "How do you want to open this?" chooser dialog. This tweak sets:
+  - `HKCU:\Software\Microsoft\GameBar`: `ShowStartupPanel = 0`,
+    `GamePanelStartupTipIndex = 3`, `UseNexusForGameBarEnabled = 0`
+    (suppresses the startup/first-run tip that IS the popup).
+  - `HKCU:\System\GameConfigStore`: `GameDVR_Enabled = 0`.
+  - `HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR`:
+    `AppCaptureEnabled = 0`, `HistoricalCaptureEnabled = 0`.
+  - `HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR`: `AllowGameDVR = 0`
+    - the real kill switch (Group Policy level, applied because Wethereal
+    already runs elevated): stops Windows from ever trying to broadcast/
+    launch the overlay again, so the popup can't come back even if Game
+    Bar is reinstalled or a Windows Update resets the user-level keys.
+  - Every value is captured through `Backup-RegistryValue` first, so it's
+    fully covered by Undo / Restore / Full Rollback like every other tweak.
+- Wired in automatically wherever a "complete" optimization run happens, so
+  no extra menu or confirmation is needed - it's just always applied:
+  `Invoke-AllSystemOptimizations` (System Performance > Apply All),
+  `Apply-AllGamingOptimizations` (Gaming > Apply All), `Optimize-LowEndGaming`,
+  `Optimize-Streaming`, and the Gaming / MaxPerformance optimization profiles.
+
 ## [4.4.4] - 2026-08-26 - CRITICAL HOTFIX: backup/undo functions unreachable from closured tweak steps
 
 ### 🐛 Bug Fixes
