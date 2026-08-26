@@ -1,6 +1,8 @@
 ﻿# Wethereal Ultimate Edition - Pro Suite Module
 # Full rollback, third-party adware scanner, disk S.M.A.R.T. health check,
-# opt-in local usage telemetry, code-signing, and EN/ES language toggle.
+# opt-in local usage telemetry, code-signing, EN/ES/FR/DE/PT language toggle,
+# configuration drift detection, clean uninstall wizard, and a scanner for
+# conflicting third-party optimization tools.
 
 $Script:TelemetryFile = "$PSScriptRoot\Telemetry.json"
 $Script:LanguageFile = "$PSScriptRoot\Language.json"
@@ -20,7 +22,10 @@ function Global:Show-ProSuiteMenu {
         Write-Host "   3. [DISK] SSD/Disk Health Check (S.M.A.R.T.)" -ForegroundColor White
         Write-Host "   4. [STATS] Anonymous Usage Telemetry (opt-in, local)" -ForegroundColor White
         Write-Host "   5. [SIGN] Code-Sign Wethereal Scripts" -ForegroundColor White
-        Write-Host "   6. [NET] Language / Idioma (EN/ES)" -ForegroundColor White
+        Write-Host "   6. [NET] Language / Idioma (EN/ES/FR/DE/PT)" -ForegroundColor White
+        Write-Host "   7. [HEALTH] Configuration Drift Check (Doctor mode)" -ForegroundColor White
+        Write-Host "   8. [SCAN] Conflicting Optimizer Scanner" -ForegroundColor White
+        Write-Host "   9. [!] Clean Uninstall Wizard" -ForegroundColor White
         Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
@@ -33,6 +38,9 @@ function Global:Show-ProSuiteMenu {
             '4' { Show-TelemetryMenu }
             '5' { Set-WetherealCodeSignature }
             '6' { Set-WetherealLanguage }
+            '7' { Test-ConfigurationDrift }
+            '8' { Find-ConflictingOptimizers }
+            '9' { Invoke-WetherealUninstall }
             '0' { return }
             default {
                 Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
@@ -243,6 +251,205 @@ function Global:Test-DiskHealth {
     }
 
     Write-Log "Ran disk S.M.A.R.T. health check on $($disks.Count) disk(s)" -Level Info -Category "Monitoring"
+    Wait-ForUser
+}
+
+#endregion
+
+#region Configuration Drift Detection ("Doctor" mode)
+
+function Global:Test-ConfigurationDrift {
+    <#
+        Compares every registry value and service Wethereal has ever recorded
+        (the lifetime master backup - the ORIGINAL, pre-Wethereal value for
+        each) against its CURRENT live value. If the current value now
+        matches what it was BEFORE Wethereal touched it, that specific tweak
+        has been silently reverted - typically by a Windows Update, a
+        conflicting third-party tool, or the user manually changing it back -
+        and the user would otherwise have no way to know without re-checking
+        every tweak by hand. Read-only: reports drift, changes nothing.
+    #>
+    param([switch]$Quiet)
+
+    if (-not $Quiet) {
+        Write-Host "`n[CONFIGURATION DRIFT CHECK]" -ForegroundColor $Script:Colors.Title
+        Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+        Write-Host "Checks every tweak Wethereal has ever applied against its current live" -ForegroundColor $Script:Colors.Info
+        Write-Host "value, to catch anything silently reverted (a Windows Update, another" -ForegroundColor $Script:Colors.Info
+        Write-Host "tool, or a manual change back)." -ForegroundColor $Script:Colors.Info
+    }
+
+    if (-not (Test-Path $Script:MasterBackupFile)) {
+        if (-not $Quiet) { Write-Host "`n[!] No lifetime backup file yet - nothing has been recorded to check." -ForegroundColor $Script:Colors.Warning; Wait-ForUser }
+        return @()
+    }
+
+    $entries = @(Get-Content -Path $Script:MasterBackupFile -Raw | ConvertFrom-Json)
+    $drifted = @()
+
+    foreach ($entry in $entries) {
+        if ($entry.Type -eq 'Registry') {
+            $current = Get-ItemProperty -Path $entry.Path -Name $entry.Name -ErrorAction SilentlyContinue
+            if ($current -and ("$($current.$($entry.Name))" -eq "$($entry.Value)")) {
+                $drifted += "Registry: $($entry.Path)\$($entry.Name) is back to its pre-Wethereal value ($($entry.Value))"
+            }
+        }
+        elseif ($entry.Type -eq 'Service') {
+            $service = Get-Service -Name $entry.Name -ErrorAction SilentlyContinue
+            if ($service -and $service.StartType -eq $entry.StartType -and $service.Status -eq $entry.Status) {
+                $drifted += "Service: $($entry.Name) is back to its pre-Wethereal state (StartType=$($entry.StartType), Status=$($entry.Status))"
+            }
+        }
+    }
+
+    if (-not $Quiet) {
+        if ($drifted.Count -eq 0) {
+            Write-Host "`n[OK] No drift detected - every tracked tweak is still in effect." -ForegroundColor $Script:Colors.Success
+        }
+        else {
+            Write-Host "`n[!] $($drifted.Count) tweak(s) appear to have reverted:" -ForegroundColor $Script:Colors.Warning
+            $drifted | ForEach-Object { Write-Host "  - $_" -ForegroundColor $Script:Colors.Warning }
+            Write-Host "`n  Re-apply the relevant tweak(s), or the profile/Apply All that covers them." -ForegroundColor $Script:Colors.Info
+        }
+        Write-Log "Configuration drift check: $($drifted.Count) drifted item(s)" -Level $(if ($drifted.Count -gt 0) { 'Warning' } else { 'Info' }) -Category "Doctor"
+        Wait-ForUser
+    }
+
+    return $drifted
+}
+
+#endregion
+
+#region Clean Uninstall Wizard
+
+function Global:Invoke-WetherealUninstall {
+    <#
+        A proper "take me back to before I ever ran this" path, distinct from
+        Full Rollback: rollback only restores tracked registry/service
+        values, but leaves behind Wethereal's own scheduled tasks (Auto
+        Re-Apply, Game-Aware Update Pause, Game-Aware Notification Mute) and
+        generated files (log, master backup, config, telemetry/language
+        settings, watcher scripts). This wizard does the rollback AND cleans
+        up everything Wethereal itself created. It does not delete the
+        Wethereal script files - PowerShell can't reliably delete a script
+        that's actively running, so that last step is left to the user.
+    #>
+    Write-Host "`n[CLEAN UNINSTALL WIZARD]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "[!]  This will:" -ForegroundColor $Script:Colors.Warning
+    Write-Host "     1. Roll back EVERY registry value/service Wethereal has ever changed" -ForegroundColor $Script:Colors.Warning
+    Write-Host "     2. Remove all scheduled tasks Wethereal created" -ForegroundColor $Script:Colors.Warning
+    Write-Host "     3. Delete Wethereal's own generated files (log, backups, settings)" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  It will NOT delete the Wethereal script files themselves - delete the" -ForegroundColor $Script:Colors.Info
+    Write-Host "  folder yourself afterward if you want the tool fully gone." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action -Message "Proceed with the clean uninstall?")) { return }
+
+    Write-Log "Starting clean uninstall wizard" -Level Warning -Category "Uninstall"
+
+    $steps = @(
+        @{
+            Name   = "Rolling back all tracked registry/service changes"
+            Action = {
+                if (Test-Path $Script:MasterBackupFile) {
+                    $entries = @(Get-Content -Path $Script:MasterBackupFile -Raw | ConvertFrom-Json)
+                    if ($entries.Count -gt 0) { Invoke-BackupRestore -Entries $entries }
+                }
+            }
+        }
+        @{
+            Name   = "Removing Wethereal scheduled tasks"
+            Action = {
+                @('Wethereal Auto Re-Apply', 'Wethereal Game-Aware Update Pause', 'Wethereal Game-Aware Notification Mute') | ForEach-Object {
+                    Unregister-ScheduledTask -TaskName $_ -Confirm:$false -ErrorAction SilentlyContinue
+                }
+            }
+        }
+        @{
+            Name   = "Deleting generated files"
+            Action = {
+                $filesToRemove = @(
+                    $Script:LogFile, $Script:MasterBackupFile, $Script:ConfigFile,
+                    $Script:TelemetryFile, $Script:LanguageFile,
+                    "$PSScriptRoot\Wethereal-GameUpdatePauseWatcher.ps1",
+                    "$PSScriptRoot\Wethereal-UpdatePausedByGame.marker",
+                    "$PSScriptRoot\Wethereal-GameNotificationMuteWatcher.ps1",
+                    "$PSScriptRoot\Wethereal-NotificationsMutedByGame.marker"
+                )
+                $filesToRemove | Where-Object { $_ } | ForEach-Object { Remove-Item -Path $_ -Force -ErrorAction SilentlyContinue }
+                Get-ChildItem -Path $PSScriptRoot -Filter "WinTweaker_Backup_*.json" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+                Get-ChildItem -Path $PSScriptRoot -Filter "OptimizationReport_*.html" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+                Get-ChildItem -Path $PSScriptRoot -Filter "ThermalEnergyReport_*.html" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Wethereal Clean Uninstall" -Steps $steps -Category "Uninstall" | Out-Null
+
+    Write-Host "`n[OK] Clean uninstall complete!" -ForegroundColor $Script:Colors.Success
+    Write-Host "  Delete this folder to remove the Wethereal script files as well." -ForegroundColor $Script:Colors.Info
+    Write-Host "  Restart recommended." -ForegroundColor $Script:Colors.Warning
+    Wait-ForUser
+}
+
+#endregion
+
+#region Conflicting Third-Party Optimizer Scanner
+
+# Legitimate (if sometimes overlapping) optimization/cleaner tools that write
+# to many of the same registry keys Wethereal does. Not malware like
+# $Script:AdwarePatterns - just tools that can fight over the same settings,
+# which is a common cause of "my changes keep reverting" confusion.
+$Script:ConflictingOptimizerPatterns = @(
+    "CCleaner", "Advanced SystemCare", "IObit Driver Booster", "Wise Care 365",
+    "Wise Registry Cleaner", "Glary Utilities", "Auslogics BoostSpeed",
+    "System Mechanic", "TuneUp Utilities", "AVG TuneUp", "Norton Utilities",
+    "Ashampoo WinOptimizer", "Razer Cortex", "PC Cleaner Pro"
+)
+
+function Global:Find-ConflictingOptimizers {
+    Write-Host "`n[CONFLICTING OPTIMIZER SCANNER]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Scans installed programs for other optimization/cleaner tools that write" -ForegroundColor $Script:Colors.Info
+    Write-Host "to many of the same registry keys as Wethereal - a common, non-obvious" -ForegroundColor $Script:Colors.Info
+    Write-Host "cause of tweaks appearing to 'revert on their own'. These are legitimate" -ForegroundColor $Script:Colors.Info
+    Write-Host "tools, not malware - nothing is removed automatically." -ForegroundColor $Script:Colors.Info
+    Write-Host ""
+
+    $uninstallKeys = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*",
+        "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    )
+
+    $installed = Get-ItemProperty -Path $uninstallKeys -ErrorAction SilentlyContinue |
+        Where-Object { $_.DisplayName } |
+        Select-Object DisplayName, UninstallString -Unique
+
+    $found = @()
+    foreach ($app in $installed) {
+        foreach ($pattern in $Script:ConflictingOptimizerPatterns) {
+            if ($app.DisplayName -like "*$pattern*") {
+                $found += $app.DisplayName
+                break
+            }
+        }
+    }
+    $found = $found | Select-Object -Unique
+
+    if ($found.Count -eq 0) {
+        Write-Host "[OK] No known conflicting optimizer tools found." -ForegroundColor $Script:Colors.Success
+        Write-Log "Conflicting optimizer scan: 0 matches" -Level Info -Category "Compatibility"
+        Wait-ForUser
+        return
+    }
+
+    Write-Host "[!] Found $($found.Count) tool(s) that may compete with Wethereal's settings:" -ForegroundColor $Script:Colors.Warning
+    $found | ForEach-Object { Write-Host "  - $_" -ForegroundColor White }
+    Write-Host "`n  If tweaks seem to 'undo themselves' after a reboot, check that tool's own" -ForegroundColor $Script:Colors.Info
+    Write-Host "  settings/scheduled cleanup first - it may be resetting the same keys." -ForegroundColor $Script:Colors.Info
+
+    Write-Log "Conflicting optimizer scan: found $($found -join ', ')" -Level Warning -Category "Compatibility"
     Wait-ForUser
 }
 
@@ -499,6 +706,78 @@ $Script:Strings = @{
         Error            = "Error"
         Warning          = "Aviso"
     }
+    FR = @{
+        MainMenuTitle    = "SELECTIONNEZ UNE CATEGORIE"
+        QuickActions     = "ACTIONS RAPIDES"
+        Cat1             = "Performance Systeme (CPU, GPU, RAM, Disque)"
+        Cat2             = "Optimisation Jeux et Graphismes"
+        Cat3             = "Reglages Reseau et Internet"
+        Cat4             = "Confidentialite et Securite"
+        Cat5             = "Nettoyage et Maintenance"
+        Cat6             = "Reglages Systeme Avances"
+        Cat7             = "Surveillance et Infos Systeme"
+        Cat8             = "Outils et Utilitaires"
+        Cat9             = "Extras et Gestionnaire d'Apps (winget, Perf Ultime, plus)"
+        Cat10            = "Outils Pro Gaming (guide OC, goulot d'etranglement, reglage par jeu)"
+        Cat11            = "Automatisation et Mises a Jour (auto-maj, benchmark, planification)"
+        Cat12            = "Suite Pro (rollback, scan adware, sante disque, plus)"
+        Cat13            = "Performance Avancee et Compatibilite (C-states, gestion energie, prerequis, audio)"
+        Exit             = "Quitter"
+        PressEnter       = "Appuyez sur Entree pour continuer"
+        Yes              = "Oui"
+        No               = "Non"
+        Success          = "Succes"
+        Error            = "Erreur"
+        Warning          = "Avertissement"
+    }
+    DE = @{
+        MainMenuTitle    = "KATEGORIE AUSWAEHLEN"
+        QuickActions     = "SCHNELLAKTIONEN"
+        Cat1             = "Systemleistung (CPU, GPU, RAM, Festplatte)"
+        Cat2             = "Gaming- und Grafikoptimierung"
+        Cat3             = "Netzwerk- und Internet-Einstellungen"
+        Cat4             = "Datenschutz und Sicherheit"
+        Cat5             = "Bereinigung und Wartung"
+        Cat6             = "Erweiterte Systemeinstellungen"
+        Cat7             = "Ueberwachung und Systeminfo"
+        Cat8             = "Werkzeuge und Dienstprogramme"
+        Cat9             = "Extras und App-Manager (winget, Ultimate-Leistung, mehr)"
+        Cat10            = "Pro-Gaming-Tools (OC-Anleitung, Engpass, spielspezifische Einstellungen)"
+        Cat11            = "Automatisierung und Updates (Selbst-Update, Benchmark, Planung)"
+        Cat12            = "Pro Suite (Rollback, Adware-Scan, Festplattengesundheit, mehr)"
+        Cat13            = "Erweiterte Leistung und Kompatibilitaet (C-States, Energieverwaltung, Voraussetzungen, Audio)"
+        Exit             = "Beenden"
+        PressEnter       = "Druecken Sie Enter, um fortzufahren"
+        Yes              = "Ja"
+        No               = "Nein"
+        Success          = "Erfolg"
+        Error            = "Fehler"
+        Warning          = "Warnung"
+    }
+    PT = @{
+        MainMenuTitle    = "SELECIONE UMA CATEGORIA"
+        QuickActions     = "ACOES RAPIDAS"
+        Cat1             = "Desempenho do Sistema (CPU, GPU, RAM, Disco)"
+        Cat2             = "Otimizacao de Jogos e Graficos"
+        Cat3             = "Ajustes de Rede e Internet"
+        Cat4             = "Privacidade e Seguranca"
+        Cat5             = "Limpeza e Manutencao"
+        Cat6             = "Ajustes Avancados do Sistema"
+        Cat7             = "Monitoramento e Info do Sistema"
+        Cat8             = "Ferramentas e Utilitarios"
+        Cat9             = "Extras e Gerenciador de Apps (winget, Desempenho Maximo, mais)"
+        Cat10            = "Ferramentas Pro de Gaming (guia OC, gargalo, ajuste por jogo)"
+        Cat11            = "Automacao e Atualizacoes (auto-atualizacao, benchmark, agendamento)"
+        Cat12            = "Suite Pro (rollback, scanner de adware, saude do disco, mais)"
+        Cat13            = "Desempenho Avancado e Compatibilidade (C-states, gerenciamento de energia, pre-requisitos, audio)"
+        Exit             = "Sair"
+        PressEnter       = "Pressione Enter para continuar"
+        Yes              = "Sim"
+        No               = "Nao"
+        Success          = "Sucesso"
+        Error            = "Erro"
+        Warning          = "Aviso"
+    }
 }
 
 function Global:Get-Str {
@@ -512,7 +791,7 @@ function Global:Import-LanguageSetting {
     if (Test-Path $Script:LanguageFile) {
         try {
             $cfg = Get-Content -Path $Script:LanguageFile -Raw | ConvertFrom-Json
-            if ($cfg.Language -in @('EN', 'ES')) { $Script:Language = $cfg.Language }
+            if ($cfg.Language -in @('EN', 'ES', 'FR', 'DE', 'PT')) { $Script:Language = $cfg.Language }
         }
         catch {}
     }
@@ -529,6 +808,9 @@ function Global:Set-WetherealLanguage {
     Write-Host ""
     Write-Host "  1. English" -ForegroundColor White
     Write-Host "  2. Espanol" -ForegroundColor White
+    Write-Host "  3. Francais" -ForegroundColor White
+    Write-Host "  4. Deutsch" -ForegroundColor White
+    Write-Host "  5. Portugues" -ForegroundColor White
     Write-Host "  0. Cancel" -ForegroundColor Yellow
     Write-Host ""
 
@@ -536,6 +818,9 @@ function Global:Set-WetherealLanguage {
     switch ($choice) {
         '1' { $Script:Language = 'EN' }
         '2' { $Script:Language = 'ES' }
+        '3' { $Script:Language = 'FR' }
+        '4' { $Script:Language = 'DE' }
+        '5' { $Script:Language = 'PT' }
         '0' { return }
         default {
             Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error

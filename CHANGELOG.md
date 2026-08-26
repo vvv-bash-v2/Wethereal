@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.11.0] - 2026-08-26 - Tool completeness: CLI single-tweak mode, Doctor mode, clean uninstall, conflict scanner, 3 more languages
+
+### Added
+
+- **`-Tweak <Name>` CLI mode**: runs exactly one named tweak unattended, then
+  exits (`.\Win-Tweaker.ps1 -Tweak Optimize-DiskIO`) - for scripted/scheduled
+  use when a whole profile is more than needed. Restricted to a curated
+  `$Script:CliSafeTweaks` allow-list (~50 functions across Categories 1-5, 9
+  and 13, plus two read-only Pro Suite diagnostics): every entry was verified
+  to have no Read-Host prompt beyond the plain y/N Confirm-Action that
+  -Silent/-Tweak already bypass, so an unattended run can never hang waiting
+  on input. Explicitly excludes anything with a menu/free-text prompt
+  (Optimize-DNS, Enable-DnsOverHttps, Show-GameProfiles, Optimize-
+  SearchIndexing, Set-ClassicContextMenu, Set-TaskbarAlignment, Set-
+  HostsAdBlock, Find-ThirdPartyAdware, the game-aware watcher toggles,
+  Set-WetherealLanguage) and anything destructive/high-consequence
+  (Uninstall-XboxGameBar, Disable-CoreIsolation, Invoke-FullRollback,
+  Invoke-WetherealUninstall) - those stay menu-only by design.
+- **`-Doctor` CLI mode / Configuration Drift Check** (`Test-
+  ConfigurationDrift`, Pro Suite > 7): compares every registry value and
+  service Wethereal has ever recorded (the lifetime master backup's
+  original, pre-Wethereal value) against its current live value. If the
+  current value now matches what it was BEFORE Wethereal touched it, that
+  tweak has been silently reverted - by a Windows Update, a conflicting
+  tool, or a manual change back - and is reported instead of the user
+  discovering it by accident. `-Doctor` runs this headlessly and exits 0
+  (clean) or 1 (drift found), suitable for a scheduled health-check job.
+- **Clean Uninstall Wizard** (`Invoke-WetherealUninstall`, Pro Suite > 9):
+  rolls back every tracked registry/service change (like Full Rollback),
+  removes every scheduled task Wethereal created (Auto Re-Apply, Game-Aware
+  Update Pause, Game-Aware Notification Mute), and deletes Wethereal's own
+  generated files (log, master backup, config, telemetry/language settings,
+  watcher scripts, backup/report files). Does not delete the Wethereal
+  script files themselves - PowerShell can't reliably delete a script that's
+  actively running, so that step is left to the user (delete the folder).
+- **Conflicting Optimizer Scanner** (`Find-ConflictingOptimizers`, Pro
+  Suite > 8): scans installed programs for other optimization/cleaner tools
+  (CCleaner, Advanced SystemCare, IObit Driver Booster, Wise Care 365, Glary
+  Utilities, Auslogics BoostSpeed, System Mechanic, TuneUp Utilities, AVG
+  TuneUp, Norton Utilities, Ashampoo WinOptimizer, Razer Cortex, PC Cleaner
+  Pro) that write to many of the same registry keys as Wethereal - a common,
+  non-obvious cause of "my changes keep reverting". These are legitimate
+  tools, not malware (distinct from the existing adware scanner) - nothing
+  is removed automatically, just flagged.
+- **3 more languages**: French, German and Portuguese added alongside
+  English/Spanish (`Set-WetherealLanguage`, Pro Suite > 6) - same 18-key
+  menu/category translation set as ES, ASCII-only per the rest of the
+  codebase (accents stripped: e/e, u/ue, ç/c, etc.).
+
 ## [4.10.0] - 2026-08-26 - 4 more options in Category 13: DoH, component/driver store cleanup, NAT diagnostic
 
 ### Added

@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.10.0
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.11.0
 .DESCRIPTION
     A comprehensive Windows optimization tool with 200+ tweaks across 13 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
@@ -10,7 +10,7 @@
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.10.0 Ultimate Edition
+    Version: 4.11.0 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 .PARAMETER Silent
@@ -26,12 +26,32 @@
     Launches the WinForms graphical front-end instead of the console menu.
     Needs an STA session - if launched from an MTA host, relaunch with
     'powershell -STA -File Win-Tweaker.ps1 -Gui'.
+.PARAMETER Tweak
+    Runs exactly one named tweak function unattended, then exits - for
+    scripted/scheduled use when a whole profile is more than you need (e.g. a
+    Task Scheduler job that only wants Optimize-DiskIO). Must be one of the
+    curated non-interactive tweaks in $Script:CliSafeTweaks; anything that
+    needs a menu choice or free-text input (DNS provider, per-game .exe path,
+    etc.) is deliberately excluded so an unattended run can never hang
+    waiting on Read-Host.
+.PARAMETER Doctor
+    Runs the configuration drift check unattended and exits: compares every
+    tweak Wethereal has ever applied against its current live value and
+    reports anything that's been silently reverted (by a Windows Update,
+    another tool, or a manual change). Exit code 0 = no drift, 1 = drift
+    found - suitable for a scheduled health-check job.
 .EXAMPLE
     .\Win-Tweaker.ps1 -Silent -ProfileName LowEndGaming
     Applies the Low-End Gaming / Max FPS profile with zero interaction, then exits.
 .EXAMPLE
     .\Win-Tweaker.ps1 -Gui
     Opens the graphical quick-launch window.
+.EXAMPLE
+    .\Win-Tweaker.ps1 -Tweak Optimize-DiskIO
+    Runs just that one tweak unattended, then exits.
+.EXAMPLE
+    .\Win-Tweaker.ps1 -Doctor
+    Checks for configuration drift and exits (0 = clean, 1 = drift found).
 #>
 
 param(
@@ -40,7 +60,11 @@ param(
     [ValidateSet('Gaming', 'Work', 'MaxPerformance', 'Privacy', 'LowEndGaming', 'Streaming', 'Presentation')]
     [string]$ProfileName,
 
-    [switch]$Gui
+    [switch]$Gui,
+
+    [string]$Tweak,
+
+    [switch]$Doctor
 )
 
 if ($Silent -and -not $ProfileName) {
@@ -48,8 +72,57 @@ if ($Silent -and -not $ProfileName) {
     exit 1
 }
 
+# Curated allow-list for -Tweak: every function here is verified non-
+# interactive beyond a plain y/N Confirm-Action (which -Tweak bypasses just
+# like -Silent). Deliberately excludes anything with a Read-Host menu/free-
+# text prompt (Optimize-DNS, Enable-DnsOverHttps, Show-GameProfiles, the
+# game-aware watcher toggles, Set-WetherealLanguage, Optimize-SearchIndexing,
+# Set-ClassicContextMenu, Set-TaskbarAlignment, Set-HostsAdBlock,
+# Find-ThirdPartyAdware, etc.) or a destructive/high-consequence action
+# (Uninstall-XboxGameBar, Disable-CoreIsolation, Invoke-FullRollback,
+# Invoke-WetherealUninstall) - those stay menu-only by
+# design, so an unattended run can never hang or fire irreversibly by typo.
+$Script:CliSafeTweaks = @(
+    # Category 1: System Performance
+    'Optimize-CPU', 'Optimize-GPU', 'Optimize-MemoryAdvanced', 'Optimize-DiskIO',
+    'Optimize-WindowsServices', 'Optimize-VisualEffects', 'Optimize-Storage',
+    'Optimize-WindowsUpdate', 'Invoke-AllSystemOptimizations',
+    # Category 2: Gaming & Graphics
+    'Enable-GamingMode', 'Reduce-InputLag', 'Optimize-NetworkGaming',
+    'Disable-FullscreenOptimizations', 'Optimize-AudioGaming', 'Optimize-FrameRate',
+    'Apply-AllGamingOptimizations', 'Optimize-LowEndGaming', 'Add-DefenderGameExclusions',
+    'Disable-GameBarOverlayPopup', 'Enable-MSIModeInterrupts', 'Register-AllInstalledGames',
+    # Category 3: Network & Internet
+    'Optimize-TCPIP', 'Optimize-NetworkAdapter', 'Configure-QoS', 'Optimize-Browsers',
+    'Apply-AllNetworkOptimizations',
+    # Category 4: Privacy & Security
+    'Block-TelemetryAdvanced', 'Disable-TrackingAds', 'Remove-Bloatware',
+    'Set-WindowsFeaturesPrivacy', 'Set-CameraMicrophonePrivacy', 'Set-NetworkPrivacy',
+    'Enable-SecurityHardening', 'Invoke-AllPrivacyOptimizations',
+    # Category 5: Cleanup & Maintenance
+    'Clear-TemporaryFiles', 'Optimize-ScheduledTasks', 'Clear-ContextMenu',
+    'Start-AllCleanupTasks',
+    # Category 9: Extras
+    'Enable-UltimatePerformancePlan', 'Invoke-WingetUpgradeAll',
+    # Category 13: Advanced Performance & Compatibility
+    'Disable-CpuCStates', 'Disable-UsbPcieSuspend', 'Disable-FastStartup',
+    'Install-MissingPrerequisites', 'Test-GpuDriverVersion', 'Optimize-AudioLatency',
+    'Set-Win32PrioritySeparation', 'Disable-Hibernation', 'Set-ClassicWindowsSearch',
+    'Set-StorageSenseSchedule', 'Test-NetworkBufferbloat', 'Set-DefenderScanSchedule',
+    'Clear-ComponentStore', 'Clear-OldDriverPackages', 'Test-NatConnectivity',
+    'Invoke-AllAdvancedPerformanceOptimizations',
+    # Pro Suite: read-only diagnostics
+    'Test-DiskHealth', 'Find-ConflictingOptimizers'
+)
+
+if ($Tweak -and $Tweak -notin $Script:CliSafeTweaks) {
+    Write-Host "ERROR: '-Tweak $Tweak' is not in the unattended-safe tweak list." -ForegroundColor Red
+    Write-Host "Run without -Tweak and use the menu for anything that needs a choice or free-text input." -ForegroundColor Yellow
+    exit 1
+}
+
 # Script configuration
-$Script:Version = "4.10.0"
+$Script:Version = "4.11.0"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
@@ -1100,6 +1173,37 @@ function Global:Main {
 
     Import-TelemetrySettings
     Import-LanguageSetting
+
+    if ($Doctor) {
+        # Unattended drift check: compare every tweak Wethereal has ever
+        # applied against its current live value and exit with a status code
+        # a scheduled health-check job can act on.
+        $Script:SilentMode = $true
+        Write-Log "Wethereal v$($Script:Version) started in -Doctor mode" -Level Info -Category "System"
+        Write-Host "Wethereal v$($Script:Version) - Checking for configuration drift..." -ForegroundColor Cyan
+        $drifted = Test-ConfigurationDrift -Quiet
+        if ($drifted.Count -eq 0) {
+            Write-Host "[OK] No drift detected." -ForegroundColor Green
+            exit 0
+        }
+        else {
+            Write-Host "[!] $($drifted.Count) tweak(s) have reverted:" -ForegroundColor Yellow
+            $drifted | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+            exit 1
+        }
+    }
+
+    if ($Tweak) {
+        # Unattended single-tweak mode: run exactly one curated, non-
+        # interactive tweak and exit - see $Script:CliSafeTweaks above.
+        $Script:SilentMode = $true
+        Get-HardwareProfile -Refresh | Out-Null
+        Write-Log "Wethereal v$($Script:Version) started in -Tweak mode ($Tweak)" -Level Info -Category "System"
+        Write-Host "Wethereal v$($Script:Version) - Running '$Tweak'..." -ForegroundColor Cyan
+        & $Tweak
+        Write-Host "Done. See $Script:LogFile for details." -ForegroundColor Green
+        exit 0
+    }
 
     if ($Silent) {
         # Unattended mode: no banner, no prompts - apply the requested profile
