@@ -25,7 +25,11 @@ function Global:Show-SuperOptimizerMenu {
         Write-Host "  12. [NET] Network Bufferbloat / Latency-Under-Load Test" -ForegroundColor White
         Write-Host "  13. [SYNC] Reschedule Defender Full Scan (Off-Hours)" -ForegroundColor White
         Write-Host "  14. [!] Uninstall Xbox Game Bar & Xbox App (nuclear option)" -ForegroundColor White
-        Write-Host "  15. * Apply All Advanced Performance Optimizations" -ForegroundColor Green
+        Write-Host "  15. [LOCK] Enable DNS-over-HTTPS (DoH)" -ForegroundColor White
+        Write-Host "  16. [CLEAN] Clean Up Windows Component Store (DISM)" -ForegroundColor White
+        Write-Host "  17. [CLEAN] Clean Up Old Driver Packages" -ForegroundColor White
+        Write-Host "  18. [SCAN] NAT / Multiplayer Connectivity Diagnostic" -ForegroundColor White
+        Write-Host "  19. * Apply All Advanced Performance Optimizations" -ForegroundColor Green
         Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
@@ -46,7 +50,11 @@ function Global:Show-SuperOptimizerMenu {
             '12' { Test-NetworkBufferbloat }
             '13' { Set-DefenderScanSchedule }
             '14' { Uninstall-XboxGameBar }
-            '15' { Invoke-AllAdvancedPerformanceOptimizations }
+            '15' { Enable-DnsOverHttps }
+            '16' { Clear-ComponentStore }
+            '17' { Clear-OldDriverPackages }
+            '18' { Test-NatConnectivity }
+            '19' { Invoke-AllAdvancedPerformanceOptimizations }
             '0' { return }
             default {
                 Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
@@ -806,15 +814,239 @@ function Global:Uninstall-XboxGameBar {
     Wait-ForUser
 }
 
+function Global:Enable-DnsOverHttps {
+    <#
+        Registers DNS-over-HTTPS templates for a chosen provider (native
+        Windows 11 feature, `netsh dns add encryption`) and points active
+        adapters at that provider's IPs, so DNS lookups are encrypted instead
+        of plaintext - closes off a real privacy leak and, on some ISPs that
+        throttle/shape based on DNS queries, can incidentally help latency
+        too. Falls back gracefully with a clear message on Windows 10, where
+        `netsh dns add encryption` doesn't exist.
+    #>
+    Write-Host "`n[ENABLE DNS-OVER-HTTPS (DoH)]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Encrypts DNS lookups end-to-end instead of sending them in plaintext." -ForegroundColor $Script:Colors.Info
+    Write-Host "Requires Windows 11 (or Windows 10 21H2+ with the feature enabled)." -ForegroundColor $Script:Colors.Info
+    Write-Host ""
+    Write-Host "  1. Cloudflare (1.1.1.1, 1.0.0.1)" -ForegroundColor White
+    Write-Host "  2. Google (8.8.8.8, 8.8.4.4)" -ForegroundColor White
+    Write-Host "  3. Quad9 (9.9.9.9, 149.112.112.112)" -ForegroundColor White
+    Write-Host "  0. Cancel" -ForegroundColor Yellow
+    Write-Host ""
+
+    $choice = Read-Host "Select a DoH provider"
+    $providers = @{
+        '1' = @{ Name = "Cloudflare"; Servers = @("1.1.1.1", "1.0.0.1"); Template = "https://cloudflare-dns.com/dns-query" }
+        '2' = @{ Name = "Google"; Servers = @("8.8.8.8", "8.8.4.4"); Template = "https://dns.google/dns-query" }
+        '3' = @{ Name = "Quad9"; Servers = @("9.9.9.9", "149.112.112.112"); Template = "https://dns.quad9.net/dns-query" }
+    }
+    if ($choice -eq '0' -or [string]::IsNullOrWhiteSpace($choice)) { return }
+    if (-not $providers.ContainsKey($choice)) {
+        Write-Host "`n[X] Invalid selection." -ForegroundColor $Script:Colors.Error
+        Start-Sleep -Seconds 1
+        return
+    }
+    $provider = $providers[$choice]
+
+    if (-not (Confirm-Action -Message "Enable DoH via $($provider.Name)?" -DefaultYes)) { return }
+
+    Write-Log "Enabling DNS-over-HTTPS via $($provider.Name)" -Level Info -Category "Advanced"
+
+    $steps = @()
+    foreach ($server in $provider.Servers) {
+        $steps += @{
+            Name   = "Registering DoH template for $server"
+            Action = {
+                $result = netsh dns add encryption server=$server dohtemplate=$($provider.Template) autoupgrade=yes udpfallback=no 2>&1
+                if ($LASTEXITCODE -ne 0) { throw "netsh dns add encryption is not supported on this Windows version" }
+            }.GetNewClosure()
+        }
+    }
+
+    $adapters = Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.Status -eq 'Up' }
+    $steps += $adapters | ForEach-Object {
+        $adapterIndex = $_.ifIndex
+        $adapterName = $_.Name
+        @{
+            Name   = "Pointing adapter '$adapterName' at $($provider.Name)"
+            Action = { Set-DnsClientServerAddress -InterfaceIndex $adapterIndex -ServerAddresses $provider.Servers -ErrorAction Stop }.GetNewClosure()
+        }
+    }
+
+    Invoke-TweakSequence -Title "DNS-over-HTTPS" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] DNS-over-HTTPS configured via $($provider.Name)!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Clear-ComponentStore {
+    <#
+        Runs DISM's native component-store cleanup (WinSxS bloat that
+        accumulates from every cumulative/feature update). Deliberately does
+        NOT use /ResetBase - that permanently removes the ability to
+        uninstall currently-installed updates, a real trade-off most users
+        wouldn't knowingly accept. Plain /StartComponentCleanup only removes
+        components that are already fully superseded and unrecoverable
+        either way. No "GB freed" figure is reported - Microsoft's own
+        guidance is that raw WinSxS folder size is misleading due to
+        hardlinks, so a before/after diff would just be a plausible-looking
+        wrong number.
+    #>
+    Write-Host "`n[CLEAN UP WINDOWS COMPONENT STORE]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Runs DISM's component-store cleanup to remove superseded update files" -ForegroundColor $Script:Colors.Info
+    Write-Host "from WinSxS. This can take several minutes and needs no restart." -ForegroundColor $Script:Colors.Info
+    Write-Host "[!]  Does not use /ResetBase, so you can still uninstall recent updates." -ForegroundColor $Script:Colors.Warning
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Running DISM component store cleanup" -Level Info -Category "Advanced"
+
+    $steps = @(
+        @{
+            Name   = "Cleaning up the component store (this may take a few minutes)"
+            Action = {
+                $result = Dism /Online /Cleanup-Image /StartComponentCleanup 2>&1
+                if ($LASTEXITCODE -ne 0) { throw "DISM exited with code $LASTEXITCODE" }
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Component Store Cleanup" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] Component store cleanup complete!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Clear-OldDriverPackages {
+    <#
+        Removes superseded third-party driver packages from the Driver Store
+        (pnputil), keeping only the newest version of each unique driver
+        (grouped by its original .inf name). pnputil itself refuses to delete
+        a package that's actively bound to a device unless forced, and this
+        never passes /force, so an in-use older driver is safely skipped
+        rather than ripped out from under a working device.
+    #>
+    Write-Host "`n[CLEAN UP OLD DRIVER PACKAGES]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Removes superseded driver packages from the Driver Store, keeping only the" -ForegroundColor $Script:Colors.Info
+    Write-Host "newest version of each driver. Packages still in use are safely skipped." -ForegroundColor $Script:Colors.Info
+
+    Write-Log "Scanning driver store for superseded packages" -Level Info -Category "Advanced"
+
+    $rawOutput = pnputil /enum-drivers 2>&1
+    $drivers = @()
+    $current = @{}
+    foreach ($line in $rawOutput) {
+        if ($line -match '^Published Name\s*:\s*(\S+)') {
+            if ($current.Count -gt 0) { $drivers += [PSCustomObject]$current }
+            $current = @{ PublishedName = $matches[1] }
+        }
+        elseif ($line -match '^Original Name\s*:\s*(\S+)') { $current.OriginalName = $matches[1] }
+        elseif ($line -match '^Driver Version\s*:\s*(.+)$') { $current.DriverVersion = $matches[1].Trim() }
+    }
+    if ($current.Count -gt 0) { $drivers += [PSCustomObject]$current }
+
+    if ($drivers.Count -eq 0) {
+        Write-Host "`n[!] Could not enumerate driver packages (pnputil output not recognized)." -ForegroundColor $Script:Colors.Warning
+        Wait-ForUser
+        return
+    }
+
+    # Group by the original .inf name; anything beyond the single newest
+    # entry per group (by driver version string, descending) is superseded.
+    $toRemove = $drivers | Group-Object -Property OriginalName | Where-Object { $_.Count -gt 1 } | ForEach-Object {
+        $_.Group | Sort-Object {
+            try { [version]($_.DriverVersion -replace '[^0-9.].*$', '') } catch { [version]'0.0' }
+        } -Descending | Select-Object -Skip 1
+    }
+
+    if (-not $toRemove -or $toRemove.Count -eq 0) {
+        Write-Host "`n[OK] No superseded driver packages found - the driver store is already lean." -ForegroundColor $Script:Colors.Success
+        Wait-ForUser
+        return
+    }
+
+    Write-Host "`n  Found $($toRemove.Count) superseded driver package(s)." -ForegroundColor $Script:Colors.Highlight
+    if (-not (Confirm-Action -Message "Remove them now?" -DefaultYes)) { return }
+
+    $steps = $toRemove | ForEach-Object {
+        $publishedName = $_.PublishedName
+        @{
+            Name   = "Removing superseded driver: $publishedName"
+            Action = { pnputil /delete-driver $publishedName /uninstall 2>&1 | Out-Null }.GetNewClosure()
+        }
+    }
+
+    Invoke-TweakSequence -Title "Old Driver Package Cleanup" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] Old driver packages cleaned up!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Test-NatConnectivity {
+    <#
+        Informational only, makes no changes: checks the signals that most
+        commonly explain "strict NAT" / multiplayer connectivity complaints -
+        the active network's classified profile (Private vs Public affects
+        firewall defaults and Network Discovery), whether the Windows
+        Firewall on that profile is blocking inbound by default, and whether
+        the UPnP-related services Windows uses for automatic port mapping are
+        running. Router-side NAT type isn't visible from Windows at all, so
+        this reports what's checkable locally, not a guaranteed diagnosis.
+    #>
+    Write-Host "`n[NAT / MULTIPLAYER CONNECTIVITY DIAGNOSTIC]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Checks the Windows-side settings that most often cause multiplayer/NAT" -ForegroundColor $Script:Colors.Info
+    Write-Host "connectivity issues. Router-side NAT type can't be checked from here." -ForegroundColor $Script:Colors.Info
+
+    Write-Log "Running NAT/multiplayer connectivity diagnostic" -Level Info -Category "Advanced"
+
+    $issues = @()
+
+    $profiles = Get-NetConnectionProfile -ErrorAction SilentlyContinue
+    foreach ($profile in $profiles) {
+        $color = if ($profile.NetworkCategory -eq 'Public') { $Script:Colors.Warning } else { $Script:Colors.Success }
+        Write-Host "`n  Network '$($profile.Name)': $($profile.NetworkCategory)" -ForegroundColor $color
+        if ($profile.NetworkCategory -eq 'Public') { $issues += "'$($profile.Name)' is classified Public - Network Discovery and some inbound traffic are more restricted" }
+    }
+
+    $fwProfiles = Get-NetFirewallProfile -ErrorAction SilentlyContinue
+    foreach ($fw in $fwProfiles) {
+        Write-Host "  Firewall [$($fw.Name)]: Enabled=$($fw.Enabled), DefaultInboundAction=$($fw.DefaultInboundAction)" -ForegroundColor White
+    }
+
+    $upnpServices = @('SSDPSRV', 'upnphost') | ForEach-Object { Get-Service -Name $_ -ErrorAction SilentlyContinue }
+    $upnpRunning = [bool]($upnpServices | Where-Object { $_.Status -eq 'Running' })
+    Write-Host "  UPnP services (SSDP Discovery / UPnP Device Host): $(if ($upnpRunning) { '[OK] Running' } else { '[!] Not running' })" -ForegroundColor $(if ($upnpRunning) { $Script:Colors.Success } else { $Script:Colors.Warning })
+    if (-not $upnpRunning) { $issues += "UPnP services aren't running - automatic port mapping (used by some games/consoles) won't work" }
+
+    Write-Host ""
+    if ($issues.Count -eq 0) {
+        Write-Host "[OK] No local connectivity red flags found. If you still see strict NAT," -ForegroundColor $Script:Colors.Success
+        Write-Host "  the issue is most likely on your router (enable UPnP/NAT-PMP there, or" -ForegroundColor $Script:Colors.Success
+        Write-Host "  set up port forwarding for the specific game)." -ForegroundColor $Script:Colors.Success
+    }
+    else {
+        Write-Host "[!] Potential issues found:" -ForegroundColor $Script:Colors.Warning
+        $issues | ForEach-Object { Write-Host "  - $_" -ForegroundColor $Script:Colors.Warning }
+    }
+
+    Wait-ForUser
+}
+
 function Global:Invoke-AllAdvancedPerformanceOptimizations {
     Write-Host "`n[APPLY ALL ADVANCED PERFORMANCE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
-    Write-Host "Applies every one-shot, non-destructive tweak in this category: C-States," -ForegroundColor $Script:Colors.Warning
-    Write-Host "USB/PCIe power management, Fast Startup, missing prerequisites, audio" -ForegroundColor $Script:Colors.Warning
-    Write-Host "latency, Win32PrioritySeparation, hibernation removal, classic search, and" -ForegroundColor $Script:Colors.Warning
-    Write-Host "Storage Sense/Defender scheduling. NOT included: the watcher/informational" -ForegroundColor $Script:Colors.Warning
-    Write-Host "features (notification mute, GPU driver check, bufferbloat test) and the" -ForegroundColor $Script:Colors.Warning
-    Write-Host "Xbox Game Bar uninstall (destructive) - run those individually if wanted." -ForegroundColor $Script:Colors.Warning
+    Write-Host "Applies every one-shot, non-destructive, non-interactive tweak in this" -ForegroundColor $Script:Colors.Warning
+    Write-Host "category: C-States, USB/PCIe power management, Fast Startup, missing" -ForegroundColor $Script:Colors.Warning
+    Write-Host "prerequisites, audio latency, Win32PrioritySeparation, hibernation removal," -ForegroundColor $Script:Colors.Warning
+    Write-Host "classic search, Storage Sense/Defender scheduling, component store and old" -ForegroundColor $Script:Colors.Warning
+    Write-Host "driver cleanup. NOT included: DNS-over-HTTPS (needs your provider choice)," -ForegroundColor $Script:Colors.Warning
+    Write-Host "the watcher/informational features (notification mute, GPU driver check," -ForegroundColor $Script:Colors.Warning
+    Write-Host "bufferbloat test, NAT diagnostic), and the Xbox Game Bar uninstall" -ForegroundColor $Script:Colors.Warning
+    Write-Host "(destructive) - run those individually if wanted." -ForegroundColor $Script:Colors.Warning
 
     if (-not (Confirm-Action)) { return }
 
@@ -842,6 +1074,8 @@ function Global:Invoke-AllAdvancedPerformanceOptimizations {
         Set-ClassicWindowsSearch
         Set-StorageSenseSchedule
         Set-DefenderScanSchedule
+        Clear-ComponentStore
+        Clear-OldDriverPackages
     }
     finally {
         $Script:SkipConfirmations = $false

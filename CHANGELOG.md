@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.10.0] - 2026-08-26 - 4 more options in Category 13: DoH, component/driver store cleanup, NAT diagnostic
+
+### Added
+
+- **15. Enable DNS-over-HTTPS** (`Enable-DnsOverHttps`): registers DoH
+  templates for Cloudflare/Google/Quad9 via Windows 11's native `netsh dns
+  add encryption`, then points active adapters at the chosen provider -
+  encrypts DNS lookups end-to-end. Fails gracefully with a clear message on
+  Windows 10, where the feature doesn't exist.
+- **16. Clean Up Windows Component Store** (`Clear-ComponentStore`): runs
+  `Dism /Online /Cleanup-Image /StartComponentCleanup` to remove superseded
+  update files from WinSxS. Deliberately does not use `/ResetBase` (that
+  would remove the ability to uninstall recent updates) and does not report
+  a "GB freed" figure, since raw WinSxS folder size is documented by
+  Microsoft as misleading due to hardlinks.
+- **17. Clean Up Old Driver Packages** (`Clear-OldDriverPackages`):
+  enumerates the Driver Store via `pnputil /enum-drivers`, groups packages
+  by their original .inf name, and removes every version except the newest
+  per group. Never passes `/force`, so `pnputil` safely skips any package
+  still bound to a device instead of removing it out from under a working
+  driver.
+- **18. NAT / Multiplayer Connectivity Diagnostic** (`Test-
+  NatConnectivity`): informational only, makes no changes. Reports the
+  active network's Private/Public classification, Windows Firewall's
+  default inbound action per profile, and whether the UPnP-related services
+  (SSDP Discovery, UPnP Device Host) are running - the Windows-side signals
+  that most often explain "strict NAT" complaints. Router-side NAT type
+  isn't visible from Windows and is called out as such.
+- **Apply All** (now option 19) extended to also run the two new safe,
+  non-interactive cleanups (component store, old driver packages).
+  DNS-over-HTTPS stays out since it needs the user's provider choice; the
+  NAT diagnostic stays out as informational-only, same as the category's
+  other read-only checks.
+
 ## [4.9.0] - 2026-08-26 - 7 more options in Category 13
 
 ### Added
