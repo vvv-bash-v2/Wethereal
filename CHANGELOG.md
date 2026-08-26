@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.8.0] - 2026-08-26 - New Category 13: Advanced Performance & Compatibility
+
+### Added
+
+- **New menu category (13 of 13)**: `Modules-SuperOptimizerExtras.ps1`,
+  wired into the main menu and `Main()` exactly like Categories 1 and 2 -
+  each tweak is its own numbered option, plus an "Apply All" (option 8) that
+  runs the safe, non-watcher tweaks with a restore point first. Everything
+  after Category 12 in the main menu (Quick Actions 14-20, Advanced Tools
+  21-25, Professional Tools 26-29) shifted up by one number to make room;
+  the option-range prompt is now "(0-29)".
+- **1. Disable CPU C-States** (`Disable-CpuCStates`): disables CPU idle
+  sleep states via `powercfg` for the lowest possible wake-from-idle
+  latency - the same trick used by competitive-gaming/BIOS "responsiveness"
+  presets. Reversible via Undo (restores C-States to enabled).
+- **2. Disable USB Selective Suspend + PCIe ASPM** (`Disable-
+  UsbPcieSuspend`): stops USB devices and the PCIe bus from dropping into
+  low-power link states that need to renegotiate on demand - a real source
+  of micro-stutter. Reversible via Undo.
+- **3. Disable Fast Startup** (`Disable-FastStartup`): turns off hybrid
+  boot (`HiberbootEnabled`), preventing the classic "worked yesterday"
+  staleness after an update caused by hibernating the kernel session
+  instead of a full shutdown.
+- **4. Check & Install Missing Prerequisites** (`Install-
+  MissingPrerequisites`): detects missing VC++ 2015-2022 Redistributable
+  (x86/x64, via the real Uninstall registry entries) and the legacy
+  DirectX End-User Runtime (many older titles still need it even though
+  DX12 ships with Windows), and offers to install exactly what's missing
+  via winget / the official Microsoft installer.
+- **5. Auto-Mute Notifications While Gaming** (`Set-
+  GameAwareNotificationMute`): same watcher-script + 5-minute scheduled-
+  task pattern as the Windows Update auto-pause, reused here to mute toast
+  notifications while a detected game is running. (Toggling the real Focus
+  Assist UI setting requires an undocumented, Windows-build-dependent
+  binary blob with no stable schema - muting `ToastEnabled` achieves the
+  same practical outcome through one simple, reliable DWORD instead.)
+  Manual opt-in, like the Update auto-pause.
+- **6. GPU Driver Version Check** (`Test-GpuDriverVersion`): reports the
+  installed driver version/age per GPU and flags anything over ~6 months
+  old, with a link to the vendor's official driver page. Deliberately does
+  not scrape vendor pages to guess "the latest version" - no stable public
+  API exists for that and scraping is fragile/against most vendors' ToS.
+- **7. Audio Latency Tweaks** (`Optimize-AudioLatency`): disables automatic
+  volume ducking during communications activity (`UserDuckingPreference`),
+  and disables built-in sound-effects processing on every playback device
+  that exposes the property (`PKEY_AudioEndpoint_Disable_SysFx`) - devices
+  whose driver doesn't expose it are skipped individually, not treated as
+  a failure.
+- **8. Apply All Advanced Performance Optimizations**
+  (`Invoke-AllAdvancedPerformanceOptimizations`): creates a restore point,
+  then runs C-States, USB/PCIe power management, Fast Startup,
+  prerequisites, and audio tweaks in sequence. The two watcher/informational
+  features (notification mute, GPU driver check) are intentionally excluded
+  from "Apply All" since they're opt-in background services / read-only
+  checks, not one-shot tweaks - run them individually if wanted.
+- Added the `Cat13` menu string in both EN and ES locales; script
+  description updated from "190+ tweaks across 12 categories" to "200+
+  tweaks across 13 categories".
+
 ## [4.7.0] - 2026-08-26 - Thermal/RAM diagnostics, bulk game tuning, game-aware Update pause, expanded report
 
 ### Added

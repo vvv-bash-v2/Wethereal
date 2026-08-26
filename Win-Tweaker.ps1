@@ -2,15 +2,15 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.7.0
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.8.0
 .DESCRIPTION
-    A comprehensive Windows optimization tool with 190+ tweaks across 12 categories,
+    A comprehensive Windows optimization tool with 200+ tweaks across 13 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
     laptops) hardware detection with vendor-adaptive optimizations, and a live
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.7.0 Ultimate Edition
+    Version: 4.8.0 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 .PARAMETER Silent
@@ -49,7 +49,7 @@ if ($Silent -and -not $ProfileName) {
 }
 
 # Script configuration
-$Script:Version = "4.7.0"
+$Script:Version = "4.8.0"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
@@ -238,31 +238,32 @@ function Global:Show-MainMenu {
     Write-Host "  10. [GAME]  $(Get-Str 'Cat10')" -ForegroundColor White
     Write-Host "  11. [AUTO] $(Get-Str 'Cat11')" -ForegroundColor White
     Write-Host "  12. [TOOLS] $(Get-Str 'Cat12')" -ForegroundColor White
+    Write-Host "  13. [BOOST] $(Get-Str 'Cat13')" -ForegroundColor White
     Write-Host ""
     Write-Host "  $(Get-Str 'QuickActions')" -ForegroundColor $Script:Colors.Menu
     Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  13. * Apply Optimization Profile" -ForegroundColor Green
-    Write-Host "  14. [SCAN] System Analysis & Recommendations" -ForegroundColor Cyan
-    Write-Host "  15. [GAME] GPU-Specific Optimizations" -ForegroundColor Magenta
-    Write-Host "  16. [DEL]  Enhanced Bloatware Removal" -ForegroundColor Yellow
-    Write-Host "  17. [UP] Generate Optimization Report" -ForegroundColor White
-    Write-Host "  18. [SYNC] Restore Previous Settings" -ForegroundColor Yellow
-    Write-Host "  19. [LIST] View Optimization Log" -ForegroundColor White
+    Write-Host "  14. * Apply Optimization Profile" -ForegroundColor Green
+    Write-Host "  15. [SCAN] System Analysis & Recommendations" -ForegroundColor Cyan
+    Write-Host "  16. [GAME] GPU-Specific Optimizations" -ForegroundColor Magenta
+    Write-Host "  17. [DEL]  Enhanced Bloatware Removal" -ForegroundColor Yellow
+    Write-Host "  18. [UP] Generate Optimization Report" -ForegroundColor White
+    Write-Host "  19. [SYNC] Restore Previous Settings" -ForegroundColor Yellow
+    Write-Host "  20. [LIST] View Optimization Log" -ForegroundColor White
     Write-Host ""
     Write-Host "  ADVANCED TOOLS (NEW!)" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  20. [STATS] Real-Time Performance Dashboard" -ForegroundColor Cyan
-    Write-Host "  21. [NET] Network Speed Test" -ForegroundColor Green
-    Write-Host "  22. [BOOST] Startup Impact Analyzer" -ForegroundColor Yellow
-    Write-Host "  23. [TEMP]  System Temperature Monitor" -ForegroundColor Magenta
-    Write-Host "  24. [SYNC] One-Click Restore" -ForegroundColor White
+    Write-Host "  21. [STATS] Real-Time Performance Dashboard" -ForegroundColor Cyan
+    Write-Host "  22. [NET] Network Speed Test" -ForegroundColor Green
+    Write-Host "  23. [BOOST] Startup Impact Analyzer" -ForegroundColor Yellow
+    Write-Host "  24. [TEMP]  System Temperature Monitor" -ForegroundColor Magenta
+    Write-Host "  25. [SYNC] One-Click Restore" -ForegroundColor White
     Write-Host ""
     Write-Host "  PROFESSIONAL TOOLS (ULTIMATE!)" -ForegroundColor $Script:Colors.Highlight
     Write-Host "  =======================================================================" -ForegroundColor $Script:Colors.Menu
-    Write-Host "  25. [HEALTH] Comprehensive System Health Check" -ForegroundColor Cyan
-    Write-Host "  26. [LOG] Registry Optimizer" -ForegroundColor Green
-    Write-Host "  27. [CFG]  Intelligent Service Optimizer" -ForegroundColor Yellow
-    Write-Host "  28. [SYNC] Windows Update Manager" -ForegroundColor Magenta
+    Write-Host "  26. [HEALTH] Comprehensive System Health Check" -ForegroundColor Cyan
+    Write-Host "  27. [LOG] Registry Optimizer" -ForegroundColor Green
+    Write-Host "  28. [CFG]  Intelligent Service Optimizer" -ForegroundColor Yellow
+    Write-Host "  29. [SYNC] Windows Update Manager" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "   0. [X] Exit" -ForegroundColor Red
     Write-Host "     (Tip: relaunch with -Gui for the graphical quick-launch window)" -ForegroundColor DarkGray
@@ -572,6 +573,7 @@ $moduleFiles = @(
     "$PSScriptRoot\Modules-ProGamingTools.ps1",
     "$PSScriptRoot\Modules-SystemAutomation.ps1",
     "$PSScriptRoot\Modules-ProSuite.ps1",
+    "$PSScriptRoot\Modules-SuperOptimizerExtras.ps1",
     "$PSScriptRoot\Modules-GUI.ps1"
 )
 
@@ -1168,7 +1170,7 @@ function Global:Main {
     
     do {
         Show-MainMenu
-        $choice = Read-Host "Select an option (0-28)"
+        $choice = Read-Host "Select an option (0-29)"
 
         switch ($choice) {
             '1' { Show-SystemPerformanceMenu }
@@ -1183,22 +1185,23 @@ function Global:Main {
             '10' { Show-ProGamingToolsMenu }
             '11' { Show-AutomationMenu }
             '12' { Show-ProSuiteMenu }
-            '13' { Show-ProfilesMenuEnhanced }
-            '14' { Start-SystemAnalysis }
-            '15' { Optimize-GPUSpecific }
-            '16' { Get-EnhancedBloatwareList }
-            '17' { New-OptimizationReport }
-            '18' { Restore-PreviousSettings }
-            '19' { Show-OptimizationLog }
-            '20' { Show-PerformanceDashboard }
-            '21' { Test-NetworkSpeed }
-            '22' { Show-StartupImpact }
-            '23' { Show-SystemTemperature }
-            '24' { Invoke-QuickRestore }
-            '25' { Start-SystemHealthCheck }
-            '26' { Optimize-Registry }
-            '27' { Optimize-ServicesIntelligent }
-            '28' { Set-WindowsUpdates }
+            '13' { Show-SuperOptimizerMenu }
+            '14' { Show-ProfilesMenuEnhanced }
+            '15' { Start-SystemAnalysis }
+            '16' { Optimize-GPUSpecific }
+            '17' { Get-EnhancedBloatwareList }
+            '18' { New-OptimizationReport }
+            '19' { Restore-PreviousSettings }
+            '20' { Show-OptimizationLog }
+            '21' { Show-PerformanceDashboard }
+            '22' { Test-NetworkSpeed }
+            '23' { Show-StartupImpact }
+            '24' { Show-SystemTemperature }
+            '25' { Invoke-QuickRestore }
+            '26' { Start-SystemHealthCheck }
+            '27' { Optimize-Registry }
+            '28' { Optimize-ServicesIntelligent }
+            '29' { Set-WindowsUpdates }
             '0' {
                 Write-Host "`nThank you for using Wethereal Ultimate Edition!" -ForegroundColor $Script:Colors.Success
                 Write-Log "Wethereal exited" -Level Info -Category "System"
