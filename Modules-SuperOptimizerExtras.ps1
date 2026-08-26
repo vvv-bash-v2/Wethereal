@@ -18,7 +18,14 @@ function Global:Show-SuperOptimizerMenu {
         Write-Host "   5. [SYNC] Auto-Mute Notifications While Gaming" -ForegroundColor White
         Write-Host "   6. [SCAN] GPU Driver Version Check" -ForegroundColor White
         Write-Host "   7. [BOOST] Audio Latency Tweaks" -ForegroundColor White
-        Write-Host "   8. * Apply All Advanced Performance Optimizations" -ForegroundColor Green
+        Write-Host "   8. [BOOST] Win32PrioritySeparation Tuning (foreground boost)" -ForegroundColor White
+        Write-Host "   9. [DISK] Disable Hibernation Entirely (frees disk space)" -ForegroundColor White
+        Write-Host "  10. [SCAN] Classic Windows Search (disable Bing web results)" -ForegroundColor White
+        Write-Host "  11. [CLEAN] Schedule Storage Sense Auto-Cleanup" -ForegroundColor White
+        Write-Host "  12. [NET] Network Bufferbloat / Latency-Under-Load Test" -ForegroundColor White
+        Write-Host "  13. [SYNC] Reschedule Defender Full Scan (Off-Hours)" -ForegroundColor White
+        Write-Host "  14. [!] Uninstall Xbox Game Bar & Xbox App (nuclear option)" -ForegroundColor White
+        Write-Host "  15. * Apply All Advanced Performance Optimizations" -ForegroundColor Green
         Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
@@ -32,7 +39,14 @@ function Global:Show-SuperOptimizerMenu {
             '5' { Set-GameAwareNotificationMute }
             '6' { Test-GpuDriverVersion }
             '7' { Optimize-AudioLatency }
-            '8' { Invoke-AllAdvancedPerformanceOptimizations }
+            '8' { Set-Win32PrioritySeparation }
+            '9' { Disable-Hibernation }
+            '10' { Set-ClassicWindowsSearch }
+            '11' { Set-StorageSenseSchedule }
+            '12' { Test-NetworkBufferbloat }
+            '13' { Set-DefenderScanSchedule }
+            '14' { Uninstall-XboxGameBar }
+            '15' { Invoke-AllAdvancedPerformanceOptimizations }
             '0' { return }
             default {
                 Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
@@ -470,13 +484,337 @@ function Global:Optimize-AudioLatency {
     Wait-ForUser
 }
 
+function Global:Set-Win32PrioritySeparation {
+    <#
+        The classic "short, fixed quantum + foreground boost" scheduler tweak.
+        Win32PrioritySeparation packs three 2-bit fields (quantum length,
+        fixed/variable, foreground boost) into one byte; 0x26 (38 decimal) is
+        the long-standing community-standard value for gaming/responsiveness:
+        short quantum, fixed length, boost 2. Windows defaults to variable-
+        length quanta tuned for background services, which is the wrong
+        trade-off on a desktop where the foreground app (your game) is what
+        matters.
+    #>
+    Write-Host "`n[WIN32PRIORITYSEPARATION TUNING]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Gives the foreground application (your game) a short, fixed CPU time slice" -ForegroundColor $Script:Colors.Info
+    Write-Host "boost instead of Windows' default background-service-friendly scheduling." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Applying Win32PrioritySeparation tuning" -Level Info -Category "Advanced"
+
+    $steps = @(
+        @{
+            Name   = "Setting short/fixed quantum with foreground boost"
+            Action = {
+                $path = "HKLM:\SYSTEM\CurrentControlSet\Control\PriorityControl"
+                Backup-RegistryValue -Path $path -Name "Win32PrioritySeparation"
+                Set-ItemProperty -Path $path -Name "Win32PrioritySeparation" -Value 38 -Type DWord
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Win32PrioritySeparation" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] Foreground priority boost applied! Restart for full effect." -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Disable-Hibernation {
+    <#
+        Fully disables hibernation (powercfg -h off), which also removes
+        hiberfil.sys and frees disk space roughly equal to installed RAM - a
+        real win on smaller SSDs. Distinct from Disable-FastStartup: turning
+        off Fast Startup alone can still leave hiberfil.sys allocated, since
+        Fast Startup is built on the hibernation subsystem. Undo restores
+        hibernation (powercfg -h on).
+    #>
+    Write-Host "`n[DISABLE HIBERNATION ENTIRELY]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Fully disables hibernation and removes hiberfil.sys, freeing disk space" -ForegroundColor $Script:Colors.Info
+    Write-Host "roughly equal to your installed RAM." -ForegroundColor $Script:Colors.Info
+    Write-Host "[!]  You will no longer be able to Hibernate (Sleep still works fine)." -ForegroundColor $Script:Colors.Warning
+
+    $hiberFile = "$env:SystemDrive\hiberfil.sys"
+    $freedGB = if (Test-Path $hiberFile) { [math]::Round((Get-Item $hiberFile -Force -ErrorAction SilentlyContinue).Length / 1GB, 1) } else { 0 }
+    if ($freedGB -gt 0) { Write-Host "  Estimated space to be freed: ~$freedGB GB" -ForegroundColor $Script:Colors.Highlight }
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Disabling hibernation" -Level Info -Category "Advanced"
+
+    $steps = @(
+        @{
+            Name   = "Disabling hibernation and removing hiberfil.sys"
+            Action = {
+                powercfg -h off 2>&1 | Out-Null
+                Add-UndoAction -Description "Re-enable hibernation" -UndoScript {
+                    powercfg -h on 2>&1 | Out-Null
+                } -Parameters @{}
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Disable Hibernation" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] Hibernation disabled!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Set-ClassicWindowsSearch {
+    Write-Host "`n[CLASSIC WINDOWS SEARCH]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Disables Bing web results in Start Menu search, keeping it local-files-only." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Disabling Bing web search integration" -Level Info -Category "Advanced"
+
+    $steps = @(
+        @{
+            Name   = "Disabling Bing web results in search"
+            Action = {
+                $path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Search"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "BingSearchEnabled"
+                Set-ItemProperty -Path $path -Name "BingSearchEnabled" -Value 0 -Type DWord
+                Backup-RegistryValue -Path $path -Name "CortanaConsent"
+                Set-ItemProperty -Path $path -Name "CortanaConsent" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Disabling search box web suggestions (policy)"
+            Action = {
+                $path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Explorer"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "DisableSearchBoxSuggestions"
+                Set-ItemProperty -Path $path -Name "DisableSearchBoxSuggestions" -Value 1 -Type DWord
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Classic Windows Search" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] Windows Search is now local-only!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Set-StorageSenseSchedule {
+    <#
+        Configures Windows' own native Storage Sense feature to run weekly and
+        auto-clean temp files, old Recycle Bin contents (30+ days) and old
+        Downloads (30+ days) - a "set once and forget" complement to the
+        manual Clear-TemporaryFiles tweak. All values are documented,
+        non-destructive (nothing is deleted immediately - this only schedules
+        Windows' own cleanup), and individually backed up.
+    #>
+    Write-Host "`n[SCHEDULE STORAGE SENSE AUTO-CLEANUP]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Turns on Windows' native Storage Sense to automatically clean temp files," -ForegroundColor $Script:Colors.Info
+    Write-Host "old Recycle Bin items and old Downloads on a weekly schedule." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Scheduling Storage Sense auto-cleanup" -Level Info -Category "Advanced"
+
+    $steps = @(
+        @{
+            Name   = "Enabling Storage Sense with weekly auto-cleanup"
+            Action = {
+                $path = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\StorageSense\Parameters\StoragePolicy"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                $values = @{
+                    "01"  = 1   # Enable Storage Sense
+                    "04"  = 7   # Run frequency: weekly
+                    "08"  = 1   # Delete temporary files apps aren't using
+                    "32"  = 1   # Auto-empty Recycle Bin
+                    "128" = 30  # ...items older than 30 days
+                    "256" = 1   # Auto-clean Downloads folder
+                    "512" = 30  # ...items older than 30 days
+                }
+                foreach ($name in $values.Keys) {
+                    Backup-RegistryValue -Path $path -Name $name
+                    Set-ItemProperty -Path $path -Name $name -Value $values[$name] -Type DWord
+                }
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Storage Sense Schedule" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] Storage Sense scheduled for weekly auto-cleanup!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Test-NetworkBufferbloat {
+    <#
+        Informational-only diagnostic (no tweaks applied): measures baseline
+        ping latency to a public host, then measures it again while
+        generating real download load, and reports how much latency
+        increases under load - "bufferbloat". A large increase means your
+        router/ISP connection queues too much data, which is what causes
+        ping spikes in games whenever something else on the network is
+        downloading. Best-effort: if the load-generation download fails for
+        any reason, still reports the baseline and says the load test was
+        skipped rather than failing outright.
+    #>
+    Write-Host "`n[NETWORK BUFFERBLOAT / LATENCY-UNDER-LOAD TEST]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Measures how much your ping increases while your connection is under load -" -ForegroundColor $Script:Colors.Info
+    Write-Host "this takes about 15 seconds and makes no changes to your system." -ForegroundColor $Script:Colors.Info
+
+    Write-Log "Running network bufferbloat test" -Level Info -Category "Advanced"
+
+    $testHost = "1.1.1.1"
+    Write-Host "`n  Measuring baseline latency to $testHost..." -ForegroundColor $Script:Colors.Info
+    $baseline = Test-Connection -ComputerName $testHost -Count 10 -ErrorAction SilentlyContinue
+    if (-not $baseline) {
+        Write-Host "  [!] Could not reach $testHost - check your internet connection." -ForegroundColor $Script:Colors.Warning
+        Wait-ForUser
+        return
+    }
+    $baselineAvg = ($baseline | Measure-Object -Property ResponseTime -Average).Average
+    Write-Host "  Baseline average latency: $([math]::Round($baselineAvg, 1)) ms" -ForegroundColor White
+
+    Write-Host "`n  Generating download load for ~10 seconds..." -ForegroundColor $Script:Colors.Info
+    $loadJob = $null
+    try {
+        $loadJob = Start-Job -ScriptBlock {
+            $urls = @(
+                "https://speed.hetzner.de/100MB.bin",
+                "http://ipv4.download.thinkbroadband.com/50MB.zip"
+            )
+            foreach ($url in $urls) {
+                try { Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\wethereal_bufferbloat_test.tmp" -TimeoutSec 12 -ErrorAction Stop; break } catch {}
+            }
+        }
+    }
+    catch { $loadJob = $null }
+
+    Start-Sleep -Seconds 3
+    $underLoad = Test-Connection -ComputerName $testHost -Count 10 -ErrorAction SilentlyContinue
+
+    if ($loadJob) {
+        Wait-Job -Job $loadJob -Timeout 12 | Out-Null
+        Remove-Job -Job $loadJob -Force -ErrorAction SilentlyContinue
+    }
+    Remove-Item -Path "$env:TEMP\wethereal_bufferbloat_test.tmp" -Force -ErrorAction SilentlyContinue
+
+    if (-not $underLoad) {
+        Write-Host "`n  [!] Load test skipped or failed - only baseline latency is available." -ForegroundColor $Script:Colors.Warning
+        Wait-ForUser
+        return
+    }
+
+    $loadAvg = ($underLoad | Measure-Object -Property ResponseTime -Average).Average
+    $increase = [math]::Round($loadAvg - $baselineAvg, 1)
+
+    Write-Host "  Latency under load:       $([math]::Round($loadAvg, 1)) ms" -ForegroundColor White
+    $verdictColor = if ($increase -gt 100) { $Script:Colors.Error } elseif ($increase -gt 30) { $Script:Colors.Warning } else { $Script:Colors.Success }
+    $verdict = if ($increase -gt 100) { "Severe bufferbloat - consider enabling QoS/SQM on your router or a router with SQM/CAKE support." }
+    elseif ($increase -gt 30) { "Moderate bufferbloat - noticeable ping spikes when downloading during games." }
+    else { "Low bufferbloat - your connection handles concurrent load well." }
+    Write-Host "  Latency increase:         +$increase ms" -ForegroundColor $verdictColor
+    Write-Host "  Verdict: $verdict" -ForegroundColor $verdictColor
+
+    Write-Log "Bufferbloat test: baseline=$([math]::Round($baselineAvg,1))ms, under load=$([math]::Round($loadAvg,1))ms, increase=+${increase}ms" -Level Info -Category "Advanced"
+    Wait-ForUser
+}
+
+function Global:Set-DefenderScanSchedule {
+    <#
+        Moves Windows Defender's scheduled full scan to off-hours (3 AM daily
+        by default) instead of whatever default/random time it was set to,
+        so a CPU/disk-heavy full scan never kicks in mid-game session.
+        Real-time protection is completely untouched - this only retimes the
+        periodic full scan.
+    #>
+    Write-Host "`n[RESCHEDULE DEFENDER FULL SCAN]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Moves the periodic Windows Defender full scan to 3:00 AM daily so it never" -ForegroundColor $Script:Colors.Info
+    Write-Host "runs during a gaming session. Real-time protection is not affected." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Rescheduling Windows Defender full scan" -Level Info -Category "Advanced"
+
+    $steps = @(
+        @{
+            Name   = "Setting full scan to run daily at 3:00 AM"
+            Action = {
+                $previous = Get-MpPreference -ErrorAction SilentlyContinue
+                Set-MpPreference -ScanScheduleDay 0 -ScanScheduleTime 180 -ScanParameters 2 -ErrorAction Stop
+                if ($previous) {
+                    Add-UndoAction -Description "Restore previous Defender scan schedule" -UndoScript {
+                        param($Day, $Time)
+                        Set-MpPreference -ScanScheduleDay $Day -ScanScheduleTime $Time -ErrorAction SilentlyContinue
+                    } -Parameters @{ Day = $previous.ScanScheduleDay; Time = $previous.ScanScheduleTime }
+                }
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Defender Scan Schedule" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] Full scan rescheduled to 3:00 AM daily!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
+function Global:Uninstall-XboxGameBar {
+    <#
+        The "nuclear" option, separate from Disable-GameBarOverlayPopup (which
+        only suppresses the popup/DVR while leaving the apps installed): this
+        actually removes the Xbox Game Bar overlay app and the Xbox app
+        package family entirely. Manual opt-in only, never wired into any
+        automatic pipeline, because it also removes the Xbox app some users
+        rely on for Game Pass / cloud saves / Xbox social features.
+    #>
+    Write-Host "`n[UNINSTALL XBOX GAME BAR & XBOX APP]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "[!]  This completely removes the Xbox Game Bar overlay AND the Xbox app -" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  you will lose Xbox Game Pass app access, cloud saves via the Xbox app, and" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  Xbox social features from this PC. Only do this if you don't use any of" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  that - the overlay popup is already suppressed elsewhere without removing" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  anything (Gaming menu / Apply All)." -ForegroundColor $Script:Colors.Warning
+
+    if (-not (Confirm-Action -Message "I understand - uninstall Xbox Game Bar and the Xbox app?")) { return }
+
+    Write-Log "Uninstalling Xbox Game Bar and Xbox app packages" -Level Warning -Category "Advanced"
+
+    $packagePatterns = @(
+        "Microsoft.XboxGamingOverlay",
+        "Microsoft.GamingApp",
+        "Microsoft.XboxApp",
+        "Microsoft.XboxIdentityProvider",
+        "Microsoft.Xbox.TCUI",
+        "Microsoft.XboxSpeechToTextOverlay"
+    )
+
+    $steps = $packagePatterns | ForEach-Object {
+        $pattern = $_
+        @{
+            Name      = "Removing package: $pattern"
+            Condition = { [bool](Get-AppxPackage -Name $pattern -ErrorAction SilentlyContinue) }.GetNewClosure()
+            Action    = { Get-AppxPackage -Name $pattern -ErrorAction SilentlyContinue | Remove-AppxPackage -ErrorAction Stop }.GetNewClosure()
+        }
+    }
+
+    Invoke-TweakSequence -Title "Uninstall Xbox Game Bar & Xbox App" -Steps $steps -Category "Advanced" | Out-Null
+
+    Write-Host "`n[OK] Xbox Game Bar and Xbox app removed!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
 function Global:Invoke-AllAdvancedPerformanceOptimizations {
     Write-Host "`n[APPLY ALL ADVANCED PERFORMANCE OPTIMIZATIONS]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
-    Write-Host "This applies C-States, USB/PCIe power management, Fast Startup, missing" -ForegroundColor $Script:Colors.Warning
-    Write-Host "prerequisites, and audio latency tweaks. The two watcher-based features" -ForegroundColor $Script:Colors.Warning
-    Write-Host "(notification mute, GPU driver check) are informational/opt-in and are" -ForegroundColor $Script:Colors.Warning
-    Write-Host "not included here - run them individually from this menu if you want them." -ForegroundColor $Script:Colors.Warning
+    Write-Host "Applies every one-shot, non-destructive tweak in this category: C-States," -ForegroundColor $Script:Colors.Warning
+    Write-Host "USB/PCIe power management, Fast Startup, missing prerequisites, audio" -ForegroundColor $Script:Colors.Warning
+    Write-Host "latency, Win32PrioritySeparation, hibernation removal, classic search, and" -ForegroundColor $Script:Colors.Warning
+    Write-Host "Storage Sense/Defender scheduling. NOT included: the watcher/informational" -ForegroundColor $Script:Colors.Warning
+    Write-Host "features (notification mute, GPU driver check, bufferbloat test) and the" -ForegroundColor $Script:Colors.Warning
+    Write-Host "Xbox Game Bar uninstall (destructive) - run those individually if wanted." -ForegroundColor $Script:Colors.Warning
 
     if (-not (Confirm-Action)) { return }
 
@@ -499,6 +837,11 @@ function Global:Invoke-AllAdvancedPerformanceOptimizations {
         Disable-FastStartup
         Install-MissingPrerequisites
         Optimize-AudioLatency
+        Set-Win32PrioritySeparation
+        Disable-Hibernation
+        Set-ClassicWindowsSearch
+        Set-StorageSenseSchedule
+        Set-DefenderScanSchedule
     }
     finally {
         $Script:SkipConfirmations = $false

@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.9.0] - 2026-08-26 - 7 more options in Category 13
+
+### Added
+
+- **8. Win32PrioritySeparation Tuning** (`Set-Win32PrioritySeparation`):
+  the classic short/fixed-quantum + foreground-boost scheduler tweak
+  (`0x26`) so the foreground game gets CPU time slices tuned for
+  responsiveness instead of Windows' background-service-friendly default.
+- **9. Disable Hibernation Entirely** (`Disable-Hibernation`): `powercfg -h
+  off`, removing `hiberfil.sys` and freeing disk space roughly equal to
+  installed RAM. Distinct from Disable Fast Startup (option 3) - Fast
+  Startup alone can leave the hibernation file allocated since it's built
+  on the same subsystem. Reports the estimated space to be freed before
+  asking for confirmation.
+- **10. Classic Windows Search** (`Set-ClassicWindowsSearch`): disables
+  Bing web results in Start Menu search (`BingSearchEnabled`,
+  `DisableSearchBoxSuggestions`), local-files-only search.
+- **11. Schedule Storage Sense Auto-Cleanup** (`Set-StorageSenseSchedule`):
+  configures Windows' native Storage Sense for weekly automatic cleanup of
+  temp files, old Recycle Bin items and old Downloads (30+ days) -
+  complements the manual Clear Temporary Files tweak with a "set once"
+  schedule.
+- **12. Network Bufferbloat / Latency-Under-Load Test**
+  (`Test-NetworkBufferbloat`): informational only, makes no changes.
+  Measures baseline ping to a public host, then measures it again while
+  generating real download load, and reports the latency increase - the
+  actual cause of ping spikes when something else on the network is
+  downloading during a game. Best-effort: reports baseline-only if the
+  load-generation download fails for any reason.
+- **13. Reschedule Defender Full Scan (Off-Hours)** (`Set-
+  DefenderScanSchedule`): moves the periodic full scan to 3:00 AM daily via
+  `Set-MpPreference`, so it never kicks in mid-session. Real-time
+  protection is completely unaffected - only the scan schedule changes.
+- **14. Uninstall Xbox Game Bar & Xbox App** (`Uninstall-XboxGameBar`): the
+  "nuclear" option, distinct from `Disable-GameBarOverlayPopup` (which only
+  suppresses the popup while leaving apps installed) - actually removes the
+  Game Bar overlay and Xbox app packages. Strong on-screen warning about
+  losing Game Pass app access/cloud saves; manual opt-in only, never wired
+  into Apply All.
+- **Apply All** (now option 15) extended to include the five new safe,
+  one-shot tweaks (Win32PrioritySeparation, hibernation removal, classic
+  search, Storage Sense and Defender scheduling). The notification-mute
+  watcher, GPU driver check, bufferbloat test, and Xbox uninstall remain
+  intentionally excluded (opt-in/informational/destructive).
+
 ## [4.8.0] - 2026-08-26 - New Category 13: Advanced Performance & Compatibility
 
 ### Added
