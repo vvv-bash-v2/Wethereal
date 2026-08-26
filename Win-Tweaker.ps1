@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.5.0
+    Wethereal - Windows Performance Tweaker ULTIMATE EDITION v4.6.0
 .DESCRIPTION
     A comprehensive Windows optimization tool with 190+ tweaks across 12 categories,
     automatic CPU (Intel/AMD) and GPU (NVIDIA/AMD/Intel, including hybrid multi-GPU
@@ -10,7 +10,7 @@
     progress bar on every applied tweak.
 .NOTES
     Author: Wethereal Team
-    Version: 4.5.0 Ultimate Edition
+    Version: 4.6.0 Ultimate Edition
     Requires: PowerShell 5.1+ and Administrator privileges
     Compatible: Windows 10/11
 .PARAMETER Silent
@@ -49,7 +49,7 @@ if ($Silent -and -not $ProfileName) {
 }
 
 # Script configuration
-$Script:Version = "4.5.0"
+$Script:Version = "4.6.0"
 $Script:LogFile = "$PSScriptRoot\WinTweaker.log"
 $Script:ConfigFile = "$PSScriptRoot\Config.json"
 $Script:BackupFile = "$PSScriptRoot\WinTweaker_Backup_$(Get-Date -Format 'yyyyMMdd_HHmmss').json"
@@ -465,6 +465,25 @@ function Global:Get-SystemInfo {
     }
 }
 
+function Global:Test-SystemDriveIsSSD {
+    <#
+        Reports whether the OS/boot drive is solid-state, so tweaks that only make
+        sense on one media type (e.g. disabling Superfetch, which HDDs still
+        benefit from) can gate on real hardware instead of assuming everyone's on
+        an SSD. Returns $false (safe default: don't apply the SSD-only tweak) if
+        the media type can't be determined for any reason.
+    #>
+    try {
+        $sysDriveLetter = $env:SystemDrive.TrimEnd(':')
+        $osPartition = Get-Partition -DriveLetter $sysDriveLetter -ErrorAction Stop
+        $osPhysicalDisk = Get-PhysicalDisk -ErrorAction Stop | Where-Object { $_.DeviceId -eq $osPartition.DiskNumber }
+        return [bool]($osPhysicalDisk -and $osPhysicalDisk.MediaType -eq 'SSD')
+    }
+    catch {
+        return $false
+    }
+}
+
 function Global:Invoke-TweakSequence {
     <#
         Shared progress-bar engine used by every optimization function in Wethereal.
@@ -804,7 +823,20 @@ function Global:Optimize-DiskIO {
     Write-Log "Starting disk I/O optimizations" -Level Info -Category "Disk"
 
     $steps = @(
-        @{ Name = "Enabling TRIM for SSDs"; Action = { fsutil behavior set DisableDeleteNotify 0 | Out-Null } }
+        @{
+            Name   = "Verifying TRIM status for SSDs"
+            Action = {
+                $queryResult = fsutil behavior query DisableDeleteNotify
+                $trimAlreadyEnabled = $queryResult -match 'DisableDeleteNotify\s*=\s*0'
+                if ($trimAlreadyEnabled) {
+                    Write-Log "TRIM already enabled (DisableDeleteNotify=0)" -Level Info -Category "Disk"
+                }
+                else {
+                    fsutil behavior set DisableDeleteNotify 0 | Out-Null
+                    Write-Log "TRIM was disabled - re-enabled it (DisableDeleteNotify=0)" -Level Success -Category "Disk"
+                }
+            }
+        }
         @{ Name = "Disabling 8.3 filename creation"; Action = { fsutil behavior set disable8dot3 1 | Out-Null } }
         @{ Name = "Disabling last-access timestamps"; Action = { fsutil behavior set disablelastaccess 1 | Out-Null } }
         @{ Name = "Optimizing NTFS memory usage"; Action = { fsutil behavior set memoryusage 2 | Out-Null } }
@@ -823,11 +855,16 @@ function Global:Optimize-WindowsServices {
     if (-not (Confirm-Action)) { return }
     
     Write-Log "Starting Windows Services optimization" -Level Info -Category "Services"
-    
+
+    # Superfetch/SysMain pre-loads frequently used apps into RAM for faster launches.
+    # On an SSD/NVMe boot drive it's pure overhead with zero benefit (no seek time to
+    # save); on a spinning HDD it genuinely speeds up cold launches, so only disable
+    # it when the OS drive is confirmed solid-state - never disable it blindly.
+    $isSystemDriveSSD = Test-SystemDriveIsSSD
+
     $servicesToDisable = @(
         'DiagTrack',                    # Connected User Experiences and Telemetry
         'dmwappushservice',             # WAP Push Message Routing Service
-        'SysMain',                      # Superfetch
         'WSearch',                      # Windows Search
         'XblAuthManager',               # Xbox Live Auth Manager
         'XblGameSave',                  # Xbox Live Game Save
@@ -863,6 +900,24 @@ function Global:Optimize-WindowsServices {
                 }
             }.GetNewClosure()
         }
+    }
+
+    # SysMain (Superfetch) gets its own step with an explicit SSD condition instead
+    # of living in the generic list above - see the media-type check further up.
+    $steps += @{
+        Name      = "Disabling service: SysMain (Superfetch - SSD/NVMe only)"
+        Condition = { $isSystemDriveSSD }.GetNewClosure()
+        Action    = {
+            $service = Get-Service -Name "SysMain" -ErrorAction SilentlyContinue
+            if ($service) {
+                Backup-ServiceState -ServiceName "SysMain"
+                Stop-Service -Name "SysMain" -Force -ErrorAction SilentlyContinue
+                Set-Service -Name "SysMain" -StartupType Disabled -ErrorAction Stop
+            }
+            else {
+                throw "Service not present on this system"
+            }
+        }.GetNewClosure()
     }
 
     $result = Invoke-TweakSequence -Title "Windows Services Optimization" -Steps $steps -Category "Services"
@@ -993,7 +1048,18 @@ function Global:Invoke-AllSystemOptimizations {
     Write-Host "This will apply ALL system performance optimizations." -ForegroundColor $Script:Colors.Warning
     
     if (-not (Confirm-Action)) { return }
-    
+
+    Write-Host "`n  Creating system restore point..." -ForegroundColor $Script:Colors.Info
+    try {
+        Enable-ComputerRestore -Drive "$env:SystemDrive\" -ErrorAction SilentlyContinue
+        $description = "Wethereal: Apply All System Optimizations - $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+        Checkpoint-Computer -Description $description -RestorePointType "MODIFY_SETTINGS" -ErrorAction Stop
+        Write-Host "  [OK] Restore point created" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Host "  [!] Could not create restore point" -ForegroundColor $Script:Colors.Warning
+    }
+
     Optimize-CPU
     Optimize-GPU
     Optimize-MemoryAdvanced

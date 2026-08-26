@@ -239,6 +239,20 @@ function Global:Show-GraphicalMenu {
       </StackPanel>
     </Border>
 
+    <Border x:Name="RecommendedBanner" DockPanel.Dock="Top" Background="#151B2E" BorderBrush="#5391FE" BorderThickness="0,0,0,1" Padding="24,12">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        <StackPanel Grid.Column="0" VerticalAlignment="Center" Margin="0,0,14,0">
+          <TextBlock Text="RECOMMENDED FOR YOU" FontSize="11" FontWeight="Bold" Foreground="#5391FE"/>
+          <TextBlock x:Name="RecommendedText" FontSize="12" Foreground="#8C99BC" Margin="0,3,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
+        <Button x:Name="ApplyRecommendedButton" Grid.Column="1" Style="{StaticResource ActionButton}" VerticalAlignment="Center" Content="Apply Recommended"/>
+      </Grid>
+    </Border>
+
     <Border DockPanel.Dock="Bottom" Background="#0F1422" Padding="16,10">
       <Grid>
         <Grid.RowDefinitions>
@@ -343,6 +357,29 @@ function Global:Show-GraphicalMenu {
     $gpuText = if ($hw.GPUs.Count -eq 0) { "no GPU detected" } else { ($hw.GPUs | ForEach-Object { "$($_.Name) [$($_.Vendor)]" }) -join " + " }
     $subtitleText.Text = "v$($Script:Version)  |  $($hw.CPU.Vendor) CPU  |  $gpuText"
 
+    # ---- "Recommended for you": pick a profile from detected RAM/disk/GPU ----
+    $recommendedText = $window.FindName("RecommendedText")
+    $totalRamGB = [math]::Round((Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction SilentlyContinue).TotalPhysicalMemory / 1GB, 1)
+    if (-not $totalRamGB) { $totalRamGB = 0 }
+    $hasDiscreteGpu = ($hw.GPUVendors -contains 'NVIDIA') -or ($hw.GPUVendors -contains 'AMD')
+    $isSystemDriveSSD = Test-SystemDriveIsSSD
+
+    $diskDesc = if ($isSystemDriveSSD) { "SSD" } else { "HDD" }
+    if ($totalRamGB -gt 0 -and $totalRamGB -lt 8) {
+        $recommendedProfileKey = 'LowEndGaming'
+        $recommendReason = "$totalRamGB GB RAM (under 8 GB) on $diskDesc - Low-End Gaming / Max FPS frees the most headroom for your specs."
+    }
+    elseif ($hasDiscreteGpu) {
+        $recommendedProfileKey = 'Gaming'
+        $recommendReason = "Discrete GPU detected ($($hw.GPUVendors -join '/')) with $totalRamGB GB RAM on $diskDesc - the Gaming profile is tuned for this setup."
+    }
+    else {
+        $recommendedProfileKey = 'MaxPerformance'
+        $recommendReason = "General-purpose hardware detected ($totalRamGB GB RAM, $diskDesc) - Maximum Performance covers the broadest set of optimizations."
+    }
+    $recommendedProfileDef = $Script:Profiles[$recommendedProfileKey]
+    $recommendedText.Text = "$($recommendedProfileDef.Name) - $recommendReason"
+
     # ---- Populate Tweaks tab (grouped, with checkboxes) ----
     $catalog = Get-GuiTweakCatalog
     $allTweakCheckboxes = @()
@@ -412,6 +449,32 @@ function Global:Show-GraphicalMenu {
             })
         $profilesPanel.Children.Add($btn) | Out-Null
     }
+
+    # ---- "Apply Recommended" button (same flow as a Profiles-tab button) ----
+    $window.FindName("ApplyRecommendedButton").Add_Click({
+            $confirmResult = [System.Windows.MessageBox]::Show(
+                "Apply the recommended profile - '$($recommendedProfileDef.Name)'?`n`n$($recommendedProfileDef.Description)",
+                "Confirm Profile", "YesNo", "Question")
+            if ($confirmResult -eq "Yes") {
+                $statusText.Text = "Applying $($recommendedProfileDef.Name)..."
+                $logBox.AppendText("`r`nApplying recommended profile: $($recommendedProfileDef.Name)...`r`n")
+                $logBox.ScrollToEnd()
+                $window.Cursor = [System.Windows.Input.Cursors]::Wait
+                try {
+                    $Script:SkipConfirmations = $true
+                    $Script:SkipPauses = $true
+                    Invoke-OptimizationProfile -ProfileName $recommendedProfileKey
+                }
+                finally {
+                    $Script:SkipConfirmations = $false
+                    $Script:SkipPauses = $false
+                    $window.Cursor = [System.Windows.Input.Cursors]::Arrow
+                }
+                $logBox.AppendText("Finished: $($recommendedProfileDef.Name). Check WinTweaker.log for full detail.`r`n")
+                $logBox.ScrollToEnd()
+                $statusText.Text = "Done: $($recommendedProfileDef.Name)"
+            }
+        }.GetNewClosure())
 
     # ---- Populate Info tab ----
     $infoLines = @(

@@ -347,6 +347,8 @@ function Global:Invoke-OptimizationProfile {
                 Optimize-NetworkGaming
                 Optimize-FrameRate
                 Disable-GameBarOverlayPopup
+                Add-DefenderGameExclusions
+                Enable-MSIModeInterrupts
                 Write-Host "`n  [OK] Gaming profile applied!" -ForegroundColor $Script:Colors.Success
             }
 
@@ -379,6 +381,8 @@ function Global:Invoke-OptimizationProfile {
                 Reduce-InputLag
                 Optimize-GPUSpecific
                 Disable-GameBarOverlayPopup
+                Add-DefenderGameExclusions
+                Enable-MSIModeInterrupts
 
                 # Network
                 Optimize-TCPIP

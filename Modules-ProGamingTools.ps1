@@ -14,6 +14,8 @@ function Global:Show-ProGamingToolsMenu {
         Write-Host "   3. [TARGET] Per-Game Process Tuning" -ForegroundColor White
         Write-Host "   4. [CLEAN] Clean GPU Driver Reinstall (DDU-style, best-effort)" -ForegroundColor White
         Write-Host "   5. [DEV] FPS Overlay (RTSS / MSI Afterburner)" -ForegroundColor White
+        Write-Host "   6. [BOOST] Enable MSI Mode for GPU/NVMe interrupts (advanced)" -ForegroundColor White
+        Write-Host "   7. [!] Disable Core Isolation / Memory Integrity (VBS, advanced)" -ForegroundColor White
         Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
@@ -25,6 +27,8 @@ function Global:Show-ProGamingToolsMenu {
             '3' { Show-GameProfiles }
             '4' { Invoke-CleanGpuDriverReinstall }
             '5' { Enable-FpsOverlay }
+            '6' { Enable-MSIModeInterrupts }
+            '7' { Disable-CoreIsolation }
             '0' { return }
             default {
                 Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
@@ -420,6 +424,131 @@ function Global:Enable-FpsOverlay {
         }
     }
 
+    Wait-ForUser
+}
+
+#endregion
+
+#region MSI Mode for GPU/NVMe interrupts
+
+function Global:Enable-MSIModeInterrupts {
+    <#
+        Switches supported devices (GPU, NVMe/storage controllers) from legacy
+        line-based interrupts to Message Signaled Interrupts (MSI). MSI lets the
+        device talk to any CPU core directly instead of funneling every interrupt
+        through IRQ 16 shared with other hardware, which can meaningfully cut
+        input lag / micro-stutter on systems where the GPU or NVMe drive is
+        sharing an IRQ. Not every device exposes the "MSI Supported" registry
+        value - those are silently skipped rather than treated as failures.
+    #>
+    Write-Host "`n[MSI MODE FOR GPU/NVMe INTERRUPTS]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Switches your GPU and NVMe/storage controllers from legacy line-based" -ForegroundColor $Script:Colors.Info
+    Write-Host "interrupts to Message Signaled Interrupts (MSI), which can reduce input" -ForegroundColor $Script:Colors.Info
+    Write-Host "lag and micro-stutter caused by shared IRQs. Safe and fully reversible," -ForegroundColor $Script:Colors.Info
+    Write-Host "but a restart is required for it to take effect." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Enabling MSI mode for GPU/NVMe interrupts" -Level Info -Category "Gaming"
+
+    # Display adapters (GUID 4d36e968) + storage controllers (SCSIAdapter class,
+    # covers NVMe/AHCI controllers) - the two device classes that most commonly
+    # benefit from MSI mode for gaming/latency.
+    $targets = @()
+    $targets += Get-PnpDevice -Class Display -Status OK -ErrorAction SilentlyContinue
+    $targets += Get-PnpDevice -Class SCSIAdapter -Status OK -ErrorAction SilentlyContinue
+
+    if (-not $targets -or $targets.Count -eq 0) {
+        Write-Host "`n[!] No eligible GPU/storage controller devices found." -ForegroundColor $Script:Colors.Warning
+        Wait-ForUser
+        return
+    }
+
+    $steps = $targets | ForEach-Object {
+        $device = $_
+        @{
+            Name      = "Enabling MSI mode: $($device.FriendlyName)"
+            Condition = {
+                $regPath = "HKLM:\SYSTEM\CurrentControlSet\Enum\$($device.InstanceId)\Device Parameters\Interrupt Management\MessageSignaledBasedInterruptProperties"
+                Test-Path (Split-Path $regPath -Parent) -ErrorAction SilentlyContinue
+            }.GetNewClosure()
+            Action    = {
+                $imPath = "HKLM:\SYSTEM\CurrentControlSet\Enum\$($device.InstanceId)\Device Parameters\Interrupt Management"
+                $regPath = "$imPath\MessageSignaledBasedInterruptProperties"
+                if (-not (Test-Path $regPath)) { New-Item -Path $regPath -Force | Out-Null }
+                Backup-RegistryValue -Path $regPath -Name "MSISupported"
+                Set-ItemProperty -Path $regPath -Name "MSISupported" -Value 1 -Type DWord
+            }.GetNewClosure()
+        }
+    }
+
+    Invoke-TweakSequence -Title "MSI Mode Interrupts" -Steps $steps -Category "Gaming" | Out-Null
+
+    Write-Host "`n[OK] MSI mode applied where supported!" -ForegroundColor $Script:Colors.Success
+    Write-Host "  Restart your PC for the interrupt mode change to take effect." -ForegroundColor $Script:Colors.Warning
+    Wait-ForUser
+}
+
+#endregion
+
+#region Core Isolation / Memory Integrity (VBS) toggle
+
+function Global:Disable-CoreIsolation {
+    <#
+        Virtualization-Based Security (Core Isolation / Memory Integrity) runs part
+        of the OS in a hardware-isolated hypervisor sandbox. It's a real security
+        feature, but on CPUs without efficient virtualization extensions it also
+        adds measurable overhead to every syscall - a well-documented FPS cost in
+        CPU-bound games. This tweak is opt-in and explicit about the trade-off; it
+        is only ever applied automatically inside the Gaming / LowEndGaming
+        profiles, which the user has already opted into for maximum performance.
+    #>
+    Write-Host "`n[DISABLE CORE ISOLATION / MEMORY INTEGRITY]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "[!]  SECURITY TRADE-OFF: Core Isolation / Memory Integrity (VBS) blocks" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  entire classes of kernel-level malware and driver exploits. Disabling it" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  removes that protection in exchange for lower CPU overhead and higher" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  FPS in CPU-bound games. Only disable this if you understand and accept" -ForegroundColor $Script:Colors.Warning
+    Write-Host "  the risk. Fully reversible from Windows Security > Device Security." -ForegroundColor $Script:Colors.Warning
+
+    if (-not (Confirm-Action -Message "I understand the security trade-off - disable it?")) { return }
+
+    Write-Log "Disabling Core Isolation / Memory Integrity (VBS)" -Level Warning -Category "Gaming"
+
+    $steps = @(
+        @{
+            Name   = "Disabling Virtualization-Based Security"
+            Action = {
+                $path = "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "EnableVirtualizationBasedSecurity"
+                Set-ItemProperty -Path $path -Name "EnableVirtualizationBasedSecurity" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Disabling Memory Integrity (HVCI)"
+            Action = {
+                $path = "HKLM:\SYSTEM\CurrentControlSet\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "Enabled"
+                Set-ItemProperty -Path $path -Name "Enabled" -Value 0 -Type DWord
+            }
+        }
+        @{
+            Name   = "Clearing Credential Guard configuration flags"
+            Action = {
+                $path = "HKLM:\SYSTEM\CurrentControlSet\Control\LSA"
+                Backup-RegistryValue -Path $path -Name "LsaCfgFlags"
+                Set-ItemProperty -Path $path -Name "LsaCfgFlags" -Value 0 -Type DWord
+            }
+        }
+    )
+
+    Invoke-TweakSequence -Title "Core Isolation Toggle" -Steps $steps -Category "Gaming" | Out-Null
+
+    Write-Host "`n[OK] Core Isolation / Memory Integrity disabled!" -ForegroundColor $Script:Colors.Success
+    Write-Host "  Restart your PC for this to take effect." -ForegroundColor $Script:Colors.Warning
     Wait-ForUser
 }
 

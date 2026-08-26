@@ -91,6 +91,32 @@ function Global:Block-TelemetryAdvanced {
                 Set-ItemProperty -Path $path -Name "UploadUserActivities" -Value 0 -Type DWord
             }
         }
+        @{
+            Name   = "Disabling Windows Recall (Copilot+ AI snapshot history)"
+            Action = {
+                $path = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsAI"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "DisableAIDataAnalysis"
+                Set-ItemProperty -Path $path -Name "DisableAIDataAnalysis" -Value 1 -Type DWord
+                $userPath = "HKCU:\Software\Policies\Microsoft\Windows\WindowsAI"
+                if (-not (Test-Path $userPath)) { New-Item -Path $userPath -Force | Out-Null }
+                Backup-RegistryValue -Path $userPath -Name "DisableAIDataAnalysis"
+                Set-ItemProperty -Path $userPath -Name "DisableAIDataAnalysis" -Value 1 -Type DWord
+            }
+        }
+        @{
+            Name   = "Disabling Windows Copilot"
+            Action = {
+                $path = "HKCU:\Software\Policies\Microsoft\Windows\WindowsCopilot"
+                if (-not (Test-Path $path)) { New-Item -Path $path -Force | Out-Null }
+                Backup-RegistryValue -Path $path -Name "TurnOffWindowsCopilot"
+                Set-ItemProperty -Path $path -Name "TurnOffWindowsCopilot" -Value 1 -Type DWord
+                $explorerPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+                if (-not (Test-Path $explorerPath)) { New-Item -Path $explorerPath -Force | Out-Null }
+                Backup-RegistryValue -Path $explorerPath -Name "ShowCopilotButton"
+                Set-ItemProperty -Path $explorerPath -Name "ShowCopilotButton" -Value 0 -Type DWord
+            }
+        }
     )
 
     Invoke-TweakSequence -Title "Telemetry Blocking" -Steps $steps -Category "Privacy" | Out-Null
@@ -432,10 +458,6 @@ function Global:Clear-TemporaryFiles {
     Write-Host "`n[CLEAN TEMPORARY FILES]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
 
-    if (-not (Confirm-Action)) { return }
-
-    Write-Log "Cleaning temporary files" -Level Info -Category "Cleanup"
-
     $cleanupPaths = @(
         "$env:TEMP\*",
         "$env:WINDIR\Temp\*",
@@ -444,16 +466,32 @@ function Global:Clear-TemporaryFiles {
         "$env:LOCALAPPDATA\Temp\*"
     )
 
+    # Scan sizes up front so the user knows what they're about to free BEFORE
+    # confirming, not just what got freed afterward.
+    Write-Host "Scanning temporary file locations..." -ForegroundColor $Script:Colors.Info
+    $pathSizes = @{}
+    $totalBytes = 0
+    foreach ($cleanPath in $cleanupPaths) {
+        $size = (Get-ChildItem -Path $cleanPath -Recurse -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
+        if (-not $size) { $size = 0 }
+        $pathSizes[$cleanPath] = $size
+        $totalBytes += $size
+    }
+    Write-Host "About to free approximately $('{0:N2}' -f ($totalBytes / 1GB)) GB." -ForegroundColor $Script:Colors.Highlight
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Cleaning temporary files ($('{0:N2}' -f ($totalBytes / 1GB)) GB detected)" -Level Info -Category "Cleanup"
+
     $Script:LastTempCleanupFreedBytes = 0
     $steps = $cleanupPaths | ForEach-Object {
         $cleanPath = $_
+        $knownSize = $pathSizes[$cleanPath]
         @{
-            Name   = "Cleaning $cleanPath"
+            Name   = "Cleaning $cleanPath ($('{0:N2}' -f ($knownSize / 1MB)) MB)"
             Action = {
-                $items = Get-ChildItem -Path $cleanPath -Recurse -Force -ErrorAction SilentlyContinue
-                $sizeBefore = ($items | Measure-Object -Property Length -Sum -ErrorAction SilentlyContinue).Sum
                 Remove-Item -Path $cleanPath -Recurse -Force -ErrorAction SilentlyContinue
-                if ($sizeBefore) { $Script:LastTempCleanupFreedBytes += $sizeBefore }
+                $Script:LastTempCleanupFreedBytes += $knownSize
             }.GetNewClosure()
         }
     }

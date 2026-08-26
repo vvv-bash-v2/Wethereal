@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.6.0] - 2026-08-26 - 10 new optimizations: latency, safety, Windows 11 privacy, smarter GUI
+
+### Added
+
+- **MSI Mode for GPU/NVMe interrupts** (`Enable-MSIModeInterrupts`, Pro Gaming
+  Tools > 6): switches display adapters and storage controllers from legacy
+  line-based interrupts to Message Signaled Interrupts, which can reduce
+  input lag/micro-stutter caused by shared IRQs. Safe and reversible.
+- **Core Isolation / Memory Integrity (VBS) toggle** (`Disable-CoreIsolation`,
+  Pro Gaming Tools > 7): opt-in only, with an explicit on-screen security
+  trade-off warning before it runs. Not wired into any automatic profile -
+  deliberately manual-only given what it turns off.
+- **Automatic Windows Defender exclusions for installed games**
+  (`Add-DefenderGameExclusions`, Gaming menu > 9): detects every Steam
+  library (parsed from `libraryfolders.vdf`, not just the default path)
+  plus Epic Games, Origin, Battle.net, Riot Games, GOG Galaxy and Ubisoft
+  Connect, and excludes them from real-time scanning to cut asset-streaming
+  stutter. Real-time protection itself stays fully on. Wired into Apply All
+  Gaming Optimizations, Low-End Gaming, and the Gaming profile.
+- **Disable Windows Recall and Copilot**: added to Advanced Telemetry
+  Blocking (and therefore to the Privacy profile and Apply All Privacy) -
+  sets the official `DisableAIDataAnalysis` and `TurnOffWindowsCopilot`
+  policies plus hides the taskbar Copilot button.
+- **"Recommended for you" panel in the GUI**: a banner under the header now
+  reads the detected RAM, disk type (SSD/HDD) and GPU vendor and suggests
+  Low-End Gaming (under 8 GB RAM), Gaming (discrete GPU present) or Maximum
+  Performance (general-purpose hardware), with a one-click "Apply
+  Recommended" button that runs the same profile pipeline as the Profiles tab.
+
+### Improved
+
+- **SysMain/Superfetch is now SSD-aware**: it used to be disabled
+  unconditionally in Windows Services Optimization, which actually hurts
+  performance on HDD-only systems (Superfetch's whole point is masking HDD
+  seek latency). New shared `Test-SystemDriveIsSSD` helper checks the real
+  OS drive media type; SysMain is now only disabled when it's confirmed SSD/
+  NVMe, and left alone otherwise. The same helper now also feeds the GUI's
+  hardware-based profile recommendation.
+- **Restore point before "Apply All"**: `Invoke-AllSystemOptimizations` and
+  `Apply-AllGamingOptimizations` now create a system restore point first,
+  matching the safety net that profiles already had - previously only
+  `Invoke-OptimizationProfile` did this.
+- **Temporary file cleanup now shows size BEFORE deleting**, not just after:
+  scans every temp/cache location up front, prints "About to free ~X GB",
+  then asks for confirmation with that number in hand instead of clearing
+  blind and reporting the total afterward.
+- **TRIM handling now reports actual status** instead of blindly re-running
+  `fsutil behavior set` every time: queries `DisableDeleteNotify` first and
+  logs whether TRIM was already enabled or had to be turned back on.
+- HAGS (Hardware-Accelerated GPU Scheduling) was already implemented in
+  `Optimize-GPU` - verified still correct, no changes needed.
+
 ## [4.5.0] - 2026-08-26 - Automatically suppress the Xbox Game Bar overlay popup
 
 ### Added

@@ -17,6 +17,7 @@ function Global:Show-GamingMenu {
         Write-Host "   6. Frame Rate Optimizations" -ForegroundColor White
         Write-Host "   7. * Apply All Gaming Optimizations" -ForegroundColor Green
         Write-Host "   8. [GAME]  Low-End Gaming / Max FPS Mode (budget PCs)" -ForegroundColor Magenta
+        Write-Host "   9. [SCAN] Add Windows Defender Exclusions for Installed Games" -ForegroundColor White
         Write-Host "   0. <- Back to Main Menu" -ForegroundColor Yellow
         Write-Host ""
 
@@ -31,6 +32,7 @@ function Global:Show-GamingMenu {
             '6' { Optimize-FrameRate }
             '7' { Apply-AllGamingOptimizations }
             '8' { Optimize-LowEndGaming }
+            '9' { Add-DefenderGameExclusions }
             '0' { return }
             default {
                 Write-Host "`n[X] Invalid option." -ForegroundColor $Script:Colors.Error
@@ -257,6 +259,88 @@ function Global:Disable-GameBarOverlayPopup {
     Invoke-TweakSequence -Title "Game Bar Overlay Popup" -Steps $steps -Category "Gaming" | Out-Null
 }
 
+function Global:Add-DefenderGameExclusions {
+    <#
+        Auto-detects installed game library folders (Steam, including every
+        library listed in libraryfolders.vdf - not just the default install
+        path - plus Epic Games, Battle.net, Riot Games, GOG Galaxy, Ubisoft
+        Connect) and adds them as Windows Defender real-time scan exclusions.
+        Defender re-scanning every asset a game streams from disk is a common,
+        very real source of stutter; excluding known-safe game library folders
+        removes that overhead without turning off real-time protection.
+    #>
+    Write-Host "`n[DEFENDER EXCLUSIONS FOR INSTALLED GAMES]" -ForegroundColor $Script:Colors.Title
+    Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
+    Write-Host "Adds your detected game library folders as Windows Defender real-time" -ForegroundColor $Script:Colors.Info
+    Write-Host "scan exclusions, removing scan overhead while games stream assets from" -ForegroundColor $Script:Colors.Info
+    Write-Host "disk. Real-time protection itself stays fully enabled." -ForegroundColor $Script:Colors.Info
+
+    if (-not (Confirm-Action)) { return }
+
+    Write-Log "Adding Defender exclusions for detected game libraries" -Level Info -Category "Gaming"
+
+    $candidatePaths = [System.Collections.Generic.List[string]]::new()
+
+    # Steam: read the actual library folders from libraryfolders.vdf instead of
+    # assuming everything lives under the default install path.
+    $steamPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam" -ErrorAction SilentlyContinue).InstallPath
+    if (-not $steamPath) { $steamPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Valve\Steam" -ErrorAction SilentlyContinue).InstallPath }
+    if ($steamPath -and (Test-Path $steamPath)) {
+        $candidatePaths.Add("$steamPath\steamapps\common")
+        $vdfPath = Join-Path $steamPath "steamapps\libraryfolders.vdf"
+        if (Test-Path $vdfPath) {
+            $vdfContent = Get-Content -Path $vdfPath -Raw -ErrorAction SilentlyContinue
+            $matches = [regex]::Matches($vdfContent, '"path"\s*"([^"]+)"')
+            foreach ($m in $matches) {
+                $libPath = $m.Groups[1].Value -replace '\\\\', '\'
+                if (Test-Path $libPath) { $candidatePaths.Add("$libPath\steamapps\common") }
+            }
+        }
+    }
+
+    # Other common launchers, checked by their default install locations.
+    $candidatePaths.Add("${env:ProgramFiles}\Epic Games")
+    $candidatePaths.Add("${env:ProgramFiles(x86)}\Origin Games")
+    $candidatePaths.Add("${env:ProgramFiles(x86)}\Battle.net")
+    $candidatePaths.Add("${env:ProgramFiles(x86)}\Riot Games")
+    $candidatePaths.Add("C:\Riot Games")
+    $candidatePaths.Add("${env:ProgramFiles(x86)}\GOG Galaxy\Games")
+    $candidatePaths.Add("${env:ProgramFiles}\Ubisoft\Ubisoft Game Launcher\games")
+
+    $foundPaths = $candidatePaths | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
+
+    if (-not $foundPaths -or $foundPaths.Count -eq 0) {
+        Write-Host "`n[!] No known game library folders were found on this system." -ForegroundColor $Script:Colors.Warning
+        Wait-ForUser
+        return
+    }
+
+    $steps = $foundPaths | ForEach-Object {
+        $gamePath = $_
+        @{
+            Name   = "Excluding: $gamePath"
+            Action = {
+                $existing = (Get-MpPreference -ErrorAction SilentlyContinue).ExclusionPath
+                if ($existing -notcontains $gamePath) {
+                    Add-MpPreference -ExclusionPath $gamePath -ErrorAction Stop
+                    $entry = @{ Type = 'DefenderExclusion'; Path = $gamePath }
+                    $Script:ConfigBackup += $entry
+                    Add-MasterBackupEntry -Entry $entry
+                    Add-UndoAction -Description "Remove Defender exclusion: $gamePath" -UndoScript {
+                        param($Path)
+                        Remove-MpPreference -ExclusionPath $Path -ErrorAction SilentlyContinue
+                    } -Parameters @{ Path = $gamePath }
+                }
+            }.GetNewClosure()
+        }
+    }
+
+    Invoke-TweakSequence -Title "Defender Game Exclusions" -Steps $steps -Category "Gaming" | Out-Null
+
+    Write-Host "`n[OK] Added $($foundPaths.Count) game folder(s) as Defender exclusions!" -ForegroundColor $Script:Colors.Success
+    Wait-ForUser
+}
+
 function Global:Optimize-AudioGaming {
     Write-Host "`n[AUDIO OPTIMIZATIONS FOR GAMING]" -ForegroundColor $Script:Colors.Title
     Write-Host "============================================================" -ForegroundColor $Script:Colors.Title
@@ -314,6 +398,17 @@ function Global:Apply-AllGamingOptimizations {
 
     if (-not (Confirm-Action)) { return }
 
+    Write-Host "`n  Creating system restore point..." -ForegroundColor $Script:Colors.Info
+    try {
+        Enable-ComputerRestore -Drive "$env:SystemDrive\" -ErrorAction SilentlyContinue
+        $description = "Wethereal: Apply All Gaming Optimizations - $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+        Checkpoint-Computer -Description $description -RestorePointType "MODIFY_SETTINGS" -ErrorAction Stop
+        Write-Host "  [OK] Restore point created" -ForegroundColor $Script:Colors.Success
+    }
+    catch {
+        Write-Host "  [!] Could not create restore point" -ForegroundColor $Script:Colors.Warning
+    }
+
     $Script:SkipConfirmations = $true
     $Script:SkipPauses = $true
     try {
@@ -322,6 +417,8 @@ function Global:Apply-AllGamingOptimizations {
         Optimize-NetworkGaming
         Disable-FullscreenOptimizations
         Disable-GameBarOverlayPopup
+        Add-DefenderGameExclusions
+        Enable-MSIModeInterrupts
         Optimize-AudioGaming
         Optimize-FrameRate
     }
@@ -364,6 +461,8 @@ function Global:Optimize-LowEndGaming {
         Optimize-NetworkGaming
         Disable-FullscreenOptimizations
         Disable-GameBarOverlayPopup
+        Add-DefenderGameExclusions
+        Enable-MSIModeInterrupts
         Optimize-FrameRate
 
         # FPS-specific tweaks not covered by any of the above.
